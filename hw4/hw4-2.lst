@@ -1,0 +1,318 @@
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/12/23 23:28:25 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   1  option limrow=100, limcol=0;
+   2  sets
+   3      P "Places" / 'Hogwarts', 'Godric’s Hollow', 'Little Whinging', 'Shell Cottage', 'The Leaky Cauldron', 'Ollivander’s', 'Zonko’s Joke Shop', 'Dervish and Banges', 'Little Hangleton', 'Weasley’s Wizard Wheezes'/;
+   4   
+   5  alias(P, Q);
+   6   
+   7  parameters
+   8      x(P) / 'Hogwarts' 0, 'Godric’s Hollow' 20, 'Little Whinging' 18, 'Shell Cottage' 30, 'The Leaky Cauldron' 35, 'Ollivander’s' 33, 'Zonko’s Joke Shop' 5, 'Dervish and Banges' 5, 'Little Hangleton' 11, 'Weasley’s Wizard Wheezes' 2/
+   9      y(P) / 'Hogwarts' 0, 'Godric’s Hollow' 20, 'Little Whinging' 10,'Shell Cottage' 12, 'The Leaky Cauldron' 0, 'Ollivander’s' 25, 'Zonko’s Joke Shop' 27, 'Dervish and Banges' 10, 'Little Hangleton' 0, 'Weasley’s Wizard Wheezes' 15/
+  10      requiredBrooms(P) / 'Hogwarts' 10, 'Godric’s Hollow' 6, 'Little Whinging' 8, 'Shell Cottage'11, 'The Leaky Cauldron' 9, 'Ollivander’s' 7, 'Zonko’s Joke Shop' 15, 'Dervish and Banges' 7, 'Little Hangleton' 9, 'Weasley’s Wizard Wheezes' 12/
+  11      currentBrooms(P) / 'Hogwarts' 8, 'Godric’s Hollow' 13,'Little Whinging' 4, 'Shell Cottage' 8, 'The Leaky Cauldron' 12, 'Ollivander’s' 2, 'Zonko’s Joke Shop' 14, 'Dervish and Banges' 11, 'Little Hangleton' 15, 'Weasley’s Wizard Wheezes' 7/;
+  12   
+  13  variables
+  14      flow(P, Q) "Flow of brooms from p to q"
+  15      cost "Total cost of transportation";
+  16   
+  17  positive variable flow;
+  18   
+  19  parameters
+  20      dist(P,Q) "Euclidean distance between places"
+  21      isNotFromClosest(P) "Binary parameter to indicate if a place does not receive brooms from its closest location";
+  22   
+  23  * Calculate distances between all pairs
+  24  dist(P,Q)$(not sameas(P,Q)) = sqrt(sqr(x(P) - x(Q)) + sqr(y(P) - y(Q)));
+  25   
+  26  * Identify the closest place for each P
+  27  parameter closestDist(P);
+  28  closestDist(P) = smin(Q$(not sameas(P,Q)), dist(P,Q));
+  29   
+  30  * Identify if Q is the closest place for P
+  31  parameter isClosest(P,Q) "Binary parameter to indicate if Q is the closest place to P";
+  32  isClosest(P,Q)$(not sameas(P,Q) and dist(P,Q) = closestDist(P)) = 1;
+  33   
+  34   
+  35  equations
+  36      obj "Objective function"
+  37      conservation(P) "Conservation of flow for each node";
+  38   
+  39  obj.. cost =e= sum((P,Q), 0.5 * sqrt(sqr(x(P) - x(Q)) + sqr(y(P) - y(Q))) * flow(P,Q));
+  40   
+  41  conservation(P).. sum(Q, flow(Q,P)) - sum(Q, flow(P,Q)) =e= requiredBrooms(P) - currentBrooms(P);
+  42   
+  43  model Transport / obj, conservation /;
+  44   
+  45  Transport.optfile=1;
+  46   
+  52   
+  53  solve Transport using MIP minimizing cost;
+  54   
+  55  loop(P,
+  56      if(sum(Q$(isClosest(P,Q)), flow.l(Q,P)) = 0 and requiredBrooms(P) > currentBrooms(P),
+  57          isNotFromClosest(P) = 1;
+  58      else
+  59          isNotFromClosest(P) = 0;
+  60      );
+  61  );
+  62  set not_from_closest(P) ;
+  63   
+  64  not_from_closest(P) = yes$(isNotFromClosest(P) = 1);
+  65   
+  66  option not_from_closest:0:0:1;
+  67   
+  68  display not_from_closest;
+
+
+COMPILATION TIME     =        0.000 SECONDS      3 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/12/23 23:28:25 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE Transport Using MIP From line 53
+
+
+---- obj  =E=  Objective function
+
+obj..  - 14.142135623731*flow(Hogwarts,Godric’s Hollow) - 10.295630140987*flow(Hogwarts,Little Whinging) - 16.1554944214035*flow(Hogwarts,Shell Cottage) - 17.5*flow(Hogwarts,The Leaky Cauldron) - 20.7002415444845*flow(Hogwarts,Ollivander’s) - 13.729530217746*flow(Hogwarts,Zonko’s Joke Shop) - 5.59016994374947*flow(Hogwarts,Dervish and Banges) - 5.5*flow(Hogwarts,Little Hangleton) - 7.56637297521078*flow(Hogwarts,Weasley’s Wizard Wheezes) - 14.142135623731*flow(Godric’s Hollow,Hogwarts) - 5.09901951359278*flow(Godric’s Hollow,Little Whinging) - 6.40312423743285*flow(Godric’s Hollow,Shell Cottage) - 12.5*flow(Godric’s Hollow,The Leaky Cauldron) - 6.96419413859206*flow(Godric’s Hollow,Ollivander’s) - 8.27647267862342*flow(Godric’s Hollow,Zonko’s Joke Shop) - 9.01387818865997*flow(Godric’s Hollow,Dervish and Banges) - 10.9658560997307*flow(Godric’s Hollow,Little Hangleton) - 9.3407708461347*flow(Godric’s Hollow,Weasley’s Wizard Wheezes) - 10.295630140987*flow(Little Whinging,Hogwarts) - 5.09901951359278*flow(Little Whinging,Godric’s Hollow) - 6.08276253029822*flow(Little Whinging,Shell Cottage) - 9.86154146165801*flow(Little Whinging,The Leaky Cauldron) - 10.6066017177982*flow(Little Whinging,Ollivander’s) - 10.7004672795163*flow(Little Whinging,Zonko’s Joke Shop) - 6.5*flow(Little Whinging,Dervish and Banges) - 6.10327780786685*flow(Little Whinging,Little Hangleton) - 8.38152730712011*flow(Little Whinging,Weasley’s Wizard Wheezes) - 16.1554944214035*flow(Shell Cottage,Hogwarts) - 6.40312423743285*flow(Shell Cottage,Godric’s Hollow) - 6.08276253029822*flow(Shell Cottage,Little Whinging) - 6.5*flow(Shell Cottage,The Leaky Cauldron) - 6.67083203206317*flow(Shell Cottage,Ollivander’s) - 14.5773797371133*flow(Shell Cottage,Zonko’s Joke Shop) - 12.5399362039845*flow(Shell Cottage,Dervish and Banges) - 11.2361025271221*flow(Shell Cottage,Little Hangleton) - 14.0801278403287*flow(Shell Cottage,Weasley’s Wizard Wheezes) - 17.5*flow(The Leaky Cauldron,Hogwarts) - 12.5*flow(The Leaky Cauldron,Godric’s Hollow) - 9.86154146165801*flow(The Leaky Cauldron,Little Whinging) - 6.5*flow(The Leaky Cauldron,Shell Cottage) - 12.5399362039845*flow(The Leaky Cauldron,Ollivander’s) - 20.1804360706106*flow(The Leaky Cauldron,Zonko’s Joke Shop) - 15.8113883008419*flow(The Leaky Cauldron,Dervish and Banges) - 12*flow(The Leaky Cauldron,Little Hangleton) - 18.1245689603919*flow(The Leaky Cauldron,Weasley’s Wizard Wheezes) - 20.7002415444845*flow(Ollivander’s,Hogwarts) - 6.96419413859206*flow(Ollivander’s,Godric’s Hollow) - 10.6066017177982*flow(Ollivander’s,Little Whinging) - 6.67083203206317*flow(Ollivander’s,Shell Cottage) - 12.5399362039845*flow(Ollivander’s,The Leaky Cauldron) - 14.0356688476182*flow(Ollivander’s,Zonko’s Joke Shop) - 15.8823801742686*flow(Ollivander’s,Dervish and Banges) - 16.6508258053467*flow(Ollivander’s,Little Hangleton) - 16.2864974749023*flow(Ollivander’s,Weasley’s Wizard Wheezes) - 13.729530217746*flow(Zonko’s Joke Shop,Hogwarts) - 8.27647267862342*flow(Zonko’s Joke Shop,Godric’s Hollow) - 10.7004672795163*flow(Zonko’s Joke Shop,Little Whinging) - 14.5773797371133*flow(Zonko’s Joke Shop,Shell Cottage) - 20.1804360706106*flow(Zonko’s Joke Shop,The Leaky Cauldron) - 14.0356688476182*flow(Zonko’s Joke Shop,Ollivander’s) - 8.5*flow(Zonko’s Joke Shop,Dervish and Banges) - 13.8293166859393*flow(Zonko’s Joke Shop,Little Hangleton) - 6.18465843842649*flow(Zonko’s Joke Shop,Weasley’s Wizard Wheezes) - 5.59016994374947*flow(Dervish and Banges,Hogwarts) - 9.01387818865997*flow(Dervish and Banges,Godric’s Hollow) - 6.5*flow(Dervish and Banges,Little Whinging) - 12.5399362039845*flow(Dervish and Banges,Shell Cottage) - 15.8113883008419*flow(Dervish and Banges,The Leaky Cauldron) - 15.8823801742686*flow(Dervish and Banges,Ollivander’s) - 8.5*flow(Dervish and Banges,Zonko’s Joke Shop) - 5.8309518948453*flow(Dervish and Banges,Little Hangleton) - 2.91547594742265*flow(Dervish and Banges,Weasley’s Wizard Wheezes) - 5.5*flow(Little Hangleton,Hogwarts) - 10.9658560997307*flow(Little Hangleton,Godric’s Hollow) - 6.10327780786685*flow(Little Hangleton,Little Whinging) - 11.2361025271221*flow(Little Hangleton,Shell Cottage) - 12*flow(Little Hangleton,The Leaky Cauldron) - 16.6508258053467*flow(Little Hangleton,Ollivander’s) - 13.8293166859393*flow(Little Hangleton,Zonko’s Joke Shop) - 5.8309518948453*flow(Little Hangleton,Dervish and Banges) - 8.74642784226795*flow(Little Hangleton,Weasley’s Wizard Wheezes) - 7.56637297521078*flow(Weasley’s Wizard Wheezes,Hogwarts) - 9.3407708461347*flow(Weasley’s Wizard Wheezes,Godric’s Hollow) - 8.38152730712011*flow(Weasley’s Wizard Wheezes,Little Whinging) - 14.0801278403287*flow(Weasley’s Wizard Wheezes,Shell Cottage) - 18.1245689603919*flow(Weasley’s Wizard Wheezes,The Leaky Cauldron) - 16.2864974749023*flow(Weasley’s Wizard Wheezes,Ollivander’s) - 6.18465843842649*flow(Weasley’s Wizard Wheezes,Zonko’s Joke Shop) - 2.91547594742265*flow(Weasley’s Wizard Wheezes,Dervish and Banges) - 8.74642784226795*flow(Weasley’s Wizard Wheezes,Little Hangleton) + cost =E= 0 ; (LHS = 0)
+     
+
+---- conservation  =E=  Conservation of flow for each node
+
+conservation(Hogwarts)..  - flow(Hogwarts,Godric’s Hollow) - flow(Hogwarts,Little Whinging) - flow(Hogwarts,Shell Cottage) - flow(Hogwarts,The Leaky Cauldron) - flow(Hogwarts,Ollivander’s) - flow(Hogwarts,Zonko’s Joke Shop) - flow(Hogwarts,Dervish and Banges) - flow(Hogwarts,Little Hangleton) - flow(Hogwarts,Weasley’s Wizard Wheezes) + flow(Godric’s Hollow,Hogwarts) + flow(Little Whinging,Hogwarts) + flow(Shell Cottage,Hogwarts) + flow(The Leaky Cauldron,Hogwarts) + flow(Ollivander’s,Hogwarts) + flow(Zonko’s Joke Shop,Hogwarts) + flow(Dervish and Banges,Hogwarts) + flow(Little Hangleton,Hogwarts) + flow(Weasley’s Wizard Wheezes,Hogwarts) =E= 2 ; (LHS = 0, INFES = 2 ****)
+     
+conservation(Godric’s Hollow)..  flow(Hogwarts,Godric’s Hollow) - flow(Godric’s Hollow,Hogwarts) - flow(Godric’s Hollow,Little Whinging) - flow(Godric’s Hollow,Shell Cottage) - flow(Godric’s Hollow,The Leaky Cauldron) - flow(Godric’s Hollow,Ollivander’s) - flow(Godric’s Hollow,Zonko’s Joke Shop) - flow(Godric’s Hollow,Dervish and Banges) - flow(Godric’s Hollow,Little Hangleton) - flow(Godric’s Hollow,Weasley’s Wizard Wheezes) + flow(Little Whinging,Godric’s Hollow) + flow(Shell Cottage,Godric’s Hollow) + flow(The Leaky Cauldron,Godric’s Hollow) + flow(Ollivander’s,Godric’s Hollow) + flow(Zonko’s Joke Shop,Godric’s Hollow) + flow(Dervish and Banges,Godric’s Hollow) + flow(Little Hangleton,Godric’s Hollow) + flow(Weasley’s Wizard Wheezes,Godric’s Hollow) =E= -7 ; (LHS = 0, INFES = 7 ****)
+     
+conservation(Little Whinging)..  flow(Hogwarts,Little Whinging) + flow(Godric’s Hollow,Little Whinging) - flow(Little Whinging,Hogwarts) - flow(Little Whinging,Godric’s Hollow) - flow(Little Whinging,Shell Cottage) - flow(Little Whinging,The Leaky Cauldron) - flow(Little Whinging,Ollivander’s) - flow(Little Whinging,Zonko’s Joke Shop) - flow(Little Whinging,Dervish and Banges) - flow(Little Whinging,Little Hangleton) - flow(Little Whinging,Weasley’s Wizard Wheezes) + flow(Shell Cottage,Little Whinging) + flow(The Leaky Cauldron,Little Whinging) + flow(Ollivander’s,Little Whinging) + flow(Zonko’s Joke Shop,Little Whinging) + flow(Dervish and Banges,Little Whinging) + flow(Little Hangleton,Little Whinging) + flow(Weasley’s Wizard Wheezes,Little Whinging) =E= 4 ; (LHS = 0, INFES = 4 ****)
+     
+conservation(Shell Cottage)..  flow(Hogwarts,Shell Cottage) + flow(Godric’s Hollow,Shell Cottage) + flow(Little Whinging,Shell Cottage) - flow(Shell Cottage,Hogwarts) - flow(Shell Cottage,Godric’s Hollow) - flow(Shell Cottage,Little Whinging) - flow(Shell Cottage,The Leaky Cauldron) - flow(Shell Cottage,Ollivander’s) - flow(Shell Cottage,Zonko’s Joke Shop) - flow(Shell Cottage,Dervish and Banges) - flow(Shell Cottage,Little Hangleton) - flow(Shell Cottage,Weasley’s Wizard Wheezes) + flow(The Leaky Cauldron,Shell Cottage) + flow(Ollivander’s,Shell Cottage) + flow(Zonko’s Joke Shop,Shell Cottage) + flow(Dervish and Banges,Shell Cottage) + flow(Little Hangleton,Shell Cottage) + flow(Weasley’s Wizard Wheezes,Shell Cottage) =E= 3 ; (LHS = 0, INFES = 3 ****)
+     
+conservation(The Leaky Cauldron)..  flow(Hogwarts,The Leaky Cauldron) + flow(Godric’s Hollow,The Leaky Cauldron) + flow(Little Whinging,The Leaky Cauldron) + flow(Shell Cottage,The Leaky Cauldron) - flow(The Leaky Cauldron,Hogwarts) - flow(The Leaky Cauldron,Godric’s Hollow) - flow(The Leaky Cauldron,Little Whinging) - flow(The Leaky Cauldron,Shell Cottage) - flow(The Leaky Cauldron,Ollivander’s) - flow(The Leaky Cauldron,Zonko’s Joke Shop) - flow(The Leaky Cauldron,Dervish and Banges) - flow(The Leaky Cauldron,Little Hangleton) - flow(The Leaky Cauldron,Weasley’s Wizard Wheezes) + flow(Ollivander’s,The Leaky Cauldron) + flow(Zonko’s Joke Shop,The Leaky Cauldron) + flow(Dervish and Banges,The Leaky Cauldron) + flow(Little Hangleton,The Leaky Cauldron) + flow(Weasley’s Wizard Wheezes,The Leaky Cauldron) =E= -3 ; (LHS = 0, INFES = 3 ****)
+     
+conservation(Ollivander’s)..  flow(Hogwarts,Ollivander’s) + flow(Godric’s Hollow,Ollivander’s) + flow(Little Whinging,Ollivander’s) + flow(Shell Cottage,Ollivander’s) + flow(The Leaky Cauldron,Ollivander’s) - flow(Ollivander’s,Hogwarts) - flow(Ollivander’s,Godric’s Hollow) - flow(Ollivander’s,Little Whinging) - flow(Ollivander’s,Shell Cottage) - flow(Ollivander’s,The Leaky Cauldron) - flow(Ollivander’s,Zonko’s Joke Shop) - flow(Ollivander’s,Dervish and Banges) - flow(Ollivander’s,Little Hangleton) - flow(Ollivander’s,Weasley’s Wizard Wheezes) + flow(Zonko’s Joke Shop,Ollivander’s) + flow(Dervish and Banges,Ollivander’s) + flow(Little Hangleton,Ollivander’s) + flow(Weasley’s Wizard Wheezes,Ollivander’s) =E= 5 ; (LHS = 0, INFES = 5 ****)
+     
+conservation(Zonko’s Joke Shop)..  flow(Hogwarts,Zonko’s Joke Shop) + flow(Godric’s Hollow,Zonko’s Joke Shop) + flow(Little Whinging,Zonko’s Joke Shop) + flow(Shell Cottage,Zonko’s Joke Shop) + flow(The Leaky Cauldron,Zonko’s Joke Shop) + flow(Ollivander’s,Zonko’s Joke Shop) - flow(Zonko’s Joke Shop,Hogwarts) - flow(Zonko’s Joke Shop,Godric’s Hollow) - flow(Zonko’s Joke Shop,Little Whinging) - flow(Zonko’s Joke Shop,Shell Cottage) - flow(Zonko’s Joke Shop,The Leaky Cauldron) - flow(Zonko’s Joke Shop,Ollivander’s) - flow(Zonko’s Joke Shop,Dervish and Banges) - flow(Zonko’s Joke Shop,Little Hangleton) - flow(Zonko’s Joke Shop,Weasley’s Wizard Wheezes) + flow(Dervish and Banges,Zonko’s Joke Shop) + flow(Little Hangleton,Zonko’s Joke Shop) + flow(Weasley’s Wizard Wheezes,Zonko’s Joke Shop) =E= 1 ; (LHS = 0, INFES = 1 ****)
+     
+conservation(Dervish and Banges)..  flow(Hogwarts,Dervish and Banges) + flow(Godric’s Hollow,Dervish and Banges) + flow(Little Whinging,Dervish and Banges) + flow(Shell Cottage,Dervish and Banges) + flow(The Leaky Cauldron,Dervish and Banges) + flow(Ollivander’s,Dervish and Banges) + flow(Zonko’s Joke Shop,Dervish and Banges) - flow(Dervish and Banges,Hogwarts) - flow(Dervish and Banges,Godric’s Hollow) - flow(Dervish and Banges,Little Whinging) - flow(Dervish and Banges,Shell Cottage) - flow(Dervish and Banges,The Leaky Cauldron) - flow(Dervish and Banges,Ollivander’s) - flow(Dervish and Banges,Zonko’s Joke Shop) - flow(Dervish and Banges,Little Hangleton) - flow(Dervish and Banges,Weasley’s Wizard Wheezes) + flow(Little Hangleton,Dervish and Banges) + flow(Weasley’s Wizard Wheezes,Dervish and Banges) =E= -4 ; (LHS = 0, INFES = 4 ****)
+     
+conservation(Little Hangleton)..  flow(Hogwarts,Little Hangleton) + flow(Godric’s Hollow,Little Hangleton) + flow(Little Whinging,Little Hangleton) + flow(Shell Cottage,Little Hangleton) + flow(The Leaky Cauldron,Little Hangleton) + flow(Ollivander’s,Little Hangleton) + flow(Zonko’s Joke Shop,Little Hangleton) + flow(Dervish and Banges,Little Hangleton) - flow(Little Hangleton,Hogwarts) - flow(Little Hangleton,Godric’s Hollow) - flow(Little Hangleton,Little Whinging) - flow(Little Hangleton,Shell Cottage) - flow(Little Hangleton,The Leaky Cauldron) - flow(Little Hangleton,Ollivander’s) - flow(Little Hangleton,Zonko’s Joke Shop) - flow(Little Hangleton,Dervish and Banges) - flow(Little Hangleton,Weasley’s Wizard Wheezes) + flow(Weasley’s Wizard Wheezes,Little Hangleton) =E= -6 ; (LHS = 0, INFES = 6 ****)
+     
+conservation(Weasley’s Wizard Wheezes)..  flow(Hogwarts,Weasley’s Wizard Wheezes) + flow(Godric’s Hollow,Weasley’s Wizard Wheezes) + flow(Little Whinging,Weasley’s Wizard Wheezes) + flow(Shell Cottage,Weasley’s Wizard Wheezes) + flow(The Leaky Cauldron,Weasley’s Wizard Wheezes) + flow(Ollivander’s,Weasley’s Wizard Wheezes) + flow(Zonko’s Joke Shop,Weasley’s Wizard Wheezes) + flow(Dervish and Banges,Weasley’s Wizard Wheezes) + flow(Little Hangleton,Weasley’s Wizard Wheezes) - flow(Weasley’s Wizard Wheezes,Hogwarts) - flow(Weasley’s Wizard Wheezes,Godric’s Hollow) - flow(Weasley’s Wizard Wheezes,Little Whinging) - flow(Weasley’s Wizard Wheezes,Shell Cottage) - flow(Weasley’s Wizard Wheezes,The Leaky Cauldron) - flow(Weasley’s Wizard Wheezes,Ollivander’s) - flow(Weasley’s Wizard Wheezes,Zonko’s Joke Shop) - flow(Weasley’s Wizard Wheezes,Dervish and Banges) - flow(Weasley’s Wizard Wheezes,Little Hangleton) =E= 5 ; (LHS = 0, INFES = 5 ****)
+     
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/12/23 23:28:25 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE Transport Using MIP From line 53
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 1.000E+00, 7.000E+00] - Zero values observed as well
+Bound     [min, max] : [        NA,        NA] - Zero values observed as well
+Matrix    [min, max] : [ 1.000E+00, 2.070E+01]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/12/23 23:28:25 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE Transport Using MIP From line 53
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           2     SINGLE EQUATIONS           11
+BLOCKS OF VARIABLES           2     SINGLE VARIABLES           91
+NON ZERO ELEMENTS           271
+
+
+GENERATION TIME      =        0.000 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/12/23 23:28:25 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE Transport Using MIP From line 53
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   Transport           OBJECTIVE  cost
+     TYPE    MIP                 DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  53
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE              117.4146
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT         0    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+
+Reading parameter(s) from "D:\GAMS\CODE\cplex.opt"
+>>  lpmethod 3
+>>  netfind 2
+>>  preind 0
+Finished reading from "D:\GAMS\CODE\cplex.opt"
+
+--- GMO setup time: 0.00s
+--- GMO memory 0.51 Mb (peak 0.51 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.01 Mb)
+--- Starting Cplex
+
+
+--- LP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.02 ticks)
+
+
+Optimal solution found
+Objective:          117.414628
+
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU obj                 .              .              .             1.0000      
+
+  obj  Objective function
+
+---- EQU conservation  Conservation of flow for each node
+
+                                  LOWER          LEVEL          UPPER         MARGINAL
+
+Hogwarts                           2.0000         2.0000         2.0000          .          
+Godric’s Hollow                 -7.0000        -7.0000        -7.0000        -4.4957      
+Little Whinging                    4.0000         4.0000         4.0000         0.6033      
+Shell Cottage                      3.0000         3.0000         3.0000        -2.7583      
+The Leaky Cauldron                -3.0000        -3.0000        -3.0000        -9.2583      
+Ollivander’s                     5.0000         5.0000         5.0000         2.4685      
+Zonko’s Joke Shop                1.0000         1.0000         1.0000         3.7807      
+Dervish and Banges                -4.0000        -4.0000        -4.0000         0.3310      
+Little Hangleton                  -6.0000        -6.0000        -6.0000        -5.5000      
+Weasley’s Wizard Wheezes         5.0000         5.0000         5.0000         3.2464      
+
+---- VAR flow  Flow of brooms from p to q
+
+                                                             LOWER          LEVEL          UPPER         MARGINAL
+
+Hogwarts                  .Godric’s Hollow                   .              .            +INF           18.6379      
+Hogwarts                  .Little Whinging                     .              .            +INF            9.6924      
+Hogwarts                  .Shell Cottage                       .              .            +INF           18.9138      
+Hogwarts                  .The Leaky Cauldron                  .              .            +INF           26.7583      
+Hogwarts                  .Ollivander’s                      .              .            +INF           18.2318      
+Hogwarts                  .Zonko’s Joke Shop                 .              .            +INF            9.9488      
+Hogwarts                  .Dervish and Banges                  .              .            +INF            5.2592      
+Hogwarts                  .Little Hangleton                    .              .            +INF           11.0000      
+Hogwarts                  .Weasley’s Wizard Wheezes          .              .            +INF            4.3199      
+Godric’s Hollow         .Hogwarts                            .              .            +INF            9.6464      
+Godric’s Hollow         .Little Whinging                     .             1.0000        +INF             .          
+Godric’s Hollow         .Shell Cottage                       .              .            +INF            4.6656      
+Godric’s Hollow         .The Leaky Cauldron                  .              .            +INF           17.2625      
+Godric’s Hollow         .Ollivander’s                      .             5.0000        +INF             .          
+Godric’s Hollow         .Zonko’s Joke Shop                 .             1.0000        +INF             .          
+Godric’s Hollow         .Dervish and Banges                  .              .            +INF            4.1872      
+Godric’s Hollow         .Little Hangleton                    .              .            +INF           11.9701      
+Godric’s Hollow         .Weasley’s Wizard Wheezes          .              .            +INF            1.5986      
+Little Whinging           .Hogwarts                            .              .            +INF           10.8989      
+Little Whinging           .Godric’s Hollow                   .              .            +INF           10.1980      
+Little Whinging           .Shell Cottage                       .              .            +INF            9.4443      
+Little Whinging           .The Leaky Cauldron                  .              .            +INF           19.7231      
+Little Whinging           .Ollivander’s                      .              .            +INF            8.7414      
+Little Whinging           .Zonko’s Joke Shop                 .              .            +INF            7.5230      
+Little Whinging           .Dervish and Banges                  .              .            +INF            6.7723      
+Little Whinging           .Little Hangleton                    .              .            +INF           12.2066      
+Little Whinging           .Weasley’s Wizard Wheezes          .              .            +INF            5.7384      
+Shell Cottage             .Hogwarts                            .              .            +INF           13.3972      
+Shell Cottage             .Godric’s Hollow                   .              .            +INF            8.1406      
+Shell Cottage             .Little Whinging                     .              .            +INF            2.7212      
+Shell Cottage             .The Leaky Cauldron                  .              .            +INF           13.0000      
+Shell Cottage             .Ollivander’s                      .              .            +INF            1.4441      
+Shell Cottage             .Zonko’s Joke Shop                 .              .            +INF            8.0384      
+Shell Cottage             .Dervish and Banges                  .              .            +INF            9.4507      
+Shell Cottage             .Little Hangleton                    .              .            +INF           13.9778      
+Shell Cottage             .Weasley’s Wizard Wheezes          .              .            +INF            8.0754      
+The Leaky Cauldron        .Hogwarts                            .              .            +INF            8.2417      
+The Leaky Cauldron        .Godric’s Hollow                   .              .            +INF            7.7375      
+The Leaky Cauldron        .Little Whinging                     .              .            +INF             .          
+The Leaky Cauldron        .Shell Cottage                       .             3.0000        +INF             .          
+The Leaky Cauldron        .Ollivander’s                      .              .            +INF            0.8132      
+The Leaky Cauldron        .Zonko’s Joke Shop                 .              .            +INF            7.1414      
+The Leaky Cauldron        .Dervish and Banges                  .              .            +INF            6.2222      
+The Leaky Cauldron        .Little Hangleton                    .              .            +INF            8.2417      
+The Leaky Cauldron        .Weasley’s Wizard Wheezes          .              .            +INF            5.6199      
+Ollivander’s            .Hogwarts                            .              .            +INF           23.1687      
+Ollivander’s            .Godric’s Hollow                   .              .            +INF           13.9284      
+Ollivander’s            .Little Whinging                     .              .            +INF           12.4718      
+Ollivander’s            .Shell Cottage                       .              .            +INF           11.8975      
+Ollivander’s            .The Leaky Cauldron                  .              .            +INF           24.2667      
+Ollivander’s            .Zonko’s Joke Shop                 .              .            +INF           12.7234      
+Ollivander’s            .Dervish and Banges                  .              .            +INF           18.0199      
+Ollivander’s            .Little Hangleton                    .              .            +INF           24.6193      
+Ollivander’s            .Weasley’s Wizard Wheezes          .              .            +INF           15.5085      
+Zonko’s Joke Shop       .Hogwarts                            .              .            +INF           17.5103      
+Zonko’s Joke Shop       .Godric’s Hollow                   .              .            +INF           16.5529      
+Zonko’s Joke Shop       .Little Whinging                     .              .            +INF           13.8779      
+Zonko’s Joke Shop       .Shell Cottage                       .              .            +INF           21.1164      
+Zonko’s Joke Shop       .The Leaky Cauldron                  .              .            +INF           33.2194      
+Zonko’s Joke Shop       .Ollivander’s                      .              .            +INF           15.3479      
+Zonko’s Joke Shop       .Dervish and Banges                  .              .            +INF           11.9498      
+Zonko’s Joke Shop       .Little Hangleton                    .              .            +INF           23.1100      
+Zonko’s Joke Shop       .Weasley’s Wizard Wheezes          .              .            +INF            6.7190      
+Dervish and Banges        .Hogwarts                            .              .            +INF            5.9211      
+Dervish and Banges        .Godric’s Hollow                   .              .            +INF           13.8406      
+Dervish and Banges        .Little Whinging                     .              .            +INF            6.2277      
+Dervish and Banges        .Shell Cottage                       .              .            +INF           15.6292      
+Dervish and Banges        .The Leaky Cauldron                  .              .            +INF           25.4006      
+Dervish and Banges        .Ollivander’s                      .              .            +INF           13.7449      
+Dervish and Banges        .Zonko’s Joke Shop                 .              .            +INF            5.0502      
+Dervish and Banges        .Little Hangleton                    .              .            +INF           11.6619      
+Dervish and Banges        .Weasley’s Wizard Wheezes          .             4.0000        +INF             .          
+Little Hangleton          .Hogwarts                            .             2.0000        +INF             .          
+Little Hangleton          .Godric’s Hollow                   .              .            +INF            9.9616      
+Little Hangleton          .Little Whinging                     .             3.0000        +INF             .          
+Little Hangleton          .Shell Cottage                       .              .            +INF            8.4944      
+Little Hangleton          .The Leaky Cauldron                  .              .            +INF           15.7583      
+Little Hangleton          .Ollivander’s                      .              .            +INF            8.6824      
+Little Hangleton          .Zonko’s Joke Shop                 .              .            +INF            4.5486      
+Little Hangleton          .Dervish and Banges                  .              .            +INF      8.881784E-16      
+Little Hangleton          .Weasley’s Wizard Wheezes          .             1.0000        +INF             .          
+Weasley’s Wizard Wheezes.Hogwarts                            .              .            +INF           10.8128      
+Weasley’s Wizard Wheezes.Godric’s Hollow                   .              .            +INF           17.0829      
+Weasley’s Wizard Wheezes.Little Whinging                     .              .            +INF           11.0247      
+Weasley’s Wizard Wheezes.Shell Cottage                       .              .            +INF           20.0848      
+Weasley’s Wizard Wheezes.The Leaky Cauldron                  .              .            +INF           30.6293      
+Weasley’s Wizard Wheezes.Ollivander’s                      .              .            +INF           17.0645      
+Weasley’s Wizard Wheezes.Zonko’s Joke Shop                 .              .            +INF            5.6504      
+Weasley’s Wizard Wheezes.Dervish and Banges                  .              .            +INF            5.8310      
+Weasley’s Wizard Wheezes.Little Hangleton                    .              .            +INF           17.4929      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR cost              -INF          117.4146        +INF             .          
+
+  cost  Total cost of transportation
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/12/23 23:28:25 Page 6
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----     68 SET not_from_closest  
+
+Shell Cottage      
+Ollivander’s     
+Zonko’s Joke Shop
+
+
+
+EXECUTION TIME       =        0.047 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+
+
+USER: Introduction to Optimization (CS/ISyE/ECE 524) G230906|0002AS-GEN
+      UW-Madison, CS Dept., Fall 2023, Prof. Ferris              DCE850
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      D:\GAMS\CODE\hw4-2.gms
+Output     D:\GAMS\CODE\hw4-2.lst

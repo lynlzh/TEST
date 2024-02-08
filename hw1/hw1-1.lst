@@ -1,0 +1,139 @@
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/14/23 23:16:34 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   1  option limrow = 0, limcol = 0;
+   2   
+   3  parameter x1val, x2val, x3val, objval;
+   4   
+   5  free variable obj;
+   6   
+   7  positive variable x1, x2, x3;
+   8   
+   9  equation objective,conLes,conGr,conE;
+  10   
+  11  objective..
+  12  obj =e= 3*x1 + 4*x2-20*x3;
+  13   
+  14  conLes..
+  15  x1-4*x2+2*x3 =l= 10;
+  16   
+  17  conGr..
+  18  5*x1-9*x2+3 =l= 0;
+  19   
+  20  conE..
+  21  3*x1+6*x3 =e= 12;
+  22   
+  23  model hw1_1 /all/;
+  24  solve hw1_1 using lp minimizing obj;
+  25   
+  26   
+  27  objval = obj.l; x1val = x1.l; x2val = x2.l; x3val = x3.l;
+  28   
+  29  display "Parameters";
+  30   
+  31  display objval, x1val, x2val, x3val ;
+
+
+COMPILATION TIME     =        0.000 SECONDS      2 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/14/23 23:16:34 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE hw1_1 Using LP From line 24
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 3.000E+00, 1.200E+01] - Zero values observed as well
+Bound     [min, max] : [        NA,        NA] - Zero values observed as well
+Matrix    [min, max] : [ 1.000E+00, 2.000E+01]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/14/23 23:16:34 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE hw1_1 Using LP From line 24
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           4     SINGLE EQUATIONS            4
+BLOCKS OF VARIABLES           4     SINGLE VARIABLES            4
+NON ZERO ELEMENTS            11
+
+
+GENERATION TIME      =        0.000 SECONDS      3 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/14/23 23:16:34 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE hw1_1 Using LP From line 24
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   hw1_1               OBJECTIVE  obj
+     TYPE    LP                  DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  24
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE              -38.6667
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT         0    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.50 Mb (peak 0.50 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.00 Mb)
+--- Starting Cplex
+
+
+--- LP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.00 ticks)
+
+
+Optimal solution found
+Objective:          -38.666667
+
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU objective           .              .              .             1.0000      
+---- EQU conLes            -INF            2.6667        10.0000          .          
+---- EQU conGr             -INF           -3.0000        -3.0000        -0.4444      
+---- EQU conE              12.0000        12.0000        12.0000        -3.3333      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR obj               -INF          -38.6667        +INF             .          
+---- VAR x1                  .              .            +INF           15.2222      
+---- VAR x2                  .             0.3333        +INF             .          
+---- VAR x3                  .             2.0000        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/14/23 23:16:34 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----     29 Parameters
+
+----     31 PARAMETER objval               =      -38.667  
+            PARAMETER x1val                =        0.000  
+            PARAMETER x2val                =        0.333  
+            PARAMETER x3val                =        2.000  
+
+
+EXECUTION TIME       =        0.046 SECONDS      3 MB  44.3.0 8b8fb1cb WEX-WEI
+
+
+USER: Introduction to Optimization (CS/ISyE/ECE 524) G230906|0002AS-GEN
+      UW-Madison, CS Dept., Fall 2023, Prof. Ferris              DCE850
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      D:\GAMS\CODE\hw1-1.gms
+Output     D:\GAMS\CODE\hw1-1.lst

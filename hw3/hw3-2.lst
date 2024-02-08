@@ -1,0 +1,220 @@
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 00:50:42 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   1  option limrow = 0,limcol = 0, solprint = off;
+   2  sets
+   3  *set of month
+   4  m /March, April/
+   5  *set of reservior
+   6  r /A, B/;
+   7   
+   8  parameters
+   9  *Initialize various parameters
+  10  storageCapacity(r) /A 2000, B 1500/
+  11  minLevel(r)        /A 1200, B 800/
+  12  inflow(m, r)       /March.A 200, March.B 40, April.A 130, April.B 15/
+  13  initialLevel(r)    /A 1900, B 850/
+  14  conversion(r)      /A 400, B 200/
+  15  powercapacity(r)   /A 60000, B 35000/
+  16   
+  17  normalRate         /5/
+  18  excessRate         /3.5/
+  19  normalRateLimit    /50000/;
+  20   
+  21  *Define positive variables representing spills, power generated, outflow, normal and excess powerfor each month
+  22  positive variables
+  23  spill(m, r)
+  24  power(m, r)
+  25  outflow(m, r)
+  26  normalPower(m)
+  27  excessPower(m)
+  28  normalProfit(m)
+  29  excessProfit(m);
+  30   
+  31  *Define variable representing the total profit and the water level in each reservoir at the end of each month
+  32  variables
+  33  *total profit of power March and April
+  34  profit
+  35  *water in reservior at the end of month
+  36  reservoirLevel(m, r);
+  37   
+  38  equations
+  39  *reservoir A in April
+  40  levelbalanceA1
+  41   
+  42  *reservoir A in March
+  43  levelbalanceA2
+  44   
+  45  *reservoir B in April
+  46  levelbalanceB1
+  47   
+  48  *reservoir B in March
+  49  levelbalanceB2
+  50   
+  51  *POWER BOUNDARY
+  52  totalpower
+  53   
+  54  *TOTAL PROFIT
+  55  profitcal
+  56   
+  57  *POWER CAPACITY
+  58  powercapacityconstraint
+  59   
+  60  *max Reservoir Constraint
+  61  maxreservoirconstraint
+  62   
+  63  *min Reservoir Constraint
+  64  minreservoirconstraint
+  65   
+  66  *normal power profit
+  67  normalProfitConstraint
+  68   
+  69  *excessive power profit
+  70  excessProfitConstraint(m);
+  71   
+  72  levelbalanceA1(m)$(ord(m) > 1)..
+  73      reservoirLevel(m-1, 'A') + inflow(m, 'A') - spill(m, 'A')- outflow(m, 'A') - power(m, 'A') / conversion('A') =g= minLevel('A');
+  74   
+  75  levelbalanceA2('March')..
+  76      initialLevel('A') + inflow('March', 'A') - spill('March', 'A')
+  77      - outflow('March', 'A') - power('March', 'A') / conversion('A') =g= minLevel('A');
+  78   
+  79  levelbalanceB1(m)$(ord(m) > 1)..
+  80      reservoirLevel(m-1, 'B') + inflow(m, 'B') + outflow(m, 'A')
+  81      - spill(m, 'B') - power(m, 'B') / conversion('B') =g= minLevel('B');
+  82   
+  83  levelbalanceB2('March')..
+  84      initialLevel('B') + inflow('March', 'B') + outflow('March', 'A')
+  85      - spill('March', 'B') - power('March', 'B') / conversion('B') =g= minLevel('B');
+  86   
+  87  *Calculate total power
+  88  totalpower(m)..
+  89      sum(r, power(m, r)) =e= normalPower(m) + excessPower(m);
+  90   
+  91  *Power Plant Capacity Constraint
+  92  powercapacityconstraint(m, r)..
+  93      power(m, r) =l= powercapacity(r);
+  94   
+  95  maxreservoirconstraint(m, r)..
+  96      reservoirLevel(m, r) =l= storageCapacity(r);
+  97   
+  98  minreservoirconstraint(m, r)..
+  99      reservoirLevel(m, r) =g= minLevel(r);
+ 100   
+ 101  *Calculate normal power pofit
+ 102  normalProfitConstraint(m)..
+ 103      normalProfit(m) =l= normalRate * min(normalRateLimit, normalPower(m));
+ 104   
+ 105  *Calculate excess power pofit
+ 106  excessProfitConstraint(m)..
+ 107      excessProfit(m) =l= excessRate * max(0, normalPower(m) - normalRateLimit);
+ 108   
+ 109  *total profit
+ 110  profitcal..
+ 111      profit =e= sum(m, normalProfit(m) + excessProfit(m))
+ 112   
+ 113  model powerprofit /all/;
+ 114  solve powerprofit using dnlp maximizing profit;
+ 115   
+ 116  display profit.l;
+
+
+COMPILATION TIME     =        0.000 SECONDS      3 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 00:50:42 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE powerprofit Using DNLP From line 114
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 9.000E+01, 6.000E+04] - Zero values observed as well
+Bound     [min, max] : [        NA,        NA] - Zero values observed as well
+Matrix    [min, max] : [ 2.500E-03, 5.000E+00] - Zero values observed as well
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 00:50:42 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE powerprofit Using DNLP From line 114
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS          11     SINGLE EQUATIONS           23
+BLOCKS OF VARIABLES           9     SINGLE VARIABLES           23
+NON ZERO ELEMENTS            47     NON LINEAR N-Z              4
+CODE LENGTH                  31     CONSTANT POOL              19
+
+
+GENERATION TIME      =        0.000 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 00:50:42 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE powerprofit Using DNLP From line 114
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   powerprofit         OBJECTIVE  profit
+     TYPE    DNLP                DIRECTION  MAXIMIZE
+     SOLVER  CONOPT              FROM LINE  114
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      2 Locally Optimal
+**** OBJECTIVE VALUE           815000.0000
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT         5    2147483647
+ EVALUATION ERRORS              0             0
+ 
+ 
+    C O N O P T 3   version 3.17N
+    Copyright (C)   ARKI Consulting and Development A/S
+                    Bagsvaerdvej 246 A
+                    DK-2880 Bagsvaerd, Denmark
+ 
+ 
+    The model has 23 variables and 23 constraints
+    with 47 Jacobian elements, 4 of which are nonlinear.
+    The Hessian of the Lagrangian has 2 elements on the diagonal,
+    0 elements below the diagonal, and 2 nonlinear variables.
+ 
+ ** Warning **  The value of LFITER is out of range.
+                LFITER is decreased from 2147483647 to 1000000000.
+ 
+                   Pre-triangular equations:   0
+                   Post-triangular equations:  1
+ 
+ 
+ ** Optimal solution. There are no superbasic variables.
+ 
+ 
+ CONOPT time Total                            0.001 seconds
+   of which: Function evaluations             0.000 =  0.0%
+             1st Derivative evaluations       0.000 =  0.0%
+ 
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+                             0     ERRORS
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 00:50:42 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----    116 VARIABLE profit.L              =   815000.000  
+
+
+EXECUTION TIME       =        0.047 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+
+
+USER: Introduction to Optimization (CS/ISyE/ECE 524) G230906|0002AS-GEN
+      UW-Madison, CS Dept., Fall 2023, Prof. Ferris              DCE850
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      D:\uw madison\524\hw3\hw3-2.gms
+Output     D:\uw madison\524\hw3\hw3-2.lst

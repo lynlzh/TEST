@@ -1,0 +1,532 @@
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/20/23 02:46:42 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   1  option limrow = 100, limcol=0;
+   2   
+   3  sets people /p1*p7/, months /Feb, Mar, Apr, May, Jun, Jul, Aug, Sept/,
+   4      nodes(people,months);
+   5   
+   6  parameter workers(months) /Feb 3, Mar 4, Apr 6, May 7, Jun 4, Jul 6, Aug 2, Sept 3/;
+   7   
+   8  alias(people, m, n, g);
+   9   
+  10  nodes(m,months) = Yes$(workers(months)/ord(m) < 1.25);
+  11   
+  12  nodes(m, 'Feb') = No;
+  13  nodes('p3', 'Feb') = Yes;
+  14   
+  15  nodes(m, 'Sept') = No;
+  16  nodes('p3', 'Sept') = Yes;
+  17   
+  18  parameter b(people,months);
+  19   
+  20  b('p3', 'Feb')= 1;
+  21   
+  22  b('p3', 'Sept')= -1;
+  23   
+  24  set arcs(people, months, people, months);
+  25   
+  26  arcs(m,months, n, months+1)= Yes$(((ord(n)-ord(m)) le [1/3]*ord(m)) and abs(ord(n)- ord(m)) le 3);
+  27   
+  28  parameter move(people, months, people, months), sh(people, months, people, months);
+  29   
+  30  sh(m, months, n, months+1)$(arcs(m, months, n, months+1)) = abs(ord(n)-workers(months+1)) * 200;
+  31   
+  32  move(m, months, n, months+1)$(arcs(m, months, n, months+1)) = n.ord - m.ord;
+  33   
+  34  move(m, months, n, months+1)$(move(m, months, n, months+1) < 0) = move(m, months, n, months+1)*160;
+  35   
+  36  move(m, months, n, months+1)$(move(m, months, n, months+1) > 0) = move(m, months, n, months+1)*100;
+  37   
+  38  move(m, months, n, months+1) = abs(move(m, months, n, months+1));
+  39   
+  40  move(m, months, n, months+1) = move(m, months, n, months+1) + sh(m, months, n, months+1);
+  41   
+  42  positive variable flow(people, months, people, months);
+  43   
+  44  variable totime;
+  45   
+  46  equations
+  47    obj,
+  48    balance(people, months);
+  49   
+  50  obj..
+  51    totime =e= sum(arcs, move(arcs) * flow(arcs));
+  52   
+  53  balance(m, months)..
+  54    b(m, months) =e= sum(nodes(n, months+1)$(arcs(m, months, n, months+1)), flow(m, months, n, months+1))- sum(nodes(n, months-1)$arcs(n, months-1, m, months), flow(n, months-1, m, months));
+  55   
+  56  model short /all/;
+  57   
+  63   
+  64  solve short using lp minimizing totime;
+  65   
+  66  option flow:0:0:1;
+  67   
+  68  display flow.l;
+  69   
+  70  display workers;
+  71   
+  72   
+
+
+COMPILATION TIME     =        0.000 SECONDS      3 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/20/23 02:46:42 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE short Using LP From line 64
+
+
+---- obj  =E=  
+
+obj..  - 600*flow(p1,Feb,p1,Mar) - 1000*flow(p1,Mar,p1,Apr) - 1200*flow(p1,Apr,p1,May) - 600*flow(p1,May,p1,Jun) - 1000*flow(p1,Jun,p1,Jul) - 200*flow(p1,Jul,p1,Aug) - 400*flow(p1,Aug,p1,Sept) - 760*flow(p2,Feb,p1,Mar) - 400*flow(p2,Feb,p2,Mar) - 1160*flow(p2,Mar,p1,Apr) - 800*flow(p2,Mar,p2,Apr) - 1360*flow(p2,Apr,p1,May) - 1000*flow(p2,Apr,p2,May) - 760*flow(p2,May,p1,Jun) - 400*flow(p2,May,p2,Jun) - 1160*flow(p2,Jun,p1,Jul) - 800*flow(p2,Jun,p2,Jul) - 360*flow(p2,Jul,p1,Aug) - 560*flow(p2,Aug,p1,Sept) - 200*flow(p2,Aug,p2,Sept) - 920*flow(p3,Feb,p1,Mar) - 560*flow(p3,Feb,p2,Mar) - 200*flow(p3,Feb,p3,Mar) - 100*flow(p3,Feb,p4,Mar) - 1320*flow(p3,Mar,p1,Apr) - 960*flow(p3,Mar,p2,Apr) - 600*flow(p3,Mar,p3,Apr) - 500*flow(p3,Mar,p4,Apr) - 1520*flow(p3,Apr,p1,May) - 1160*flow(p3,Apr,p2,May) - 800*flow(p3,Apr,p3,May) - 700*flow(p3,Apr,p4,May) - 920*flow(p3,May,p1,Jun) - 560*flow(p3,May,p2,Jun) - 200*flow(p3,May,p3,Jun) - 100*flow(p3,May,p4,Jun) - 1320*flow(p3,Jun,p1,Jul) - 960*flow(p3,Jun,p2,Jul) - 600*flow(p3,Jun,p3,Jul) - 500*flow(p3,Jun,p4,Jul) - 520*flow(p3,Jul,p1,Aug) - 160*flow(p3,Jul,p2,Aug) - 200*flow(p3,Jul,p3,Aug) - 500*flow(p3,Jul,p4,Aug) - 720*flow(p3,Aug,p1,Sept) - 360*flow(p3,Aug,p2,Sept) - 300*flow(p3,Aug,p4,Sept) - 1080*flow(p4,Feb,p1,Mar) - 720*flow(p4,Feb,p2,Mar) - 360*flow(p4,Feb,p3,Mar) - 300*flow(p4,Feb,p5,Mar) - 1480*flow(p4,Mar,p1,Apr) - 1120*flow(p4,Mar,p2,Apr) - 760*flow(p4,Mar,p3,Apr) - 400*flow(p4,Mar,p4,Apr) - 300*flow(p4,Mar,p5,Apr) - 1680*flow(p4,Apr,p1,May) - 1320*flow(p4,Apr,p2,May) - 960*flow(p4,Apr,p3,May) - 600*flow(p4,Apr,p4,May) - 500*flow(p4,Apr,p5,May) - 1080*flow(p4,May,p1,Jun) - 720*flow(p4,May,p2,Jun) - 360*flow(p4,May,p3,Jun) - 300*flow(p4,May,p5,Jun) - 1480*flow(p4,Jun,p1,Jul) - 1120*flow(p4,Jun,p2,Jul) - 760*flow(p4,Jun,p3,Jul) - 400*flow(p4,Jun,p4,Jul) - 300*flow(p4,Jun,p5,Jul) - 680*flow(p4,Jul,p1,Aug) - 320*flow(p4,Jul,p2,Aug) - 360*flow(p4,Jul,p3,Aug) - 400*flow(p4,Jul,p4,Aug) - 700*flow(p4,Jul,p5,Aug) - 880*flow(p4,Aug,p1,Sept) - 520*flow(p4,Aug,p2,Sept) - 160*flow(p4,Aug,p3,Sept) - 200*flow(p4,Aug,p4,Sept) - 500*flow(p4,Aug,p5,Sept) - 880*flow(p5,Feb,p2,Mar) - 520*flow(p5,Feb,p3,Mar) - 160*flow(p5,Feb,p4,Mar) - 200*flow(p5,Feb,p5,Mar) - 500*flow(p5,Feb,p6,Mar) - 1280*flow(p5,Mar,p2,Apr) - 920*flow(p5,Mar,p3,Apr) - 560*flow(p5,Mar,p4,Apr) - 200*flow(p5,Mar,p5,Apr) - 100*flow(p5,Mar,p6,Apr) - 1480*flow(p5,Apr,p2,May) - 1120*flow(p5,Apr,p3,May) - 760*flow(p5,Apr,p4,May) - 400*flow(p5,Apr,p5,May) - 300*flow(p5,Apr,p6,May) - 880*flow(p5,May,p2,Jun) - 520*flow(p5,May,p3,Jun) - 160*flow(p5,May,p4,Jun) - 200*flow(p5,May,p5,Jun) - 500*flow(p5,May,p6,Jun) - 1280*flow(p5,Jun,p2,Jul) - 920*flow(p5,Jun,p3,Jul) - 560*flow(p5,Jun,p4,Jul) - 200*flow(p5,Jun,p5,Jul) - 100*flow(p5,Jun,p6,Jul) - 480*flow(p5,Jul,p2,Aug) - 520*flow(p5,Jul,p3,Aug) - 560*flow(p5,Jul,p4,Aug) - 600*flow(p5,Jul,p5,Aug) - 900*flow(p5,Jul,p6,Aug) - 680*flow(p5,Aug,p2,Sept) - 320*flow(p5,Aug,p3,Sept) - 360*flow(p5,Aug,p4,Sept) - 400*flow(p5,Aug,p5,Sept) - 700*flow(p5,Aug,p6,Sept) - 680*flow(p6,Feb,p3,Mar) - 320*flow(p6,Feb,p4,Mar) - 360*flow(p6,Feb,p5,Mar) - 400*flow(p6,Feb,p6,Mar) - 700*flow(p6,Feb,p7,Mar) - 1080*flow(p6,Mar,p3,Apr) - 720*flow(p6,Mar,p4,Apr) - 360*flow(p6,Mar,p5,Apr) - 300*flow(p6,Mar,p7,Apr) - 1280*flow(p6,Apr,p3,May) - 920*flow(p6,Apr,p4,May) - 560*flow(p6,Apr,p5,May) - 200*flow(p6,Apr,p6,May) - 100*flow(p6,Apr,p7,May) - 680*flow(p6,May,p3,Jun) - 320*flow(p6,May,p4,Jun) - 360*flow(p6,May,p5,Jun) - 400*flow(p6,May,p6,Jun) - 700*flow(p6,May,p7,Jun) - 1080*flow(p6,Jun,p3,Jul) - 720*flow(p6,Jun,p4,Jul) - 360*flow(p6,Jun,p5,Jul) - 300*flow(p6,Jun,p7,Jul) - 680*flow(p6,Jul,p3,Aug) - 720*flow(p6,Jul,p4,Aug) - 760*flow(p6,Jul,p5,Aug) - 800*flow(p6,Jul,p6,Aug) - 1100*flow(p6,Jul,p7,Aug) - 480*flow(p6,Aug,p3,Sept) - 520*flow(p6,Aug,p4,Sept) - 560*flow(p6,Aug,p5,Sept) - 600*flow(p6,Aug,p6,Sept) - 900*flow(p6,Aug,p7,Sept) - 480*flow(p7,Feb,p4,Mar) - 520*flow(p7,Feb,p5,Mar) - 560*flow(p7,Feb,p6,Mar) - 600*flow(p7,Feb,p7,Mar) - 880*flow(p7,Mar,p4,Apr) - 520*flow(p7,Mar,p5,Apr) - 160*flow(p7,Mar,p6,Apr) - 200*flow(p7,Mar,p7,Apr) - 1080*flow(p7,Apr,p4,May) - 720*flow(p7,Apr,p5,May) - 360*flow(p7,Apr,p6,May) - 480*flow(p7,May,p4,Jun) - 520*flow(p7,May,p5,Jun) - 560*flow(p7,May,p6,Jun) - 600*flow(p7,May,p7,Jun) - 880*flow(p7,Jun,p4,Jul) - 520*flow(p7,Jun,p5,Jul) - 160*flow(p7,Jun,p6,Jul) - 200*flow(p7,Jun,p7,Jul) - 880*flow(p7,Jul,p4,Aug) - 920*flow(p7,Jul,p5,Aug) - 960*flow(p7,Jul,p6,Aug) - 1000*flow(p7,Jul,p7,Aug) - 680*flow(p7,Aug,p4,Sept) - 720*flow(p7,Aug,p5,Sept) - 760*flow(p7,Aug,p6,Sept) - 800*flow(p7,Aug,p7,Sept) + totime =E= 0 ; (LHS = 0)
+     
+
+---- balance  =E=  
+
+balance(p1,Mar)..  flow(p3,Feb,p1,Mar) =E= 0 ; (LHS = 0)
+     
+balance(p1,Apr)..  flow(p4,Mar,p1,Apr) =E= 0 ; (LHS = 0)
+     
+balance(p1,Jul)..  flow(p4,Jun,p1,Jul) =E= 0 ; (LHS = 0)
+     
+balance(p1,Sept)..  flow(p2,Aug,p1,Sept) + flow(p3,Aug,p1,Sept) + flow(p4,Aug,p1,Sept) =E= 0 ; (LHS = 0)
+     
+balance(p2,Mar)..  flow(p3,Feb,p2,Mar) =E= 0 ; (LHS = 0)
+     
+balance(p2,Apr)..  flow(p4,Mar,p2,Apr) + flow(p5,Mar,p2,Apr) =E= 0 ; (LHS = 0)
+     
+balance(p2,May)..  flow(p5,Apr,p2,May) =E= 0 ; (LHS = 0)
+     
+balance(p2,Jul)..  - flow(p2,Jul,p2,Aug) + flow(p4,Jun,p2,Jul) + flow(p5,Jun,p2,Jul) =E= 0 ; (LHS = 0)
+     
+balance(p2,Aug)..  flow(p5,Jul,p2,Aug) =E= 0 ; (LHS = 0)
+     
+balance(p2,Sept)..  flow(p2,Aug,p2,Sept) + flow(p3,Aug,p2,Sept) + flow(p4,Aug,p2,Sept) + flow(p5,Aug,p2,Sept) =E= 0 ; (LHS = 0)
+     
+balance(p3,Feb)..  - flow(p3,Feb,p4,Mar) =E= -1 ; (LHS = 0, INFES = 1 ****)
+     
+balance(p3,Mar)..  flow(p3,Feb,p3,Mar) =E= 0 ; (LHS = 0)
+     
+balance(p3,Apr)..  flow(p4,Mar,p3,Apr) + flow(p5,Mar,p3,Apr) + flow(p6,Mar,p3,Apr) =E= 0 ; (LHS = 0)
+     
+balance(p3,May)..  - flow(p3,May,p4,Jun) + flow(p5,Apr,p3,May) + flow(p6,Apr,p3,May) =E= 0 ; (LHS = 0)
+     
+balance(p3,Jun)..  flow(p6,May,p3,Jun) =E= 0 ; (LHS = 0)
+     
+balance(p3,Jul)..  - flow(p3,Jul,p2,Aug) - flow(p3,Jul,p3,Aug) - flow(p3,Jul,p4,Aug) + flow(p4,Jun,p3,Jul) + flow(p5,Jun,p3,Jul) + flow(p6,Jun,p3,Jul) =E= 0 ; (LHS = 0)
+     
+balance(p3,Aug)..  - flow(p3,Aug,p3,Sept) + flow(p5,Jul,p3,Aug) + flow(p6,Jul,p3,Aug) =E= 0 ; (LHS = 0)
+     
+balance(p3,Sept)..  flow(p3,Aug,p3,Sept) + flow(p4,Aug,p3,Sept) + flow(p5,Aug,p3,Sept) + flow(p6,Aug,p3,Sept) =E= 1 ; (LHS = 0, INFES = 1 ****)
+     
+balance(p4,Feb)..  - flow(p4,Feb,p4,Mar) - flow(p4,Feb,p5,Mar) =E= 0 ; (LHS = 0)
+     
+balance(p4,Mar)..  flow(p3,Feb,p4,Mar) - flow(p4,Mar,p5,Apr) =E= 0 ; (LHS = 0)
+     
+balance(p4,Apr)..  flow(p4,Mar,p4,Apr) + flow(p5,Mar,p4,Apr) + flow(p6,Mar,p4,Apr) + flow(p7,Mar,p4,Apr) =E= 0 ; (LHS = 0)
+     
+balance(p4,May)..  - flow(p4,May,p4,Jun) - flow(p4,May,p5,Jun) + flow(p5,Apr,p4,May) + flow(p6,Apr,p4,May) + flow(p7,Apr,p4,May) =E= 0 ; (LHS = 0)
+     
+balance(p4,Jun)..  - flow(p4,Jun,p5,Jul) + flow(p6,May,p4,Jun) + flow(p7,May,p4,Jun) =E= 0 ; (LHS = 0)
+     
+balance(p4,Jul)..  flow(p4,Jun,p4,Jul) - flow(p4,Jul,p2,Aug) - flow(p4,Jul,p3,Aug) - flow(p4,Jul,p4,Aug) - flow(p4,Jul,p5,Aug) + flow(p5,Jun,p4,Jul) + flow(p6,Jun,p4,Jul) + flow(p7,Jun,p4,Jul) =E= 0 ; (LHS = 0)
+     
+balance(p4,Aug)..  - flow(p4,Aug,p3,Sept) + flow(p5,Jul,p4,Aug) + flow(p6,Jul,p4,Aug) + flow(p7,Jul,p4,Aug) =E= 0 ; (LHS = 0)
+     
+balance(p4,Sept)..  flow(p3,Aug,p4,Sept) + flow(p4,Aug,p4,Sept) + flow(p5,Aug,p4,Sept) + flow(p6,Aug,p4,Sept) + flow(p7,Aug,p4,Sept) =E= 0 ; (LHS = 0)
+     
+balance(p5,Feb)..  - flow(p5,Feb,p4,Mar) - flow(p5,Feb,p5,Mar) - flow(p5,Feb,p6,Mar) =E= 0 ; (LHS = 0)
+     
+balance(p5,Mar)..  - flow(p5,Mar,p5,Apr) - flow(p5,Mar,p6,Apr) =E= 0 ; (LHS = 0)
+     
+balance(p5,Apr)..  flow(p4,Mar,p5,Apr) + flow(p5,Mar,p5,Apr) - flow(p5,Apr,p6,May) + flow(p6,Mar,p5,Apr) + flow(p7,Mar,p5,Apr) =E= 0 ; (LHS = 0)
+     
+balance(p5,May)..  flow(p5,Apr,p5,May) - flow(p5,May,p4,Jun) - flow(p5,May,p5,Jun) - flow(p5,May,p6,Jun) + flow(p6,Apr,p5,May) + flow(p7,Apr,p5,May) =E= 0 ; (LHS = 0)
+     
+balance(p5,Jun)..  - flow(p5,Jun,p5,Jul) - flow(p5,Jun,p6,Jul) + flow(p6,May,p5,Jun) + flow(p7,May,p5,Jun) =E= 0 ; (LHS = 0)
+     
+balance(p5,Jul)..  flow(p4,Jun,p5,Jul) + flow(p5,Jun,p5,Jul) - flow(p5,Jul,p2,Aug) - flow(p5,Jul,p3,Aug) - flow(p5,Jul,p4,Aug) - flow(p5,Jul,p5,Aug) - flow(p5,Jul,p6,Aug) + flow(p6,Jun,p5,Jul) + flow(p7,Jun,p5,Jul) =E= 0 ; (LHS = 0)
+     
+balance(p5,Aug)..  flow(p5,Jul,p5,Aug) - flow(p5,Aug,p3,Sept) + flow(p6,Jul,p5,Aug) + flow(p7,Jul,p5,Aug) =E= 0 ; (LHS = 0)
+     
+balance(p5,Sept)..  flow(p4,Aug,p5,Sept) + flow(p5,Aug,p5,Sept) + flow(p6,Aug,p5,Sept) + flow(p7,Aug,p5,Sept) =E= 0 ; (LHS = 0)
+     
+balance(p6,Feb)..  - flow(p6,Feb,p4,Mar) - flow(p6,Feb,p5,Mar) - flow(p6,Feb,p6,Mar) - flow(p6,Feb,p7,Mar) =E= 0 ; (LHS = 0)
+     
+balance(p6,Mar)..  - flow(p6,Mar,p5,Apr) - flow(p6,Mar,p6,Apr) - flow(p6,Mar,p7,Apr) =E= 0 ; (LHS = 0)
+     
+balance(p6,Apr)..  flow(p5,Mar,p6,Apr) + flow(p6,Mar,p6,Apr) - flow(p6,Apr,p6,May) - flow(p6,Apr,p7,May) + flow(p7,Mar,p6,Apr) =E= 0 ; (LHS = 0)
+     
+balance(p6,May)..  flow(p5,Apr,p6,May) + flow(p6,Apr,p6,May) - flow(p6,May,p4,Jun) - flow(p6,May,p5,Jun) - flow(p6,May,p6,Jun) - flow(p6,May,p7,Jun) + flow(p7,Apr,p6,May) =E= 0 ; (LHS = 0)
+     
+balance(p6,Jun)..  flow(p6,May,p6,Jun) - flow(p6,Jun,p5,Jul) - flow(p6,Jun,p6,Jul) - flow(p6,Jun,p7,Jul) + flow(p7,May,p6,Jun) =E= 0 ; (LHS = 0)
+     
+balance(p6,Jul)..  flow(p5,Jun,p6,Jul) + flow(p6,Jun,p6,Jul) - flow(p6,Jul,p3,Aug) - flow(p6,Jul,p4,Aug) - flow(p6,Jul,p5,Aug) - flow(p6,Jul,p6,Aug) - flow(p6,Jul,p7,Aug) + flow(p7,Jun,p6,Jul) =E= 0 ; (LHS = 0)
+     
+balance(p6,Aug)..  flow(p5,Jul,p6,Aug) + flow(p6,Jul,p6,Aug) - flow(p6,Aug,p3,Sept) + flow(p7,Jul,p6,Aug) =E= 0 ; (LHS = 0)
+     
+balance(p6,Sept)..  flow(p5,Aug,p6,Sept) + flow(p6,Aug,p6,Sept) + flow(p7,Aug,p6,Sept) =E= 0 ; (LHS = 0)
+     
+balance(p7,Feb)..  - flow(p7,Feb,p4,Mar) - flow(p7,Feb,p5,Mar) - flow(p7,Feb,p6,Mar) - flow(p7,Feb,p7,Mar) =E= 0 ; (LHS = 0)
+     
+balance(p7,Mar)..  - flow(p7,Mar,p5,Apr) - flow(p7,Mar,p6,Apr) - flow(p7,Mar,p7,Apr) =E= 0 ; (LHS = 0)
+     
+balance(p7,Apr)..  flow(p6,Mar,p7,Apr) + flow(p7,Mar,p7,Apr) - flow(p7,Apr,p6,May) - flow(p7,Apr,p7,May) =E= 0 ; (LHS = 0)
+     
+balance(p7,May)..  flow(p6,Apr,p7,May) + flow(p7,Apr,p7,May) - flow(p7,May,p4,Jun) - flow(p7,May,p5,Jun) - flow(p7,May,p6,Jun) - flow(p7,May,p7,Jun) =E= 0 ; (LHS = 0)
+     
+balance(p7,Jun)..  flow(p6,May,p7,Jun) + flow(p7,May,p7,Jun) - flow(p7,Jun,p5,Jul) - flow(p7,Jun,p6,Jul) - flow(p7,Jun,p7,Jul) =E= 0 ; (LHS = 0)
+     
+balance(p7,Jul)..  flow(p6,Jun,p7,Jul) + flow(p7,Jun,p7,Jul) - flow(p7,Jul,p4,Aug) - flow(p7,Jul,p5,Aug) - flow(p7,Jul,p6,Aug) - flow(p7,Jul,p7,Aug) =E= 0 ; (LHS = 0)
+     
+balance(p7,Aug)..  flow(p6,Jul,p7,Aug) + flow(p7,Jul,p7,Aug) =E= 0 ; (LHS = 0)
+     
+balance(p7,Sept)..  flow(p6,Aug,p7,Sept) + flow(p7,Aug,p7,Sept) =E= 0 ; (LHS = 0)
+     
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/20/23 02:46:42 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE short Using LP From line 64
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 1.000E+00, 1.000E+00] - Zero values observed as well
+Bound     [min, max] : [        NA,        NA] - Zero values observed as well
+Matrix    [min, max] : [ 1.000E+00, 1.680E+03]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/20/23 02:46:42 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE short Using LP From line 64
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           2     SINGLE EQUATIONS           51
+BLOCKS OF VARIABLES           2     SINGLE VARIABLES          183
+NON ZERO ELEMENTS           357
+
+
+GENERATION TIME      =        0.000 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/20/23 02:46:42 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE short Using LP From line 64
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   short               OBJECTIVE  totime
+     TYPE    LP                  DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  64
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE             1780.0000
+
+ RESOURCE USAGE, LIMIT          0.016 10000000000.000
+ ITERATION COUNT, LIMIT         4    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.53 Mb (peak 0.53 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.02 Mb)
+--- Starting Cplex
+
+
+--- LP status (1): optimal.
+--- Cplex Time: 0.02sec (det. 0.10 ticks)
+
+
+Optimal solution found
+Objective:         1780.000000
+
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU obj                 .              .              .             1.0000      
+
+---- EQU balance  
+
+               LOWER          LEVEL          UPPER         MARGINAL
+
+p1.Mar           .              .              .              .          
+p1.Apr           .              .              .              .          
+p1.Jul           .              .              .              .          
+p1.Sept          .              .              .              .          
+p2.Mar           .              .              .              .          
+p2.Apr           .              .              .              .          
+p2.May           .              .              .              .          
+p2.Jul           .              .              .             EPS         
+p2.Aug           .              .              .           -40.0000      
+p2.Sept          .              .              .              .          
+p3.Feb         -1.0000        -1.0000        -1.0000     -1780.0000      
+p3.Mar           .              .              .              .          
+p3.Apr           .              .              .              .          
+p3.May           .              .              .          -100.0000      
+p3.Jun           .              .              .              .          
+p3.Jul           .              .              .          -160.0000      
+p3.Aug           .              .              .             EPS         
+p3.Sept         1.0000         1.0000         1.0000          .          
+p4.Feb           .              .              .              .          
+p4.Mar           .              .              .         -1680.0000      
+p4.Apr           .              .              .              .          
+p4.May           .              .              .             EPS         
+p4.Jun           .              .              .          -760.0000      
+p4.Jul           .              .              .          -320.0000      
+p4.Aug           .              .              .          -160.0000      
+p4.Sept          .              .              .              .          
+p5.Feb           .              .              .              .          
+p5.Mar           .              .              .              .          
+p5.Apr           .              .              .         -1380.0000      
+p5.May           .              .              .          -160.0000      
+p5.Jun           .              .              .          -720.0000      
+p5.Jul           .              .              .          -520.0000      
+p5.Aug           .              .              .          -320.0000      
+p5.Sept          .              .              .              .          
+p6.Feb           .              .              .              .          
+p6.Mar           .              .              .              .          
+p6.Apr           .              .              .              .          
+p6.May           .              .              .         -1080.0000      
+p6.Jun           .              .              .          -680.0000      
+p6.Jul           .              .              .          -680.0000      
+p6.Aug           .              .              .          -480.0000      
+p6.Sept          .              .              .              .          
+p7.Feb           .              .              .              .          
+p7.Mar           .              .              .              .          
+p7.Apr           .              .              .              .          
+p7.May           .              .              .              .          
+p7.Jun           .              .              .          -380.0000      
+p7.Jul           .              .              .          -380.0000      
+p7.Aug           .              .              .              .          
+p7.Sept          .              .              .              .          
+
+---- VAR flow  
+
+                      LOWER          LEVEL          UPPER         MARGINAL
+
+p1.Feb.p1.Mar           .              .            +INF          600.0000      
+p1.Mar.p1.Apr           .              .            +INF         1000.0000      
+p1.Apr.p1.May           .              .            +INF         1200.0000      
+p1.May.p1.Jun           .              .            +INF          600.0000      
+p1.Jun.p1.Jul           .              .            +INF         1000.0000      
+p1.Jul.p1.Aug           .              .            +INF          200.0000      
+p1.Aug.p1.Sept          .              .            +INF          400.0000      
+p2.Feb.p1.Mar           .              .            +INF          760.0000      
+p2.Feb.p2.Mar           .              .            +INF          400.0000      
+p2.Mar.p1.Apr           .              .            +INF         1160.0000      
+p2.Mar.p2.Apr           .              .            +INF          800.0000      
+p2.Apr.p1.May           .              .            +INF         1360.0000      
+p2.Apr.p2.May           .              .            +INF         1000.0000      
+p2.May.p1.Jun           .              .            +INF          760.0000      
+p2.May.p2.Jun           .              .            +INF          400.0000      
+p2.Jun.p1.Jul           .              .            +INF         1160.0000      
+p2.Jun.p2.Jul           .              .            +INF          800.0000      
+p2.Jul.p1.Aug           .              .            +INF          360.0000      
+p2.Jul.p2.Aug           .              .            +INF             .          
+p2.Aug.p1.Sept          .              .            +INF          560.0000      
+p2.Aug.p2.Sept          .              .            +INF          200.0000      
+p3.Feb.p1.Mar           .              .            +INF          920.0000      
+p3.Feb.p2.Mar           .              .            +INF          560.0000      
+p3.Feb.p3.Mar           .              .            +INF          200.0000      
+p3.Feb.p4.Mar           .             1.0000        +INF             .          
+p3.Mar.p1.Apr           .              .            +INF         1320.0000      
+p3.Mar.p2.Apr           .              .            +INF          960.0000      
+p3.Mar.p3.Apr           .              .            +INF          600.0000      
+p3.Mar.p4.Apr           .              .            +INF          500.0000      
+p3.Apr.p1.May           .              .            +INF         1520.0000      
+p3.Apr.p2.May           .              .            +INF         1160.0000      
+p3.Apr.p3.May           .              .            +INF          800.0000      
+p3.Apr.p4.May           .              .            +INF          700.0000      
+p3.May.p1.Jun           .              .            +INF          920.0000      
+p3.May.p2.Jun           .              .            +INF          560.0000      
+p3.May.p3.Jun           .              .            +INF          200.0000      
+p3.May.p4.Jun           .              .            +INF             .          
+p3.Jun.p1.Jul           .              .            +INF         1320.0000      
+p3.Jun.p2.Jul           .              .            +INF          960.0000      
+p3.Jun.p3.Jul           .              .            +INF          600.0000      
+p3.Jun.p4.Jul           .              .            +INF          500.0000      
+p3.Jul.p1.Aug           .              .            +INF          520.0000      
+p3.Jul.p2.Aug           .              .            +INF             .          
+p3.Jul.p3.Aug           .              .            +INF           40.0000      
+p3.Jul.p4.Aug           .              .            +INF          340.0000      
+p3.Aug.p1.Sept          .              .            +INF          720.0000      
+p3.Aug.p2.Sept          .              .            +INF          360.0000      
+p3.Aug.p3.Sept          .             1.0000        +INF             .          
+p3.Aug.p4.Sept          .              .            +INF          300.0000      
+p4.Feb.p1.Mar           .              .            +INF         1080.0000      
+p4.Feb.p2.Mar           .              .            +INF          720.0000      
+p4.Feb.p3.Mar           .              .            +INF          360.0000      
+p4.Feb.p4.Mar           .              .            +INF            EPS         
+p4.Feb.p5.Mar           .              .            +INF          300.0000      
+p4.Mar.p1.Apr           .              .            +INF         1480.0000      
+p4.Mar.p2.Apr           .              .            +INF         1120.0000      
+p4.Mar.p3.Apr           .              .            +INF          760.0000      
+p4.Mar.p4.Apr           .              .            +INF          400.0000      
+p4.Mar.p5.Apr           .             1.0000        +INF             .          
+p4.Apr.p1.May           .              .            +INF         1680.0000      
+p4.Apr.p2.May           .              .            +INF         1320.0000      
+p4.Apr.p3.May           .              .            +INF          960.0000      
+p4.Apr.p4.May           .              .            +INF          600.0000      
+p4.Apr.p5.May           .              .            +INF          500.0000      
+p4.May.p1.Jun           .              .            +INF         1080.0000      
+p4.May.p2.Jun           .              .            +INF          720.0000      
+p4.May.p3.Jun           .              .            +INF          360.0000      
+p4.May.p4.Jun           .              .            +INF             .          
+p4.May.p5.Jun           .              .            +INF          300.0000      
+p4.Jun.p1.Jul           .              .            +INF         1480.0000      
+p4.Jun.p2.Jul           .              .            +INF         1120.0000      
+p4.Jun.p3.Jul           .              .            +INF          920.0000      
+p4.Jun.p4.Jul           .              .            +INF          720.0000      
+p4.Jun.p5.Jul           .              .            +INF           60.0000      
+p4.Jul.p1.Aug           .              .            +INF          680.0000      
+p4.Jul.p2.Aug           .              .            +INF             .          
+p4.Jul.p3.Aug           .              .            +INF           40.0000      
+p4.Jul.p4.Aug           .              .            +INF           80.0000      
+p4.Jul.p5.Aug           .              .            +INF          380.0000      
+p4.Aug.p1.Sept          .              .            +INF          880.0000      
+p4.Aug.p2.Sept          .              .            +INF          520.0000      
+p4.Aug.p3.Sept          .              .            +INF             .          
+p4.Aug.p4.Sept          .              .            +INF          200.0000      
+p4.Aug.p5.Sept          .              .            +INF          500.0000      
+p5.Feb.p2.Mar           .              .            +INF          880.0000      
+p5.Feb.p3.Mar           .              .            +INF          520.0000      
+p5.Feb.p4.Mar           .              .            +INF          160.0000      
+p5.Feb.p5.Mar           .              .            +INF          200.0000      
+p5.Feb.p6.Mar           .              .            +INF          500.0000      
+p5.Mar.p2.Apr           .              .            +INF         1280.0000      
+p5.Mar.p3.Apr           .              .            +INF          920.0000      
+p5.Mar.p4.Apr           .              .            +INF          560.0000      
+p5.Mar.p5.Apr           .              .            +INF         1580.0000      
+p5.Mar.p6.Apr           .              .            +INF          100.0000      
+p5.Apr.p2.May           .              .            +INF         1480.0000      
+p5.Apr.p3.May           .              .            +INF         1220.0000      
+p5.Apr.p4.May           .              .            +INF          760.0000      
+p5.Apr.p5.May           .              .            +INF          560.0000      
+p5.Apr.p6.May           .             1.0000        +INF             .          
+p5.May.p2.Jun           .              .            +INF          880.0000      
+p5.May.p3.Jun           .              .            +INF          520.0000      
+p5.May.p4.Jun           .              .            +INF             .          
+p5.May.p5.Jun           .              .            +INF           40.0000      
+p5.May.p6.Jun           .              .            +INF          340.0000      
+p5.Jun.p2.Jul           .              .            +INF         1280.0000      
+p5.Jun.p3.Jul           .              .            +INF         1080.0000      
+p5.Jun.p4.Jul           .              .            +INF          880.0000      
+p5.Jun.p5.Jul           .             1.0000        +INF             .          
+p5.Jun.p6.Jul           .              .            +INF           60.0000      
+p5.Jul.p2.Aug           .              .            +INF             .          
+p5.Jul.p3.Aug           .             1.0000        +INF             .          
+p5.Jul.p4.Aug           .              .            +INF          200.0000      
+p5.Jul.p5.Aug           .              .            +INF          400.0000      
+p5.Jul.p6.Aug           .              .            +INF          860.0000      
+p5.Aug.p2.Sept          .              .            +INF          680.0000      
+p5.Aug.p3.Sept          .              .            +INF             .          
+p5.Aug.p4.Sept          .              .            +INF          360.0000      
+p5.Aug.p5.Sept          .              .            +INF          400.0000      
+p5.Aug.p6.Sept          .              .            +INF          700.0000      
+p6.Feb.p3.Mar           .              .            +INF          680.0000      
+p6.Feb.p4.Mar           .              .            +INF          320.0000      
+p6.Feb.p5.Mar           .              .            +INF          360.0000      
+p6.Feb.p6.Mar           .              .            +INF          400.0000      
+p6.Feb.p7.Mar           .              .            +INF          700.0000      
+p6.Mar.p3.Apr           .              .            +INF         1080.0000      
+p6.Mar.p4.Apr           .              .            +INF          720.0000      
+p6.Mar.p5.Apr           .              .            +INF         1740.0000      
+p6.Mar.p6.Apr           .              .            +INF            EPS         
+p6.Mar.p7.Apr           .              .            +INF          300.0000      
+p6.Apr.p3.May           .              .            +INF         1380.0000      
+p6.Apr.p4.May           .              .            +INF          920.0000      
+p6.Apr.p5.May           .              .            +INF          720.0000      
+p6.Apr.p6.May           .              .            +INF         1280.0000      
+p6.Apr.p7.May           .              .            +INF          100.0000      
+p6.May.p3.Jun           .              .            +INF          680.0000      
+p6.May.p4.Jun           .              .            +INF             .          
+p6.May.p5.Jun           .             1.0000        +INF             .          
+p6.May.p6.Jun           .              .            +INF             .          
+p6.May.p7.Jun           .              .            +INF             .          
+p6.Jun.p3.Jul           .              .            +INF         1240.0000      
+p6.Jun.p4.Jul           .              .            +INF         1040.0000      
+p6.Jun.p5.Jul           .              .            +INF          200.0000      
+p6.Jun.p6.Jul           .              .            +INF             .          
+p6.Jun.p7.Jul           .              .            +INF             .          
+p6.Jul.p3.Aug           .              .            +INF            EPS         
+p6.Jul.p4.Aug           .              .            +INF          200.0000      
+p6.Jul.p5.Aug           .              .            +INF          400.0000      
+p6.Jul.p6.Aug           .              .            +INF          600.0000      
+p6.Jul.p7.Aug           .              .            +INF          420.0000      
+p6.Aug.p3.Sept          .              .            +INF             .          
+p6.Aug.p4.Sept          .              .            +INF          520.0000      
+p6.Aug.p5.Sept          .              .            +INF          560.0000      
+p6.Aug.p6.Sept          .              .            +INF          600.0000      
+p6.Aug.p7.Sept          .              .            +INF          900.0000      
+p7.Feb.p4.Mar           .              .            +INF          480.0000      
+p7.Feb.p5.Mar           .              .            +INF          520.0000      
+p7.Feb.p6.Mar           .              .            +INF          560.0000      
+p7.Feb.p7.Mar           .              .            +INF          600.0000      
+p7.Mar.p4.Apr           .              .            +INF          880.0000      
+p7.Mar.p5.Apr           .              .            +INF         1900.0000      
+p7.Mar.p6.Apr           .              .            +INF          160.0000      
+p7.Mar.p7.Apr           .              .            +INF          200.0000      
+p7.Apr.p4.May           .              .            +INF         1080.0000      
+p7.Apr.p5.May           .              .            +INF          880.0000      
+p7.Apr.p6.May           .              .            +INF         1440.0000      
+p7.Apr.p7.May           .              .            +INF            EPS         
+p7.May.p4.Jun           .              .            +INF         1240.0000      
+p7.May.p5.Jun           .              .            +INF         1240.0000      
+p7.May.p6.Jun           .              .            +INF         1240.0000      
+p7.May.p7.Jun           .              .            +INF          980.0000      
+p7.Jun.p4.Jul           .              .            +INF         1200.0000      
+p7.Jun.p5.Jul           .              .            +INF          660.0000      
+p7.Jun.p6.Jul           .              .            +INF          460.0000      
+p7.Jun.p7.Jul           .              .            +INF          200.0000      
+p7.Jul.p4.Aug           .              .            +INF          660.0000      
+p7.Jul.p5.Aug           .              .            +INF          860.0000      
+p7.Jul.p6.Aug           .              .            +INF         1060.0000      
+p7.Jul.p7.Aug           .              .            +INF          620.0000      
+p7.Aug.p4.Sept          .              .            +INF          680.0000      
+p7.Aug.p5.Sept          .              .            +INF          720.0000      
+p7.Aug.p6.Sept          .              .            +INF          760.0000      
+p7.Aug.p7.Sept          .              .            +INF          800.0000      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR totime            -INF         1780.0000        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/20/23 02:46:42 Page 6
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----     68 VARIABLE flow.L  
+
+p3.Feb.p4.Mar  1
+p3.Aug.p3.Sept 1
+p4.Mar.p5.Apr  1
+p5.Apr.p6.May  1
+p5.Jun.p5.Jul  1
+p5.Jul.p3.Aug  1
+p6.May.p5.Jun  1
+
+
+----     70 PARAMETER workers  
+
+Feb  3.000,    Mar  4.000,    Apr  6.000,    May  7.000,    Jun  4.000,    Jul  6.000,    Aug  2.000,    Sept 3.000
+
+
+
+EXECUTION TIME       =        0.047 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+
+
+USER: Introduction to Optimization (CS/ISyE/ECE 524) G230906|0002AS-GEN
+      UW-Madison, CS Dept., Fall 2023, Prof. Ferris              DCE850
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      D:\GAMS\CODE\hw5-2.gms
+Output     D:\GAMS\CODE\hw5-2.lst

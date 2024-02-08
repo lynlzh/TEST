@@ -1,0 +1,1170 @@
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 08:57:03 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   3  set t times /0*50/;
+   4  set i /x, y, dx, dy/; alias (i, j);
+   5  set ct(t) control times /0*49/;
+   6  parameter A(i,j) /x.x 1, x.y -0.1, y.x -0.5, y.y 0.5, dx.dx 0.1,
+   7  dx.dy -1.1, dy.dx 0.5, dy.y -0.5/,
+   8  b(i) /x 1, y 1, dx 1, dy 1/,
+   9  xdes(i) /x -5, y 2, dx 0, dy 0 /
+  10  s(i) /x 0, y 0, dx 0, dy 0/;
+  11   
+  12  variables
+  13      obj
+  14      x(t,i)
+  15      u(t)
+  16      z(t);
+  17   
+  18  equations
+  19  objective
+  20  dynamic(t,i)
+  21  state1(i)
+  22  state0(i)
+  23  constraint1(t)
+  24  constraint2(t)
+  25  constraint3(t)
+  26  constraint4(t);
+  27   
+  28  dynamic(t, i)$(ct(t))..
+  29  x(t+1, i)=e=sum(j, A(i,j)*x(t,j)) + b(i)*u(t);
+  30   
+  31  objective..
+  32  obj=g=sum(t$(ct(t)), z(t));
+  33   
+  34  state1(i)..
+  35  x('50', i)=e=xdes(i);
+  36   
+  37  state0(i)..
+  38  x('0',i)=e=s(i);
+  39   
+  40  constraint1(t)..
+  41  u(t)=l=z(t);
+  42   
+  43  constraint2(t)..
+  44  2*u(t)-1=l=z(t);
+  45   
+  46  constraint3(t)..
+  47  -u(t)=l=z(t);
+  48   
+  49  constraint4(t)..
+  50  -2*u(t)-1=l=z(t);
+  51   
+  52  model fuel /all/;
+  53  solve fuel using lp minimizing obj;
+  54  display obj.l,x.l, u.l,z.l;
+
+
+COMPILATION TIME     =        0.000 SECONDS      3 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 08:57:03 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE fuel Using LP From line 53
+
+
+---- objective  =G=  
+
+objective..  obj - z(0) - z(1) - z(2) - z(3) - z(4) - z(5) - z(6) - z(7) - z(8) - z(9) - z(10) - z(11) - z(12) - z(13) - z(14) - z(15) - z(16) - z(17) - z(18) - z(19) - z(20) - z(21) - z(22) - z(23) - z(24) - z(25) - z(26) - z(27) - z(28) - z(29) - z(30) - z(31) - z(32) - z(33) - z(34) - z(35) - z(36) - z(37) - z(38) - z(39) - z(40) - z(41) - z(42) - z(43) - z(44) - z(45) - z(46) - z(47) - z(48) - z(49) =G= 0 ; (LHS = 0)
+     
+
+---- dynamic  =E=  
+
+dynamic(0,x)..  - x(0,x) + 0.1*x(0,y) + x(1,x) - u(0) =E= 0 ; (LHS = 0)
+     
+dynamic(0,y)..  0.5*x(0,x) - 0.5*x(0,y) + x(1,y) - u(0) =E= 0 ; (LHS = 0)
+     
+dynamic(0,dx)..  - 0.1*x(0,dx) + 1.1*x(0,dy) + x(1,dx) - u(0) =E= 0 ; (LHS = 0)
+     
+REMAINING 197 ENTRIES SKIPPED
+
+
+---- state1  =E=  
+
+state1(x)..  x(50,x) =E= -5 ; (LHS = 0, INFES = 5 ****)
+     
+state1(y)..  x(50,y) =E= 2 ; (LHS = 0, INFES = 2 ****)
+     
+state1(dx)..  x(50,dx) =E= 0 ; (LHS = 0)
+     
+REMAINING ENTRY SKIPPED
+
+
+---- state0  =E=  
+
+state0(x)..  x(0,x) =E= 0 ; (LHS = 0)
+     
+state0(y)..  x(0,y) =E= 0 ; (LHS = 0)
+     
+state0(dx)..  x(0,dx) =E= 0 ; (LHS = 0)
+     
+REMAINING ENTRY SKIPPED
+
+
+---- constraint1  =L=  
+
+constraint1(0)..  u(0) - z(0) =L= 0 ; (LHS = 0)
+     
+constraint1(1)..  u(1) - z(1) =L= 0 ; (LHS = 0)
+     
+constraint1(2)..  u(2) - z(2) =L= 0 ; (LHS = 0)
+     
+REMAINING 48 ENTRIES SKIPPED
+
+
+---- constraint2  =L=  
+
+constraint2(0)..  2*u(0) - z(0) =L= 1 ; (LHS = 0)
+     
+constraint2(1)..  2*u(1) - z(1) =L= 1 ; (LHS = 0)
+     
+constraint2(2)..  2*u(2) - z(2) =L= 1 ; (LHS = 0)
+     
+REMAINING 48 ENTRIES SKIPPED
+
+
+---- constraint3  =L=  
+
+constraint3(0)..  - u(0) - z(0) =L= 0 ; (LHS = 0)
+     
+constraint3(1)..  - u(1) - z(1) =L= 0 ; (LHS = 0)
+     
+constraint3(2)..  - u(2) - z(2) =L= 0 ; (LHS = 0)
+     
+REMAINING 48 ENTRIES SKIPPED
+
+
+---- constraint4  =L=  
+
+constraint4(0)..  - 2*u(0) - z(0) =L= 1 ; (LHS = 0)
+     
+constraint4(1)..  - 2*u(1) - z(1) =L= 1 ; (LHS = 0)
+     
+constraint4(2)..  - 2*u(2) - z(2) =L= 1 ; (LHS = 0)
+     
+REMAINING 48 ENTRIES SKIPPED
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 08:57:03 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE fuel Using LP From line 53
+
+
+---- obj  
+
+obj
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+        1       objective
+
+
+---- x  
+
+x(0,x)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+       -1       dynamic(0,x)
+        0.5     dynamic(0,y)
+        1       state0(x)
+
+x(0,y)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+        0.1     dynamic(0,x)
+       -0.5     dynamic(0,y)
+        0.5     dynamic(0,dy)
+        1       state0(y)
+
+x(0,dx)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+       -0.1     dynamic(0,dx)
+       -0.5     dynamic(0,dy)
+        1       state0(dx)
+
+REMAINING 201 ENTRIES SKIPPED
+
+---- u  
+
+u(0)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+       -1       dynamic(0,x)
+       -1       dynamic(0,y)
+       -1       dynamic(0,dx)
+       -1       dynamic(0,dy)
+        1       constraint1(0)
+        2       constraint2(0)
+       -1       constraint3(0)
+       -2       constraint4(0)
+
+u(1)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+       -1       dynamic(1,x)
+       -1       dynamic(1,y)
+       -1       dynamic(1,dx)
+       -1       dynamic(1,dy)
+        1       constraint1(1)
+        2       constraint2(1)
+       -1       constraint3(1)
+       -2       constraint4(1)
+
+u(2)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+       -1       dynamic(2,x)
+       -1       dynamic(2,y)
+       -1       dynamic(2,dx)
+       -1       dynamic(2,dy)
+        1       constraint1(2)
+        2       constraint2(2)
+       -1       constraint3(2)
+       -2       constraint4(2)
+
+REMAINING 48 ENTRIES SKIPPED
+
+---- z  
+
+z(0)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+       -1       objective
+       -1       constraint1(0)
+       -1       constraint2(0)
+       -1       constraint3(0)
+       -1       constraint4(0)
+
+z(1)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+       -1       objective
+       -1       constraint1(1)
+       -1       constraint2(1)
+       -1       constraint3(1)
+       -1       constraint4(1)
+
+z(2)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+       -1       objective
+       -1       constraint1(2)
+       -1       constraint2(2)
+       -1       constraint3(2)
+       -1       constraint4(2)
+
+REMAINING 48 ENTRIES SKIPPED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 08:57:03 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE fuel Using LP From line 53
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 1.000E+00, 5.000E+00] - Zero values observed as well
+Bound     [min, max] : [        NA,        NA]
+Matrix    [min, max] : [ 1.000E-01, 2.000E+00]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 08:57:03 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE fuel Using LP From line 53
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           8     SINGLE EQUATIONS          413
+BLOCKS OF VARIABLES           4     SINGLE VARIABLES          307
+NON ZERO ELEMENTS         1,267
+
+
+GENERATION TIME      =        0.016 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 08:57:03 Page 6
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE fuel Using LP From line 53
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   fuel                OBJECTIVE  obj
+     TYPE    LP                  DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  53
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE                4.9777
+
+ RESOURCE USAGE, LIMIT          0.015 10000000000.000
+ ITERATION COUNT, LIMIT       118    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- Space for names approximately 0.01 Mb
+--- Use option 'names no' to turn use of names off
+--- GMO memory 0.58 Mb (peak 0.58 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.01 Mb (peak 0.04 Mb)
+--- Starting Cplex
+
+
+--- LP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 2.13 ticks)
+
+
+Optimal solution found
+Objective:            4.977729
+
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU objective           .              .            +INF            1.0000      
+
+---- EQU dynamic  
+
+             LOWER          LEVEL          UPPER         MARGINAL
+
+0 .x           .              .              .             1.2060      
+0 .y           .              .              .            -0.2060      
+0 .dx          .              .              .       5.3930049E-7      
+0 .dy          .              .              .       6.5748788E-7      
+1 .x           .              .              .             1.1111      
+1 .y           .              .              .            -0.1898      
+1 .dx          .              .              .       -5.977163E-7      
+1 .dy          .              .              .       1.1981442E-6      
+2 .x           .              .              .             1.0237      
+2 .y           .              .              .            -0.1749      
+2 .dx          .              .              .       -1.089222E-6      
+2 .dy          .              .              .       -9.775881E-7      
+3 .x           .              .              .             0.9431      
+3 .y           .              .              .            -0.1611      
+3 .dx          .              .              .       8.8871646E-7      
+3 .dy          .              .              .       -2.356187E-6      
+4 .x           .              .              .             0.8689      
+4 .y           .              .              .            -0.1484      
+4 .dx          .              .              .       2.1419885E-6      
+4 .dy          .              .              .       1.3490352E-6      
+5 .x           .              .              .             0.8005      
+5 .y           .              .              .            -0.1367      
+5 .dx          .              .              .       -1.226396E-6      
+5 .dy          .              .              .       4.5292561E-6      
+6 .x           .              .              .             0.7375      
+6 .y           .              .              .            -0.1260      
+6 .dx          .              .              .       -4.117506E-6      
+6 .dy          .              .              .       -1.629290E-6      
+7 .x           .              .              .             0.6795      
+7 .y           .              .              .            -0.1161      
+7 .dx          .              .              .       1.4811729E-6      
+7 .dy          .              .              .       -8.531246E-6      
+8 .x           .              .              .             0.6260      
+8 .y           .              .              .            -0.1069      
+8 .dx          .              .              .       7.7556779E-6      
+8 .dy          .              .              .       1.4112103E-6      
+9 .x           .              .              .             0.5768      
+9 .y           .              .              .            -0.0985      
+9 .dx          .              .              .       -1.282918E-6      
+9 .dy          .              .              .       1.5767940E-5      
+10.x           .              .              .             0.5314      
+10.y           .              .              .            -0.0908      
+10.dx          .              .              .       -1.433449E-5      
+10.dy          .              .              .       3.0106128E-7      
+11.x           .              .              .             0.4896      
+11.y           .              .              .            -0.0836      
+11.dx          .              .              .       -2.736921E-7      
+11.dy          .              .              .       -2.861424E-5      
+12.x           .              .              .             0.4510      
+12.y           .              .              .            -0.0771      
+12.dx          .              .              .       2.6012948E-5      
+12.dy          .              .              .       -5.749974E-6      
+13.x           .              .              .             0.4156      
+13.y           .              .              .            -0.0710      
+13.dx          .              .              .       5.2272488E-6      
+13.dy          .              .              .             0.0001      
+14.x           .              .              .             0.3829      
+14.y           .              .              .            -0.0654      
+14.dx          .              .              .       -4.634586E-5      
+14.dy          .              .              .       1.9723670E-5      
+15.x           .              .              .             0.3527      
+15.y           .              .              .            -0.0603      
+15.dx          .              .              .       -1.793061E-5      
+15.dy          .              .              .            -0.0001      
+16.x           .              .              .             0.3249      
+16.y           .              .              .            -0.0556      
+16.dx          .              .              .             0.0001      
+16.dy          .              .              .            -0.0001      
+17.x           .              .              .             0.2994      
+17.y           .              .              .            -0.0511      
+17.dx          .              .              .       4.7329305E-5      
+17.dy          .              .              .             0.0002      
+18.x           .              .              .             0.2759      
+18.y           .              .              .            -0.0470      
+18.dx          .              .              .            -0.0001      
+18.dy          .              .              .             0.0001      
+19.x           .              .              .             0.2542      
+19.y           .              .              .            -0.0434      
+19.dx          .              .              .            -0.0001      
+19.dy          .              .              .            -0.0003      
+20.x           .              .              .             0.2341      
+20.y           .              .              .            -0.0402      
+20.dx          .              .              .             0.0002      
+20.dy          .              .              .            -0.0003      
+21.x           .              .              .             0.2156      
+21.y           .              .              .            -0.0369      
+21.dx          .              .              .             0.0002      
+21.dy          .              .              .             0.0004      
+22.x           .              .              .             0.1988      
+22.y           .              .              .            -0.0335      
+22.dx          .              .              .            -0.0004      
+22.dy          .              .              .             0.0006      
+23.x           .              .              .             0.1833      
+23.y           .              .              .            -0.0311      
+23.dx          .              .              .            -0.0005      
+23.dy          .              .              .            -0.0007      
+24.x           .              .              .             0.1685      
+24.y           .              .              .            -0.0295      
+24.dx          .              .              .             0.0006      
+24.dy          .              .              .            -0.0011      
+25.x           .              .              .             0.1550      
+25.y           .              .              .            -0.0271      
+25.dx          .              .              .             0.0010      
+25.dy          .              .              .             0.0010      
+26.x           .              .              .             0.1434      
+26.y           .              .              .            -0.0233      
+26.dx          .              .              .            -0.0009      
+26.dy          .              .              .             0.0023      
+27.x           .              .              .             0.1327      
+27.y           .              .              .            -0.0213      
+27.dx          .              .              .            -0.0021      
+27.dy          .              .              .            -0.0014      
+28.x           .              .              .             0.1213      
+28.y           .              .              .            -0.0227      
+28.dx          .              .              .             0.0012      
+28.dy          .              .              .            -0.0044      
+29.x           .              .              .             0.1105      
+29.y           .              .              .            -0.0217      
+29.dx          .              .              .             0.0040      
+29.dy          .              .              .             0.0017      
+30.x           .              .              .             0.1033      
+30.y           .              .              .            -0.0145      
+30.dx          .              .              .            -0.0015      
+30.dy          .              .              .             0.0082      
+31.x           .              .              .             0.0977      
+31.y           .              .              .            -0.0110      
+31.dx          .              .              .            -0.0075      
+31.dy          .              .              .            -0.0016      
+32.x           .              .              .             0.0879      
+32.y           .              .              .            -0.0197      
+32.dx          .              .              .             0.0014      
+32.dy          .              .              .            -0.0152      
+33.x           .              .              .             0.0758      
+33.y           .              .              .            -0.0241      
+33.dx          .              .              .             0.0139      
+33.dy          .              .              .             0.0001      
+34.x           .              .              .             0.0729      
+34.y           .              .              .            -0.0060      
+34.dx          .              .              .            -0.0001      
+34.dy          .              .              .             0.0277      
+35.x           .              .              .             0.0770      
+35.y           .              .              .             0.0084      
+35.dx          .              .              .            -0.0252      
+35.dy          .              .              .             0.0049      
+36.x           .              .              .             0.0674      
+36.y           .              .              .            -0.0194      
+36.dx          .              .              .            -0.0044      
+36.dy          .              .              .            -0.0495      
+37.x           .              .              .             0.0434      
+37.y           .              .              .            -0.0479      
+37.dx          .              .              .             0.0450      
+37.dy          .              .              .            -0.0178      
+38.x           .              .              .             0.0433      
+38.y           .              .              .            -0.0003      
+38.dx          .              .              .             0.0162      
+38.dy          .              .              .             0.0868      
+39.x           .              .              .             0.0745      
+39.y           .              .              .             0.0626      
+39.dx          .              .              .            -0.0789      
+39.dy          .              .              .             0.0482      
+40.x           .              .              .             0.0695      
+40.y           .              .              .            -0.0101      
+40.dx          .              .              .            -0.0439      
+40.dy          .              .              .            -0.1491      
+41.x           .              .              .             0.0022      
+41.y           .              .              .            -0.1345      
+41.dx          .              .              .             0.1355      
+41.dy          .              .              .            -0.1148      
+42.x           .              .              .            -0.0080      
+42.y           .              .              .            -0.0204      
+42.dx          .              .              .             0.1044      
+42.dy          .              .              .             0.2502      
+43.x           .              .              .             0.1097      
+43.y           .              .              .             0.2353      
+43.dx          .              .              .            -0.2275      
+43.dy          .              .              .             0.2542      
+44.x           .              .              .             0.1563      
+44.y           .              .              .             0.0932      
+44.dx          .              .              .            -0.2311      
+44.dy          .              .              .            -0.4087      
+45.x           .              .              .            -0.0209      
+45.y           .              .              .            -0.3544      
+45.dx          .              .              .             0.3716      
+45.dy          .              .              .            -0.5366      
+46.x           .              .              .            -0.0584      
+46.y           .              .              .            -0.0749      
+46.dx          .              .              .             0.4878      
+46.dy          .              .              .             0.6456      
+47.x           .              .              .             0.4590      
+47.y           .              .              .             1.0349      
+47.dx          .              .              .            -0.5869      
+47.dy          .              .              .             1.0930      
+48.x           .              .              .             1.1182      
+48.y           .              .              .             1.3184      
+48.dx          .              .              .            -0.9936      
+48.dy          .              .              .            -0.9750      
+49.x           .              .              .             1.5048      
+49.y           .              .              .             0.7732      
+49.dx          .              .              .             0.8864      
+49.dy          .              .              .            -2.1645      
+
+---- EQU state1  
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+x         -5.0000        -5.0000        -5.0000        -1.5048      
+y          2.0000         2.0000         2.0000        -0.7732      
+dx          .              .              .            -0.8864      
+dy          .              .              .             2.1645      
+
+---- EQU state0  
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+x           .              .              .             1.3090      
+y           .              .              .            -0.2236      
+dx          .              .              .       3.8267399E-7      
+dy          .              .              .       -5.932305E-7      
+
+---- EQU constraint1  
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -INF           -0.0938          .              .          
+1         -INF             .              .            -0.0393      
+2         -INF             .              .            -0.0756      
+3         -INF             .              .            -0.1090      
+4         -INF             .              .            -0.1398      
+5         -INF             .              .            -0.1681      
+6         -INF             .              .            -0.1942      
+7         -INF             .              .            -0.2183      
+8         -INF             .              .            -0.2405      
+9         -INF             .              .            -0.2609      
+10        -INF             .              .            -0.2797      
+11        -INF             .              .            -0.2970      
+12        -INF             .              .            -0.3130      
+13        -INF             .              .            -0.3277      
+14        -INF             .              .            -0.3413      
+15        -INF             .              .            -0.3538      
+16        -INF             .              .            -0.3653      
+17        -INF             .              .            -0.3758      
+18        -INF             .              .            -0.3856      
+19        -INF             .              .            -0.3948      
+20        -INF             .              .            -0.4031      
+21        -INF             .              .            -0.4103      
+22        -INF             .              .            -0.4173      
+23        -INF             .              .            -0.4244      
+24        -INF             .              .            -0.4308      
+25        -INF             .              .            -0.4350      
+26        -INF             .              .            -0.4393      
+27        -INF             .              .            -0.4460      
+28        -INF             .              .            -0.4523      
+29        -INF             .              .            -0.4528      
+30        -INF             .              .            -0.4523      
+31        -INF             .              .            -0.4612      
+32        -INF             .              .            -0.4728      
+33        -INF             .              .            -0.4672      
+34        -INF             .              .            -0.4527      
+35        -INF             .              .            -0.4675      
+36        -INF             .              .            -0.5030      
+37        -INF             .              .            -0.4886      
+38        -INF             .              .            -0.4270      
+39        -INF             .              .            -0.4468      
+40        -INF             .              .            -0.5668      
+41        -INF             .              .            -0.5558      
+42        -INF             .              .            -0.3369      
+43        -INF             .              .            -0.3141      
+44        -INF             .              .            -0.6952      
+45        -INF             .              .            -0.7702      
+46        -INF           -0.0710          .              .          
+47        -INF           -6.6690          .              .          
+48        -INF             .              .            -0.2660      
+49        -INF           -1.5653          .              .          
+50        -INF             .              .              .          
+
+---- EQU constraint2  
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -INF           -0.1407         1.0000          .          
+1         -INF             .             1.0000          .          
+2         -INF             .             1.0000          .          
+3         -INF             .             1.0000          .          
+4         -INF             .             1.0000          .          
+5         -INF             .             1.0000          .          
+6         -INF             .             1.0000          .          
+7         -INF             .             1.0000          .          
+8         -INF             .             1.0000          .          
+9         -INF             .             1.0000          .          
+10        -INF             .             1.0000          .          
+11        -INF             .             1.0000          .          
+12        -INF             .             1.0000          .          
+13        -INF             .             1.0000          .          
+14        -INF             .             1.0000          .          
+15        -INF             .             1.0000          .          
+16        -INF             .             1.0000          .          
+17        -INF             .             1.0000          .          
+18        -INF             .             1.0000          .          
+19        -INF             .             1.0000          .          
+20        -INF             .             1.0000          .          
+21        -INF             .             1.0000          .          
+22        -INF             .             1.0000          .          
+23        -INF             .             1.0000          .          
+24        -INF             .             1.0000          .          
+25        -INF             .             1.0000          .          
+26        -INF             .             1.0000          .          
+27        -INF             .             1.0000          .          
+28        -INF             .             1.0000          .          
+29        -INF             .             1.0000          .          
+30        -INF             .             1.0000          .          
+31        -INF             .             1.0000          .          
+32        -INF             .             1.0000          .          
+33        -INF             .             1.0000          .          
+34        -INF             .             1.0000          .          
+35        -INF             .             1.0000          .          
+36        -INF             .             1.0000          .          
+37        -INF             .             1.0000          .          
+38        -INF             .             1.0000          .          
+39        -INF             .             1.0000          .          
+40        -INF             .             1.0000          .          
+41        -INF             .             1.0000          .          
+42        -INF             .             1.0000          .          
+43        -INF             .             1.0000          .          
+44        -INF             .             1.0000          .          
+45        -INF             .             1.0000          .          
+46        -INF           -0.1065         1.0000          .          
+47        -INF           -9.2253         1.0000          .          
+48        -INF             .             1.0000          .          
+49        -INF           -2.3480         1.0000          .          
+50        -INF             .             1.0000          .          
+
+---- EQU constraint3  
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -INF             .              .            -1.0000      
+1         -INF             .              .            -0.9607      
+2         -INF             .              .            -0.9244      
+3         -INF             .              .            -0.8910      
+4         -INF             .              .            -0.8602      
+5         -INF             .              .            -0.8319      
+6         -INF             .              .            -0.8058      
+7         -INF             .              .            -0.7817      
+8         -INF             .              .            -0.7595      
+9         -INF             .              .            -0.7391      
+10        -INF             .              .            -0.7203      
+11        -INF             .              .            -0.7030      
+12        -INF             .              .            -0.6870      
+13        -INF             .              .            -0.6723      
+14        -INF             .              .            -0.6587      
+15        -INF             .              .            -0.6462      
+16        -INF             .              .            -0.6347      
+17        -INF             .              .            -0.6242      
+18        -INF             .              .            -0.6144      
+19        -INF             .              .            -0.6052      
+20        -INF             .              .            -0.5969      
+21        -INF             .              .            -0.5897      
+22        -INF             .              .            -0.5827      
+23        -INF             .              .            -0.5756      
+24        -INF             .              .            -0.5692      
+25        -INF             .              .            -0.5650      
+26        -INF             .              .            -0.5607      
+27        -INF             .              .            -0.5540      
+28        -INF             .              .            -0.5477      
+29        -INF             .              .            -0.5472      
+30        -INF             .              .            -0.5477      
+31        -INF             .              .            -0.5388      
+32        -INF             .              .            -0.5272      
+33        -INF             .              .            -0.5328      
+34        -INF             .              .            -0.5473      
+35        -INF             .              .            -0.5325      
+36        -INF             .              .            -0.4970      
+37        -INF             .              .            -0.5114      
+38        -INF             .              .            -0.5730      
+39        -INF             .              .            -0.5532      
+40        -INF             .              .            -0.4332      
+41        -INF             .              .            -0.4442      
+42        -INF             .              .            -0.6631      
+43        -INF             .              .            -0.6859      
+44        -INF             .              .            -0.3048      
+45        -INF             .              .            -0.2298      
+46        -INF             .              .            -1.0000      
+47        -INF           -1.5563          .              .          
+48        -INF             .              .            -0.7340      
+49        -INF             .              .            -1.0000      
+50        -INF             .              .             EPS         
+
+---- EQU constraint4  
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -INF            0.0469         1.0000          .          
+1         -INF             .             1.0000          .          
+2         -INF             .             1.0000          .          
+3         -INF             .             1.0000          .          
+4         -INF             .             1.0000          .          
+5         -INF             .             1.0000          .          
+6         -INF             .             1.0000          .          
+7         -INF             .             1.0000          .          
+8         -INF             .             1.0000          .          
+9         -INF             .             1.0000          .          
+10        -INF             .             1.0000          .          
+11        -INF             .             1.0000          .          
+12        -INF             .             1.0000          .          
+13        -INF             .             1.0000          .          
+14        -INF             .             1.0000          .          
+15        -INF             .             1.0000          .          
+16        -INF             .             1.0000          .          
+17        -INF             .             1.0000          .          
+18        -INF             .             1.0000          .          
+19        -INF             .             1.0000          .          
+20        -INF             .             1.0000          .          
+21        -INF             .             1.0000          .          
+22        -INF             .             1.0000          .          
+23        -INF             .             1.0000          .          
+24        -INF             .             1.0000          .          
+25        -INF             .             1.0000          .          
+26        -INF             .             1.0000          .          
+27        -INF             .             1.0000          .          
+28        -INF             .             1.0000          .          
+29        -INF             .             1.0000          .          
+30        -INF             .             1.0000          .          
+31        -INF             .             1.0000          .          
+32        -INF             .             1.0000          .          
+33        -INF             .             1.0000          .          
+34        -INF             .             1.0000          .          
+35        -INF             .             1.0000          .          
+36        -INF             .             1.0000          .          
+37        -INF             .             1.0000          .          
+38        -INF             .             1.0000          .          
+39        -INF             .             1.0000          .          
+40        -INF             .             1.0000          .          
+41        -INF             .             1.0000          .          
+42        -INF             .             1.0000          .          
+43        -INF             .             1.0000          .          
+44        -INF             .             1.0000          .          
+45        -INF             .             1.0000          .          
+46        -INF            0.0355         1.0000          .          
+47        -INF            1.0000         1.0000        -1.0000      
+48        -INF             .             1.0000          .          
+49        -INF            0.7827         1.0000          .          
+50        -INF             .             1.0000          .          
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR obj               -INF            4.9777        +INF             .          
+
+---- VAR x  
+
+             LOWER          LEVEL          UPPER         MARGINAL
+
+0 .x         -INF             .            +INF             .          
+0 .y         -INF             .            +INF             .          
+0 .dx        -INF             .            +INF             .          
+0 .dy        -INF             .            +INF             .          
+1 .x         -INF           -0.0469        +INF             .          
+1 .y         -INF           -0.0469        +INF             .          
+1 .dx        -INF           -0.0469        +INF             .          
+1 .dy        -INF           -0.0469        +INF             .          
+2 .x         -INF           -0.0422        +INF             .          
+2 .y         -INF             .            +INF             .          
+2 .dx        -INF            0.0469        +INF             .          
+2 .dy        -INF             .            +INF             .          
+3 .x         -INF           -0.0422        +INF             .          
+3 .y         -INF            0.0211        +INF             .          
+3 .dx        -INF            0.0047        +INF             .          
+3 .dy        -INF            0.0235        +INF             .          
+4 .x         -INF           -0.0443        +INF             .          
+4 .y         -INF            0.0317        +INF             .          
+4 .dx        -INF           -0.0253        +INF             .          
+4 .dy        -INF           -0.0082        +INF             .          
+5 .x         -INF           -0.0475        +INF             .          
+5 .y         -INF            0.0380        +INF             .          
+5 .dx        -INF            0.0065        +INF             .          
+5 .dy        -INF           -0.0285        +INF             .          
+6 .x         -INF           -0.0513        +INF             .          
+6 .y         -INF            0.0427        +INF             .          
+6 .dx        -INF            0.0320        +INF             .          
+6 .dy        -INF           -0.0158        +INF             .          
+7 .x         -INF           -0.0556        +INF             .          
+7 .y         -INF            0.0470        +INF             .          
+7 .dx        -INF            0.0205        +INF             .          
+7 .dy        -INF           -0.0054        +INF             .          
+8 .x         -INF           -0.0603        +INF             .          
+8 .y         -INF            0.0513        +INF             .          
+8 .dx        -INF            0.0080        +INF             .          
+8 .dy        -INF           -0.0132        +INF             .          
+9 .x         -INF           -0.0654        +INF             .          
+9 .y         -INF            0.0558        +INF             .          
+9 .dx        -INF            0.0154        +INF             .          
+9 .dy        -INF           -0.0217        +INF             .          
+10.x         -INF           -0.0710        +INF             .          
+10.y         -INF            0.0606        +INF             .          
+10.dx        -INF            0.0254        +INF             .          
+10.dy        -INF           -0.0202        +INF             .          
+11.x         -INF           -0.0770        +INF             .          
+11.y         -INF            0.0658        +INF             .          
+11.dx        -INF            0.0248        +INF             .          
+11.dy        -INF           -0.0176        +INF             .          
+12.x         -INF           -0.0836        +INF             .          
+12.y         -INF            0.0714        +INF             .          
+12.dx        -INF            0.0219        +INF             .          
+12.dy        -INF           -0.0205        +INF             .          
+13.x         -INF           -0.0908        +INF             .          
+13.y         -INF            0.0775        +INF             .          
+13.dx        -INF            0.0247        +INF             .          
+13.dy        -INF           -0.0248        +INF             .          
+14.x         -INF           -0.0985        +INF             .          
+14.y         -INF            0.0841        +INF             .          
+14.dx        -INF            0.0297        +INF             .          
+14.dy        -INF           -0.0264        +INF             .          
+15.x         -INF           -0.1069        +INF             .          
+15.y         -INF            0.0913        +INF             .          
+15.dx        -INF            0.0320        +INF             .          
+15.dy        -INF           -0.0272        +INF             .          
+16.x         -INF           -0.1161        +INF             .          
+16.y         -INF            0.0991        +INF             .          
+16.dx        -INF            0.0331        +INF             .          
+16.dy        -INF           -0.0297        +INF             .          
+17.x         -INF           -0.1260        +INF             .          
+17.y         -INF            0.1076        +INF             .          
+17.dx        -INF            0.0359        +INF             .          
+17.dy        -INF           -0.0330        +INF             .          
+18.x         -INF           -0.1367        +INF             .          
+18.y         -INF            0.1168        +INF             .          
+18.dx        -INF            0.0399        +INF             .          
+18.dy        -INF           -0.0358        +INF             .          
+19.x         -INF           -0.1484        +INF             .          
+19.y         -INF            0.1268        +INF             .          
+19.dx        -INF            0.0434        +INF             .          
+19.dy        -INF           -0.0384        +INF             .          
+20.x         -INF           -0.1611        +INF             .          
+20.y         -INF            0.1376        +INF             .          
+20.dx        -INF            0.0466        +INF             .          
+20.dy        -INF           -0.0417        +INF             .          
+21.x         -INF           -0.1748        +INF             .          
+21.y         -INF            0.1493        +INF             .          
+21.dx        -INF            0.0505        +INF             .          
+21.dy        -INF           -0.0455        +INF             .          
+22.x         -INF           -0.1898        +INF             .          
+22.y         -INF            0.1621        +INF             .          
+22.dx        -INF            0.0551        +INF             .          
+22.dy        -INF           -0.0494        +INF             .          
+23.x         -INF           -0.2060        +INF             .          
+23.y         -INF            0.1759        +INF             .          
+23.dx        -INF            0.0599        +INF             .          
+23.dy        -INF           -0.0535        +INF             .          
+24.x         -INF           -0.2236        +INF             .          
+24.y         -INF            0.1910        +INF             .          
+24.dx        -INF            0.0648        +INF             .          
+24.dy        -INF           -0.0580        +INF             .          
+25.x         -INF           -0.2427        +INF             .          
+25.y         -INF            0.2073        +INF             .          
+25.dx        -INF            0.0703        +INF             .          
+25.dy        -INF           -0.0631        +INF             .          
+26.x         -INF           -0.2634        +INF             .          
+26.y         -INF            0.2250        +INF             .          
+26.dx        -INF            0.0764        +INF             .          
+26.dy        -INF           -0.0685        +INF             .          
+27.x         -INF           -0.2859        +INF             .          
+27.y         -INF            0.2442        +INF             .          
+27.dx        -INF            0.0830        +INF             .          
+27.dy        -INF           -0.0743        +INF             .          
+28.x         -INF           -0.3103        +INF             .          
+28.y         -INF            0.2650        +INF             .          
+28.dx        -INF            0.0900        +INF             .          
+28.dy        -INF           -0.0806        +INF             .          
+29.x         -INF           -0.3368        +INF             .          
+29.y         -INF            0.2877        +INF             .          
+29.dx        -INF            0.0977        +INF             .          
+29.dy        -INF           -0.0875        +INF             .          
+30.x         -INF           -0.3656        +INF             .          
+30.y         -INF            0.3123        +INF             .          
+30.dx        -INF            0.1060        +INF             .          
+30.dy        -INF           -0.0950        +INF             .          
+31.x         -INF           -0.3968        +INF             .          
+31.y         -INF            0.3389        +INF             .          
+31.dx        -INF            0.1151        +INF             .          
+31.dy        -INF           -0.1031        +INF             .          
+32.x         -INF           -0.4307        +INF             .          
+32.y         -INF            0.3679        +INF             .          
+32.dx        -INF            0.1249        +INF             .          
+32.dy        -INF           -0.1119        +INF             .          
+33.x         -INF           -0.4675        +INF             .          
+33.y         -INF            0.3993        +INF             .          
+33.dx        -INF            0.1356        +INF             .          
+33.dy        -INF           -0.1215        +INF             .          
+34.x         -INF           -0.5074        +INF             .          
+34.y         -INF            0.4334        +INF             .          
+34.dx        -INF            0.1472        +INF             .          
+34.dy        -INF           -0.1318        +INF             .          
+35.x         -INF           -0.5508        +INF             .          
+35.y         -INF            0.4704        +INF             .          
+35.dx        -INF            0.1598        +INF             .          
+35.dy        -INF           -0.1431        +INF             .          
+36.x         -INF           -0.5978        +INF             .          
+36.y         -INF            0.5106        +INF             .          
+36.dx        -INF            0.1734        +INF             .          
+36.dy        -INF           -0.1553        +INF             .          
+37.x         -INF           -0.6489        +INF             .          
+37.y         -INF            0.5542        +INF             .          
+37.dx        -INF            0.1882        +INF             .          
+37.dy        -INF           -0.1686        +INF             .          
+38.x         -INF           -0.7043        +INF             .          
+38.y         -INF            0.6015        +INF             .          
+38.dx        -INF            0.2043        +INF             .          
+38.dy        -INF           -0.1830        +INF             .          
+39.x         -INF           -0.7644        +INF             .          
+39.y         -INF            0.6529        +INF             .          
+39.dx        -INF            0.2217        +INF             .          
+39.dy        -INF           -0.1986        +INF             .          
+40.x         -INF           -0.8297        +INF             .          
+40.y         -INF            0.7087        +INF             .          
+40.dx        -INF            0.2407        +INF             .          
+40.dy        -INF           -0.2156        +INF             .          
+41.x         -INF           -0.9006        +INF             .          
+41.y         -INF            0.7692        +INF             .          
+41.dx        -INF            0.2612        +INF             .          
+41.dy        -INF           -0.2340        +INF             .          
+42.x         -INF           -0.9775        +INF             .          
+42.y         -INF            0.8349        +INF             .          
+42.dx        -INF            0.2835        +INF             .          
+42.dy        -INF           -0.2540        +INF             .          
+43.x         -INF           -1.0610        +INF             .          
+43.y         -INF            0.9062        +INF             .          
+43.dx        -INF            0.3077        +INF             .          
+43.dy        -INF           -0.2757        +INF             .          
+44.x         -INF           -1.1516        +INF             .          
+44.y         -INF            0.9836        +INF             .          
+44.dx        -INF            0.3340        +INF             .          
+44.dy        -INF           -0.2992        +INF             .          
+45.x         -INF           -1.2500        +INF             .          
+45.y         -INF            1.0676        +INF             .          
+45.dx        -INF            0.3626        +INF             .          
+45.dy        -INF           -0.3248        +INF             .          
+46.x         -INF           -1.3567        +INF             .          
+46.y         -INF            1.1588        +INF             .          
+46.dx        -INF            0.3935        +INF             .          
+46.dy        -INF           -0.3525        +INF             .          
+47.x         -INF           -1.5081        +INF             .          
+47.y         -INF            1.2223        +INF             .          
+47.dx        -INF            0.3916        +INF             .          
+47.dy        -INF           -0.4181        +INF             .          
+48.x         -INF           -4.1867        +INF             .          
+48.y         -INF           -1.1911        +INF             .          
+48.dx        -INF           -2.0572        +INF             .          
+48.dy        -INF           -2.9717        +INF             .          
+49.x         -INF           -4.0676        +INF             .          
+49.y         -INF            1.4978        +INF             .          
+49.dx        -INF            3.0631        +INF             .          
+49.dy        -INF           -0.4330        +INF             .          
+50.x         -INF           -5.0000        +INF             .          
+50.y         -INF            2.0000        +INF             .          
+50.dx        -INF             .            +INF             .          
+50.dy        -INF             .            +INF             .          
+
+---- VAR u  
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -INF           -0.0469        +INF             .          
+1         -INF             .            +INF             .          
+2         -INF             .            +INF             .          
+3         -INF             .            +INF             .          
+4         -INF             .            +INF             .          
+5         -INF             .            +INF             .          
+6         -INF             .            +INF             .          
+7         -INF             .            +INF             .          
+8         -INF             .            +INF             .          
+9         -INF             .            +INF             .          
+10        -INF             .            +INF             .          
+11        -INF             .            +INF             .          
+12        -INF             .            +INF             .          
+13        -INF             .            +INF             .          
+14        -INF             .            +INF             .          
+15        -INF             .            +INF             .          
+16        -INF             .            +INF             .          
+17        -INF             .            +INF             .          
+18        -INF             .            +INF             .          
+19        -INF             .            +INF             .          
+20        -INF             .            +INF             .          
+21        -INF             .            +INF             .          
+22        -INF             .            +INF             .          
+23        -INF             .            +INF             .          
+24        -INF             .            +INF             .          
+25        -INF             .            +INF             .          
+26        -INF             .            +INF             .          
+27        -INF             .            +INF             .          
+28        -INF             .            +INF             .          
+29        -INF             .            +INF             .          
+30        -INF             .            +INF             .          
+31        -INF             .            +INF             .          
+32        -INF             .            +INF             .          
+33        -INF             .            +INF             .          
+34        -INF             .            +INF             .          
+35        -INF             .            +INF             .          
+36        -INF             .            +INF             .          
+37        -INF             .            +INF             .          
+38        -INF             .            +INF             .          
+39        -INF             .            +INF             .          
+40        -INF             .            +INF             .          
+41        -INF             .            +INF             .          
+42        -INF             .            +INF             .          
+43        -INF             .            +INF             .          
+44        -INF             .            +INF             .          
+45        -INF             .            +INF             .          
+46        -INF           -0.0355        +INF             .          
+47        -INF           -2.5563        +INF             .          
+48        -INF             .            +INF             .          
+49        -INF           -0.7827        +INF             .          
+50        -INF             .            +INF            EPS         
+
+---- VAR z  
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+0         -INF            0.0469        +INF             .          
+1         -INF             .            +INF             .          
+2         -INF             .            +INF             .          
+3         -INF             .            +INF             .          
+4         -INF             .            +INF             .          
+5         -INF             .            +INF             .          
+6         -INF             .            +INF             .          
+7         -INF             .            +INF             .          
+8         -INF             .            +INF             .          
+9         -INF             .            +INF             .          
+10        -INF             .            +INF             .          
+11        -INF             .            +INF             .          
+12        -INF             .            +INF             .          
+13        -INF             .            +INF             .          
+14        -INF             .            +INF             .          
+15        -INF             .            +INF             .          
+16        -INF             .            +INF             .          
+17        -INF             .            +INF             .          
+18        -INF             .            +INF             .          
+19        -INF             .            +INF             .          
+20        -INF             .            +INF             .          
+21        -INF             .            +INF             .          
+22        -INF             .            +INF             .          
+23        -INF             .            +INF             .          
+24        -INF             .            +INF             .          
+25        -INF             .            +INF             .          
+26        -INF             .            +INF             .          
+27        -INF             .            +INF             .          
+28        -INF             .            +INF             .          
+29        -INF             .            +INF             .          
+30        -INF             .            +INF             .          
+31        -INF             .            +INF             .          
+32        -INF             .            +INF             .          
+33        -INF             .            +INF             .          
+34        -INF             .            +INF             .          
+35        -INF             .            +INF             .          
+36        -INF             .            +INF             .          
+37        -INF             .            +INF             .          
+38        -INF             .            +INF             .          
+39        -INF             .            +INF             .          
+40        -INF             .            +INF             .          
+41        -INF             .            +INF             .          
+42        -INF             .            +INF             .          
+43        -INF             .            +INF             .          
+44        -INF             .            +INF             .          
+45        -INF             .            +INF             .          
+46        -INF            0.0355        +INF             .          
+47        -INF            4.1127        +INF             .          
+48        -INF             .            +INF             .          
+49        -INF            0.7827        +INF             .          
+50        -INF             .            +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 08:57:03 Page 7
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----     54 VARIABLE obj.L                 =        4.978  
+
+----     54 VARIABLE x.L  
+
+             x           y          dx          dy
+
+1       -0.047      -0.047      -0.047      -0.047
+2       -0.042                   0.047
+3       -0.042       0.021       0.005       0.023
+4       -0.044       0.032      -0.025      -0.008
+5       -0.047       0.038       0.006      -0.028
+6       -0.051       0.043       0.032      -0.016
+7       -0.056       0.047       0.021      -0.005
+8       -0.060       0.051       0.008      -0.013
+9       -0.065       0.056       0.015      -0.022
+10      -0.071       0.061       0.025      -0.020
+11      -0.077       0.066       0.025      -0.018
+12      -0.084       0.071       0.022      -0.021
+13      -0.091       0.078       0.025      -0.025
+14      -0.099       0.084       0.030      -0.026
+15      -0.107       0.091       0.032      -0.027
+16      -0.116       0.099       0.033      -0.030
+17      -0.126       0.108       0.036      -0.033
+18      -0.137       0.117       0.040      -0.036
+19      -0.148       0.127       0.043      -0.038
+20      -0.161       0.138       0.047      -0.042
+21      -0.175       0.149       0.051      -0.045
+22      -0.190       0.162       0.055      -0.049
+23      -0.206       0.176       0.060      -0.054
+24      -0.224       0.191       0.065      -0.058
+25      -0.243       0.207       0.070      -0.063
+26      -0.263       0.225       0.076      -0.068
+27      -0.286       0.244       0.083      -0.074
+28      -0.310       0.265       0.090      -0.081
+29      -0.337       0.288       0.098      -0.088
+30      -0.366       0.312       0.106      -0.095
+31      -0.397       0.339       0.115      -0.103
+32      -0.431       0.368       0.125      -0.112
+33      -0.467       0.399       0.136      -0.121
+34      -0.507       0.433       0.147      -0.132
+35      -0.551       0.470       0.160      -0.143
+36      -0.598       0.511       0.173      -0.155
+37      -0.649       0.554       0.188      -0.169
+38      -0.704       0.602       0.204      -0.183
+39      -0.764       0.653       0.222      -0.199
+40      -0.830       0.709       0.241      -0.216
+41      -0.901       0.769       0.261      -0.234
+42      -0.978       0.835       0.284      -0.254
+43      -1.061       0.906       0.308      -0.276
+44      -1.152       0.984       0.334      -0.299
+45      -1.250       1.068       0.363      -0.325
+46      -1.357       1.159       0.394      -0.353
+47      -1.508       1.222       0.392      -0.418
+48      -4.187      -1.191      -2.057      -2.972
+49      -4.068       1.498       3.063      -0.433
+50      -5.000       2.000
+
+
+----     54 VARIABLE u.L  
+
+0  -0.047,    46 -0.035,    47 -2.556,    49 -0.783
+
+
+----     54 VARIABLE z.L  
+
+0  0.047,    46 0.035,    47 4.113,    49 0.783
+
+
+
+EXECUTION TIME       =        0.047 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+
+
+USER: Introduction to Optimization (CS/ISyE/ECE 524) G230906|0002AS-GEN
+      UW-Madison, CS Dept., Fall 2023, Prof. Ferris              DCE850
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      C:\Users\lanya\Documents\GAMS\Studio\workspace\hw8-3.gms
+Output     C:\Users\lanya\Documents\GAMS\Studio\workspace\hw8-3.lst

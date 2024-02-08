@@ -1,0 +1,308 @@
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:33:22 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   1  sets
+   2      i /1*15/
+   3      j /1*7/;
+   4  parameters
+   5      c(j) / 1 1.8, 2 1.3, 3 4.0, 4 3.5, 5 3.8, 6 2.6, 7 2.1 / ,
+   6      p(i) / 1 2, 2 4, 3 13, 4 6, 5 9, 6 4, 7 8, 8 12, 9 10, 10 11, 11 6, 12 14, 13 9, 14 3, 15 6 /;
+   7   
+   8  table covering(i,j)
+   9     1 2 3 4 5 6 7
+  10  1  1 0 0 0 0 0 0
+  11  2  1 1 0 0 0 0 0
+  12  3  0 1 0 0 0 0 0
+  13  4  0 0 1 0 0 0 0
+  14  5  0 1 0 1 0 0 0
+  15  6  0 0 0 1 1 0 0
+  16  7  0 0 1 0 0 1 0
+  17  8  0 0 1 1 1 0 0
+  18  9  0 0 0 1 1 0 0
+  19  10 0 0 1 0 0 1 0
+  20  11 0 0 0 0 0 1 0
+  21  12 0 0 0 0 1 1 1
+  22  13 0 0 0 0 0 0 1
+  23  14 0 0 0 0 0 0 1
+  24  15 0 0 0 0 0 1 1;
+  25   
+  26  variables
+  27      pop_covered;
+  28   
+  29  binary variables
+  30      x(j)
+  31      y(i);
+  32   
+  33  equations
+  34  obj 'Objective function for total population covered'
+  35  budget
+  36  coverage(i);
+  37   
+  38  obj..
+  39  pop_covered =e= sum(i, y(i) * p(i));
+  40   
+  41  budget..
+  42  sum(j, c(j) * x(j)) =l= 10;
+  43   
+  44  coverage(i)..
+  45  y(i) =l= sum(j, covering(i,j) * x(j));
+  46   
+  47  model phoenixsite /all/;
+  48   
+  49  option optcr = 0; option optca = 0;
+  50   
+  51  solve phoenixsite using mip maximizing pop_covered;
+  52   
+  53  set open(J); open(J) = yes$(x.l(J) > 0.5);
+  54   
+  55  option open:0:0:1;display open, pop_covered.l;
+  56   
+
+
+COMPILATION TIME     =        0.000 SECONDS      3 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:33:22 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE phoenixsite Using MIP From line 51
+
+
+---- obj  =E=  Objective function for total population covered
+
+obj..  pop_covered - 2*y(1) - 4*y(2) - 13*y(3) - 6*y(4) - 9*y(5) - 4*y(6) - 8*y(7) - 12*y(8) - 10*y(9) - 11*y(10) - 6*y(11) - 14*y(12) - 9*y(13) - 3*y(14) - 6*y(15) =E= 0 ; (LHS = 0)
+     
+
+---- budget  =L=  
+
+budget..  1.8*x(1) + 1.3*x(2) + 4*x(3) + 3.5*x(4) + 3.8*x(5) + 2.6*x(6) + 2.1*x(7) =L= 10 ; (LHS = 0)
+     
+
+---- coverage  =L=  
+
+coverage(1)..  - x(1) + y(1) =L= 0 ; (LHS = 0)
+     
+coverage(2)..  - x(1) - x(2) + y(2) =L= 0 ; (LHS = 0)
+     
+coverage(3)..  - x(2) + y(3) =L= 0 ; (LHS = 0)
+     
+REMAINING 12 ENTRIES SKIPPED
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:33:22 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE phoenixsite Using MIP From line 51
+
+
+---- pop_covered  
+
+pop_covered
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+        1       obj
+
+
+---- x  
+
+x(1)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+        1.8     budget
+       -1       coverage(1)
+       -1       coverage(2)
+
+x(2)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+        1.3     budget
+       -1       coverage(2)
+       -1       coverage(3)
+       -1       coverage(5)
+
+x(3)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+        4       budget
+       -1       coverage(4)
+       -1       coverage(7)
+       -1       coverage(8)
+       -1       coverage(10)
+
+REMAINING 4 ENTRIES SKIPPED
+
+---- y  
+
+y(1)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+       -2       obj
+        1       coverage(1)
+
+y(2)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+       -4       obj
+        1       coverage(2)
+
+y(3)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      -13       obj
+        1       coverage(3)
+
+REMAINING 12 ENTRIES SKIPPED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:33:22 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE phoenixsite Using MIP From line 51
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 1.000E+01, 1.000E+01] - Zero values observed as well
+Bound     [min, max] : [ 1.000E+00, 1.000E+00] - Zero values observed as well
+Matrix    [min, max] : [ 1.000E+00, 1.400E+01]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:33:22 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE phoenixsite Using MIP From line 51
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           3     SINGLE EQUATIONS           17
+BLOCKS OF VARIABLES           3     SINGLE VARIABLES           23
+NON ZERO ELEMENTS            64     DISCRETE VARIABLES         22
+
+
+GENERATION TIME      =        0.015 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:33:22 Page 6
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE phoenixsite Using MIP From line 51
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   phoenixsite         OBJECTIVE  pop_covered
+     TYPE    MIP                 DIRECTION  MAXIMIZE
+     SOLVER  CPLEX               FROM LINE  51
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE              109.0000
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT         2    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.50 Mb (peak 0.50 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.00 Mb)
+--- Starting Cplex
+
+
+--- MIP status (101): integer optimal solution.
+--- Cplex Time: 0.00sec (det. 0.10 ticks)
+
+--- Returning a primal only solution to GAMS (marginals all set to NA).
+--- Fixing integer variables and solving final LP...
+
+
+--- Fixed MIP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.01 ticks)
+
+
+Proven optimal solution
+MIP Solution:          109.000000    (2 iterations, 0 nodes)
+Final Solve:           109.000000    (0 iterations)
+
+Best possible:         109.000000
+Absolute gap:            0.000000
+Relative gap:            0.000000
+
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU obj                 .              .              .             1.0000      
+---- EQU budget            -INF            9.5000        10.0000          .          
+
+  obj  Objective function for total population covered
+
+---- EQU coverage  
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+1         -INF             .              .              .          
+2         -INF             .              .              .          
+3         -INF             .              .              .          
+4         -INF             .              .              .          
+5         -INF           -1.0000          .              .          
+6         -INF             .              .              .          
+7         -INF             .              .              .          
+8         -INF             .              .              .          
+9         -INF             .              .              .          
+10        -INF             .              .              .          
+11        -INF             .              .              .          
+12        -INF           -1.0000          .              .          
+13        -INF             .              .              .          
+14        -INF             .              .              .          
+15        -INF           -1.0000          .              .          
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR pop_cover~        -INF          109.0000        +INF             .          
+
+---- VAR x  
+
+         LOWER          LEVEL          UPPER         MARGINAL
+
+1          .              .             1.0000         EPS         
+2          .             1.0000         1.0000         EPS         
+3          .              .             1.0000         EPS         
+4          .             1.0000         1.0000         EPS         
+5          .              .             1.0000         EPS         
+6          .             1.0000         1.0000         EPS         
+7          .             1.0000         1.0000         EPS         
+
+---- VAR y  
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+1           .              .             1.0000         2.0000      
+2           .             1.0000         1.0000         4.0000      
+3           .             1.0000         1.0000        13.0000      
+4           .              .             1.0000         6.0000      
+5           .             1.0000         1.0000         9.0000      
+6           .             1.0000         1.0000         4.0000      
+7           .             1.0000         1.0000         8.0000      
+8           .             1.0000         1.0000        12.0000      
+9           .             1.0000         1.0000        10.0000      
+10          .             1.0000         1.0000        11.0000      
+11          .             1.0000         1.0000         6.0000      
+12          .             1.0000         1.0000        14.0000      
+13          .             1.0000         1.0000         9.0000      
+14          .             1.0000         1.0000         3.0000      
+15          .             1.0000         1.0000         6.0000      
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:33:22 Page 7
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----     55 SET open  
+
+2
+4
+6
+7
+
+
+----     55 VARIABLE pop_covered.L         =      109.000  
+
+
+EXECUTION TIME       =        0.047 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+
+
+USER: Introduction to Optimization (CS/ISyE/ECE 524) G230906|0002AS-GEN
+      UW-Madison, CS Dept., Fall 2023, Prof. Ferris              DCE850
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      D:\GAMS\CODE\hw6-3.gms
+Output     D:\GAMS\CODE\hw6-3.lst

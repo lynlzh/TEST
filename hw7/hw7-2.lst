@@ -1,0 +1,2111 @@
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/09/23 23:42:56 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   1  sets T, P, C(P), N(P);
+   2  parameters d(T), cost(P), ell(P), u(P);
+GDXIN   C:\Users\lanya\Documents\GAMS\Studio\workspace\ucdata.gdx
+--- LOAD  T = 1:T
+--- LOAD  P = 2:P
+--- LOAD  C = 3:C
+--- LOAD  N = 4:N
+--- LOAD  d = 5:d
+--- LOAD  cost = 6:cost
+--- LOAD  ell = 7:ell
+--- LOAD  u = 8:u
+   6   
+   7  positive variable g(p,t);
+   8   
+   9  binary variable
+  10  x(p,t)
+  11  count(t)
+  12  y(n,t);
+  13   
+  14  free variable TotalCost;
+  15   
+  16  equations
+  17  objective
+  18  DemandConstraint
+  19  LowerBoundConstraint
+  20  UpperBoundConstraint
+  21  NuclearConstraint
+  22  SafetyConstraint
+  23  Coal1
+  24  Coal2
+  25  button1
+  26  button2;
+  27   
+  28  objective..
+  29  TotalCost=e=sum((p,t),g(p,t)*cost(p));
+  30   
+  31  DemandConstraint(t)..
+  32  sum(p,g(p,t))=g=d(t);
+  33   
+  34  LowerBoundConstraint(p,t)..
+  35  ell(p)*x(p,t)=l=g(p,t);
+  36   
+  37  UpperBoundConstraint(p,t)..
+  38  u(p)*x(p,t)=g=g(p,t);
+  39   
+  40  Coal1(t)..
+  41  count(t)*(card(c)-1)=g=sum(c,x(c,t))-1;
+  42   
+  43  Coal2(t)..
+  44  2*count(t)=l=sum(c,x(c,t));
+  45   
+  46  NuclearConstraint(t)..
+  47  sum(n,x(n,t))=g=3*(count(t));
+  48   
+  49  SafetyConstraint(n,t)..
+  50  x(n,t)+x(n,t+1)+x(n,t+2)+x(n,t+3)=g=4*y(n,t);
+  51   
+  52  button1(n,t)..
+  53  x(n,t) + (1-x(n, t-1))=g=2*y(n,t);
+  54   
+  55  button2(n,t)..
+  56  x(n,t)-x(n,t-1)=l=y(n,t);
+  57   
+  58  model powerplants /all/;
+  59  powerplants.optcr = 1e-6
+  60   
+  61  solve powerplants using mip minimizing TotalCost;
+  62   
+  63  set oper(p,t);
+  64  oper(p,t) = yes$(x.l(p,t) > 0.5);
+  65  option oper:0:0:1;
+  66  display oper;
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/09/23 23:42:56 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Include File Summary
+
+
+   SEQ   GLOBAL TYPE      PARENT   LOCAL  FILENAME
+
+     1        1 INPUT          0       0  C:\Users\lanya\Documents\GAMS\Studio\workspace\hw7-2.gms
+     2        3 GDXIN          1       3  C:\Users\lanya\Documents\GAMS\Studio\workspace\ucdata.gdx
+
+
+COMPILATION TIME     =        0.000 SECONDS      3 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/09/23 23:42:56 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE powerplants Using MIP From line 61
+
+
+---- objective  =E=  
+
+objective..  - 7.3159362*g(p1,t1) - 7.3159362*g(p1,t2) - 7.3159362*g(p1,t3) - 7.3159362*g(p1,t4) - 7.3159362*g(p1,t5) - 7.3159362*g(p1,t6) - 7.3159362*g(p1,t7) - 7.3159362*g(p1,t8) - 7.3159362*g(p1,t9) - 7.3159362*g(p1,t10) - 7.3159362*g(p1,t11) - 7.3159362*g(p1,t12) - 7.3159362*g(p1,t13) - 7.3159362*g(p1,t14) - 7.3159362*g(p1,t15) - 7.3159362*g(p1,t16) - 7.3159362*g(p1,t17) - 7.3159362*g(p1,t18) - 7.3159362*g(p1,t19) - 7.3159362*g(p1,t20) - 7.3159362*g(p1,t21) - 7.3159362*g(p1,t22) - 7.3159362*g(p1,t23) - 7.3159362*g(p1,t24) - 6.237929674*g(p2,t1) - 6.237929674*g(p2,t2) - 6.237929674*g(p2,t3) - 6.237929674*g(p2,t4) - 6.237929674*g(p2,t5) - 6.237929674*g(p2,t6) - 6.237929674*g(p2,t7) - 6.237929674*g(p2,t8) - 6.237929674*g(p2,t9) - 6.237929674*g(p2,t10) - 6.237929674*g(p2,t11) - 6.237929674*g(p2,t12) - 6.237929674*g(p2,t13) - 6.237929674*g(p2,t14) - 6.237929674*g(p2,t15) - 6.237929674*g(p2,t16) - 6.237929674*g(p2,t17) - 6.237929674*g(p2,t18) - 6.237929674*g(p2,t19) - 6.237929674*g(p2,t20) - 6.237929674*g(p2,t21) - 6.237929674*g(p2,t22) - 6.237929674*g(p2,t23) - 6.237929674*g(p2,t24) - 6.621244326*g(p3,t1) - 6.621244326*g(p3,t2) - 6.621244326*g(p3,t3) - 6.621244326*g(p3,t4) - 6.621244326*g(p3,t5) - 6.621244326*g(p3,t6) - 6.621244326*g(p3,t7) - 6.621244326*g(p3,t8) - 6.621244326*g(p3,t9) - 6.621244326*g(p3,t10) - 6.621244326*g(p3,t11) - 6.621244326*g(p3,t12) - 6.621244326*g(p3,t13) - 6.621244326*g(p3,t14) - 6.621244326*g(p3,t15) - 6.621244326*g(p3,t16) - 6.621244326*g(p3,t17) - 6.621244326*g(p3,t18) - 6.621244326*g(p3,t19) - 6.621244326*g(p3,t20) - 6.621244326*g(p3,t21) - 6.621244326*g(p3,t22) - 6.621244326*g(p3,t23) - 6.621244326*g(p3,t24) - 7.31994552*g(p4,t1) - 7.31994552*g(p4,t2) - 7.31994552*g(p4,t3) - 7.31994552*g(p4,t4) - 7.31994552*g(p4,t5) - 7.31994552*g(p4,t6) - 7.31994552*g(p4,t7) - 7.31994552*g(p4,t8) - 7.31994552*g(p4,t9) - 7.31994552*g(p4,t10) - 7.31994552*g(p4,t11) - 7.31994552*g(p4,t12) - 7.31994552*g(p4,t13) - 7.31994552*g(p4,t14) - 7.31994552*g(p4,t15) - 7.31994552*g(p4,t16) - 7.31994552*g(p4,t17) - 7.31994552*g(p4,t18) - 7.31994552*g(p4,t19) - 7.31994552*g(p4,t20) - 7.31994552*g(p4,t21) - 7.31994552*g(p4,t22) - 7.31994552*g(p4,t23) - 7.31994552*g(p4,t24) - 6.611417962*g(p5,t1) - 6.611417962*g(p5,t2) - 6.611417962*g(p5,t3) - 6.611417962*g(p5,t4) - 6.611417962*g(p5,t5) - 6.611417962*g(p5,t6) - 6.611417962*g(p5,t7) - 6.611417962*g(p5,t8) - 6.611417962*g(p5,t9) - 6.611417962*g(p5,t10) - 6.611417962*g(p5,t11) - 6.611417962*g(p5,t12) - 6.611417962*g(p5,t13) - 6.611417962*g(p5,t14) - 6.611417962*g(p5,t15) - 6.611417962*g(p5,t16) - 6.611417962*g(p5,t17) - 6.611417962*g(p5,t18) - 6.611417962*g(p5,t19) - 6.611417962*g(p5,t20) - 6.611417962*g(p5,t21) - 6.611417962*g(p5,t22) - 6.611417962*g(p5,t23) - 6.611417962*g(p5,t24) - 7.142599854*g(p6,t1) - 7.142599854*g(p6,t2) - 7.142599854*g(p6,t3) - 7.142599854*g(p6,t4) - 7.142599854*g(p6,t5) - 7.142599854*g(p6,t6) - 7.142599854*g(p6,t7) - 7.142599854*g(p6,t8) - 7.142599854*g(p6,t9) - 7.142599854*g(p6,t10) - 7.142599854*g(p6,t11) - 7.142599854*g(p6,t12) - 7.142599854*g(p6,t13) - 7.142599854*g(p6,t14) - 7.142599854*g(p6,t15) - 7.142599854*g(p6,t16) - 7.142599854*g(p6,t17) - 7.142599854*g(p6,t18) - 7.142599854*g(p6,t19) - 7.142599854*g(p6,t20) - 7.142599854*g(p6,t21) - 7.142599854*g(p6,t22) - 7.142599854*g(p6,t23) - 7.142599854*g(p6,t24) - 7.705982732*g(p7,t1) - 7.705982732*g(p7,t2) - 7.705982732*g(p7,t3) - 7.705982732*g(p7,t4) - 7.705982732*g(p7,t5) - 7.705982732*g(p7,t6) - 7.705982732*g(p7,t7) - 7.705982732*g(p7,t8) - 7.705982732*g(p7,t9) - 7.705982732*g(p7,t10) - 7.705982732*g(p7,t11) - 7.705982732*g(p7,t12) - 7.705982732*g(p7,t13) - 7.705982732*g(p7,t14) - 7.705982732*g(p7,t15) - 7.705982732*g(p7,t16) - 7.705982732*g(p7,t17) - 7.705982732*g(p7,t18) - 7.705982732*g(p7,t19) - 7.705982732*g(p7,t20) - 7.705982732*g(p7,t21) - 7.705982732*g(p7,t22) - 7.705982732*g(p7,t23) - 7.705982732*g(p7,t24) - 6.410280932*g(p8,t1) - 6.410280932*g(p8,t2) - 6.410280932*g(p8,t3) - 6.410280932*g(p8,t4) - 6.410280932*g(p8,t5) - 6.410280932*g(p8,t6) - 6.410280932*g(p8,t7) - 6.410280932*g(p8,t8) - 6.410280932*g(p8,t9) - 6.410280932*g(p8,t10) - 6.410280932*g(p8,t11) - 6.410280932*g(p8,t12) - 6.410280932*g(p8,t13) - 6.410280932*g(p8,t14) - 6.410280932*g(p8,t15) - 6.410280932*g(p8,t16) - 6.410280932*g(p8,t17) - 6.410280932*g(p8,t18) - 6.410280932*g(p8,t19) - 6.410280932*g(p8,t20) - 6.410280932*g(p8,t21) - 6.410280932*g(p8,t22) - 6.410280932*g(p8,t23) - 6.410280932*g(p8,t24) - 7.488826974*g(p9,t1) - 7.488826974*g(p9,t2) - 7.488826974*g(p9,t3) - 7.488826974*g(p9,t4) - 7.488826974*g(p9,t5) - 7.488826974*g(p9,t6) - 7.488826974*g(p9,t7) - 7.488826974*g(p9,t8) - 7.488826974*g(p9,t9) - 7.488826974*g(p9,t10) - 7.488826974*g(p9,t11) - 7.488826974*g(p9,t12) - 7.488826974*g(p9,t13) - 7.488826974*g(p9,t14) - 7.488826974*g(p9,t15) - 7.488826974*g(p9,t16) - 7.488826974*g(p9,t17) - 7.488826974*g(p9,t18) - 7.488826974*g(p9,t19) - 7.488826974*g(p9,t20) - 7.488826974*g(p9,t21) - 7.488826974*g(p9,t22) - 7.488826974*g(p9,t23) - 7.488826974*g(p9,t24) - 6.329309222*g(p10,t1) - 6.329309222*g(p10,t2) - 6.329309222*g(p10,t3) - 6.329309222*g(p10,t4) - 6.329309222*g(p10,t5) - 6.329309222*g(p10,t6) - 6.329309222*g(p10,t7) - 6.329309222*g(p10,t8) - 6.329309222*g(p10,t9) - 6.329309222*g(p10,t10) - 6.329309222*g(p10,t11) - 6.329309222*g(p10,t12) - 6.329309222*g(p10,t13) - 6.329309222*g(p10,t14) - 6.329309222*g(p10,t15) - 6.329309222*g(p10,t16) - 6.329309222*g(p10,t17) - 6.329309222*g(p10,t18) - 6.329309222*g(p10,t19) - 6.329309222*g(p10,t20) - 6.329309222*g(p10,t21) - 6.329309222*g(p10,t22) - 6.329309222*g(p10,t23) - 6.329309222*g(p10,t24) + TotalCost =E= 0 ; (LHS = 0)
+     
+
+---- DemandConstraint  =G=  
+
+DemandConstraint(t1)..  g(p1,t1) + g(p2,t1) + g(p3,t1) + g(p4,t1) + g(p5,t1) + g(p6,t1) + g(p7,t1) + g(p8,t1) + g(p9,t1) + g(p10,t1) =G= 546.8699188 ; (LHS = 0, INFES = 546.8699188 ****)
+     
+DemandConstraint(t2)..  g(p1,t2) + g(p2,t2) + g(p3,t2) + g(p4,t2) + g(p5,t2) + g(p6,t2) + g(p7,t2) + g(p8,t2) + g(p9,t2) + g(p10,t2) =G= 336.0448072 ; (LHS = 0, INFES = 336.0448072 ****)
+     
+DemandConstraint(t3)..  g(p1,t3) + g(p2,t3) + g(p3,t3) + g(p4,t3) + g(p5,t3) + g(p6,t3) + g(p7,t3) + g(p8,t3) + g(p9,t3) + g(p10,t3) =G= 511.7544604 ; (LHS = 0, INFES = 511.7544604 ****)
+     
+REMAINING 21 ENTRIES SKIPPED
+
+
+---- LowerBoundConstraint  =L=  
+
+LowerBoundConstraint(p1,t1)..  - g(p1,t1) + 125.61701975*x(p1,t1) =L= 0 ; (LHS = 0)
+     
+LowerBoundConstraint(p1,t2)..  - g(p1,t2) + 125.61701975*x(p1,t2) =L= 0 ; (LHS = 0)
+     
+LowerBoundConstraint(p1,t3)..  - g(p1,t3) + 125.61701975*x(p1,t3) =L= 0 ; (LHS = 0)
+     
+REMAINING 237 ENTRIES SKIPPED
+
+
+---- UpperBoundConstraint  =G=  
+
+UpperBoundConstraint(p1,t1)..  - g(p1,t1) + 251.2340395*x(p1,t1) =G= 0 ; (LHS = 0)
+     
+UpperBoundConstraint(p1,t2)..  - g(p1,t2) + 251.2340395*x(p1,t2) =G= 0 ; (LHS = 0)
+     
+UpperBoundConstraint(p1,t3)..  - g(p1,t3) + 251.2340395*x(p1,t3) =G= 0 ; (LHS = 0)
+     
+REMAINING 237 ENTRIES SKIPPED
+
+
+---- NuclearConstraint  =G=  
+
+NuclearConstraint(t1)..  x(p1,t1) + x(p3,t1) + x(p5,t1) + x(p7,t1) + x(p9,t1) - 3*count(t1) =G= 0 ; (LHS = 0)
+     
+NuclearConstraint(t2)..  x(p1,t2) + x(p3,t2) + x(p5,t2) + x(p7,t2) + x(p9,t2) - 3*count(t2) =G= 0 ; (LHS = 0)
+     
+NuclearConstraint(t3)..  x(p1,t3) + x(p3,t3) + x(p5,t3) + x(p7,t3) + x(p9,t3) - 3*count(t3) =G= 0 ; (LHS = 0)
+     
+REMAINING 21 ENTRIES SKIPPED
+
+
+---- SafetyConstraint  =G=  
+
+SafetyConstraint(p1,t1)..  x(p1,t1) + x(p1,t2) + x(p1,t3) + x(p1,t4) - 4*y(p1,t1) =G= 0 ; (LHS = 0)
+     
+SafetyConstraint(p1,t2)..  x(p1,t2) + x(p1,t3) + x(p1,t4) + x(p1,t5) - 4*y(p1,t2) =G= 0 ; (LHS = 0)
+     
+SafetyConstraint(p1,t3)..  x(p1,t3) + x(p1,t4) + x(p1,t5) + x(p1,t6) - 4*y(p1,t3) =G= 0 ; (LHS = 0)
+     
+REMAINING 117 ENTRIES SKIPPED
+
+
+---- Coal1  =G=  
+
+Coal1(t1)..  - x(p2,t1) - x(p4,t1) - x(p6,t1) - x(p8,t1) - x(p10,t1) + 4*count(t1) =G= -1 ; (LHS = 0)
+     
+Coal1(t2)..  - x(p2,t2) - x(p4,t2) - x(p6,t2) - x(p8,t2) - x(p10,t2) + 4*count(t2) =G= -1 ; (LHS = 0)
+     
+Coal1(t3)..  - x(p2,t3) - x(p4,t3) - x(p6,t3) - x(p8,t3) - x(p10,t3) + 4*count(t3) =G= -1 ; (LHS = 0)
+     
+REMAINING 21 ENTRIES SKIPPED
+
+
+---- Coal2  =L=  
+
+Coal2(t1)..  - x(p2,t1) - x(p4,t1) - x(p6,t1) - x(p8,t1) - x(p10,t1) + 2*count(t1) =L= 0 ; (LHS = 0)
+     
+Coal2(t2)..  - x(p2,t2) - x(p4,t2) - x(p6,t2) - x(p8,t2) - x(p10,t2) + 2*count(t2) =L= 0 ; (LHS = 0)
+     
+Coal2(t3)..  - x(p2,t3) - x(p4,t3) - x(p6,t3) - x(p8,t3) - x(p10,t3) + 2*count(t3) =L= 0 ; (LHS = 0)
+     
+REMAINING 21 ENTRIES SKIPPED
+
+
+---- button1  =G=  
+
+button1(p1,t1)..  x(p1,t1) - 2*y(p1,t1) =G= -1 ; (LHS = 0)
+     
+button1(p1,t2)..  - x(p1,t1) + x(p1,t2) - 2*y(p1,t2) =G= -1 ; (LHS = 0)
+     
+button1(p1,t3)..  - x(p1,t2) + x(p1,t3) - 2*y(p1,t3) =G= -1 ; (LHS = 0)
+     
+REMAINING 117 ENTRIES SKIPPED
+
+
+---- button2  =L=  
+
+button2(p1,t1)..  x(p1,t1) - y(p1,t1) =L= 0 ; (LHS = 0)
+     
+button2(p1,t2)..  - x(p1,t1) + x(p1,t2) - y(p1,t2) =L= 0 ; (LHS = 0)
+     
+button2(p1,t3)..  - x(p1,t2) + x(p1,t3) - y(p1,t3) =L= 0 ; (LHS = 0)
+     
+REMAINING 117 ENTRIES SKIPPED
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/09/23 23:42:56 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE powerplants Using MIP From line 61
+
+
+---- g  
+
+g(p1,t1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -7.3159  objective
+        1       DemandConstraint(t1)
+       -1       LowerBoundConstraint(p1,t1)
+       -1       UpperBoundConstraint(p1,t1)
+
+g(p1,t2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -7.3159  objective
+        1       DemandConstraint(t2)
+       -1       LowerBoundConstraint(p1,t2)
+       -1       UpperBoundConstraint(p1,t2)
+
+g(p1,t3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -7.3159  objective
+        1       DemandConstraint(t3)
+       -1       LowerBoundConstraint(p1,t3)
+       -1       UpperBoundConstraint(p1,t3)
+
+REMAINING 237 ENTRIES SKIPPED
+
+---- x  
+
+x(p1,t1)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      125.617   LowerBoundConstraint(p1,t1)
+      251.234   UpperBoundConstraint(p1,t1)
+        1       NuclearConstraint(t1)
+        1       SafetyConstraint(p1,t1)
+        1       button1(p1,t1)
+       -1       button1(p1,t2)
+        1       button2(p1,t1)
+       -1       button2(p1,t2)
+
+x(p1,t2)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      125.617   LowerBoundConstraint(p1,t2)
+      251.234   UpperBoundConstraint(p1,t2)
+        1       NuclearConstraint(t2)
+        1       SafetyConstraint(p1,t1)
+        1       SafetyConstraint(p1,t2)
+        1       button1(p1,t2)
+       -1       button1(p1,t3)
+        1       button2(p1,t2)
+       -1       button2(p1,t3)
+
+x(p1,t3)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      125.617   LowerBoundConstraint(p1,t3)
+      251.234   UpperBoundConstraint(p1,t3)
+        1       NuclearConstraint(t3)
+        1       SafetyConstraint(p1,t1)
+        1       SafetyConstraint(p1,t2)
+        1       SafetyConstraint(p1,t3)
+        1       button1(p1,t3)
+       -1       button1(p1,t4)
+        1       button2(p1,t3)
+       -1       button2(p1,t4)
+
+REMAINING 237 ENTRIES SKIPPED
+
+---- count  
+
+count(t1)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+       -3       NuclearConstraint(t1)
+        4       Coal1(t1)
+        2       Coal2(t1)
+
+count(t2)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+       -3       NuclearConstraint(t2)
+        4       Coal1(t2)
+        2       Coal2(t2)
+
+count(t3)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+       -3       NuclearConstraint(t3)
+        4       Coal1(t3)
+        2       Coal2(t3)
+
+REMAINING 21 ENTRIES SKIPPED
+
+---- y  
+
+y(p1,t1)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+       -4       SafetyConstraint(p1,t1)
+       -2       button1(p1,t1)
+       -1       button2(p1,t1)
+
+y(p1,t2)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+       -4       SafetyConstraint(p1,t2)
+       -2       button1(p1,t2)
+       -1       button2(p1,t2)
+
+y(p1,t3)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+       -4       SafetyConstraint(p1,t3)
+       -2       button1(p1,t3)
+       -1       button2(p1,t3)
+
+REMAINING 117 ENTRIES SKIPPED
+
+---- TotalCost  
+
+TotalCost
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+        1       objective
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/09/23 23:42:56 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE powerplants Using MIP From line 61
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 1.000E+00, 9.341E+02] - Zero values observed as well
+Bound     [min, max] : [ 1.000E+00, 1.000E+00] - Zero values observed as well
+Matrix    [min, max] : [ 1.000E+00, 2.758E+02]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/09/23 23:42:56 Page 6
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE powerplants Using MIP From line 61
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS          10     SINGLE EQUATIONS          937
+BLOCKS OF VARIABLES           5     SINGLE VARIABLES          625
+NON ZERO ELEMENTS         3,153     DISCRETE VARIABLES        384
+
+
+GENERATION TIME      =        0.000 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/09/23 23:42:56 Page 7
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE powerplants Using MIP From line 61
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   powerplants         OBJECTIVE  TotalCost
+     TYPE    MIP                 DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  61
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE            73087.2112
+
+ RESOURCE USAGE, LIMIT          0.140 10000000000.000
+ ITERATION COUNT, LIMIT      1682    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- Space for names approximately 0.04 Mb
+--- Use option 'names no' to turn use of names off
+--- GMO memory 0.68 Mb (peak 0.68 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.02 Mb (peak 0.11 Mb)
+--- Starting Cplex
+
+
+--- MIP status (101): integer optimal solution.
+--- Cplex Time: 0.14sec (det. 183.31 ticks)
+
+--- Returning a primal only solution to GAMS (marginals all set to NA).
+--- Fixing integer variables and solving final LP...
+
+
+--- Fixed MIP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.81 ticks)
+
+
+Proven optimal solution
+MIP Solution:        73087.211193    (1682 iterations, 49 nodes)
+Final Solve:         73087.211193    (17 iterations)
+
+Best possible:       73087.211193
+Absolute gap:            0.000000
+Relative gap:            0.000000
+
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU objective           .              .              .             1.0000      
+
+---- EQU DemandConstraint  
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t1        546.8699       546.8699        +INF            6.6114      
+t2        336.0448       336.0448        +INF            6.6114      
+t3        511.7545       511.7545        +INF            6.2379      
+t4        886.4158       886.4158        +INF            6.6114      
+t5        136.9094       136.9094        +INF            7.3159      
+t6        255.5502       255.5502        +INF            6.3293      
+t7        912.4007       912.4007        +INF            6.6114      
+t8        439.4505       439.4505        +INF            6.2379      
+t9        394.3896       394.3896        +INF            6.2379      
+t10       441.8569       441.8569        +INF            6.2379      
+t11       226.0837       226.0837        +INF            6.2379      
+t12       539.0776       539.0776        +INF            6.6212      
+t13       457.3753       457.3753        +INF            6.6212      
+t14       621.4382       621.4382        +INF            6.6212      
+t15       934.1399       934.1399        +INF            6.3293      
+t16       554.9687       554.9687        +INF            6.6114      
+t17       545.6851       545.6851        +INF            6.6114      
+t18       234.5520       234.5520        +INF            6.3293      
+t19       506.6465       506.6465        +INF            6.2379      
+t20       560.2034       560.2034        +INF            6.6114      
+t21       276.5055       276.5055        +INF            6.2379      
+t22       518.1217       518.1217        +INF            6.6212      
+t23       165.6488       165.6488        +INF            6.2379      
+t24       254.4482       254.4482        +INF            6.2379      
+
+---- EQU LowerBoundConstraint  
+
+               LOWER          LEVEL          UPPER         MARGINAL
+
+p1 .t1         -INF             .              .              .          
+p1 .t2         -INF             .              .              .          
+p1 .t3         -INF             .              .              .          
+p1 .t4         -INF             .              .            -0.7045      
+p1 .t5         -INF          -11.2924          .              .          
+p1 .t6         -INF             .              .            -0.9866      
+p1 .t7         -INF             .              .            -0.7045      
+p1 .t8         -INF             .              .              .          
+p1 .t9         -INF             .              .              .          
+p1 .t10        -INF             .              .              .          
+p1 .t11        -INF             .              .              .          
+p1 .t12        -INF             .              .              .          
+p1 .t13        -INF             .              .              .          
+p1 .t14        -INF             .              .            -0.6947      
+p1 .t15        -INF             .              .            -0.9866      
+p1 .t16        -INF             .              .            -0.7045      
+p1 .t17        -INF             .              .            -0.7045      
+p1 .t18        -INF             .              .              .          
+p1 .t19        -INF             .              .              .          
+p1 .t20        -INF             .              .              .          
+p1 .t21        -INF             .              .              .          
+p1 .t22        -INF             .              .              .          
+p1 .t23        -INF             .              .              .          
+p1 .t24        -INF             .              .              .          
+p2 .t1         -INF         -137.9236          .              .          
+p2 .t2         -INF             .              .              .          
+p2 .t3         -INF         -119.3689          .              .          
+p2 .t4         -INF         -137.9236          .              .          
+p2 .t5         -INF             .              .              .          
+p2 .t6         -INF             .              .              .          
+p2 .t7         -INF         -137.9236          .              .          
+p2 .t8         -INF          -47.0649          .              .          
+p2 .t9         -INF           -2.0040          .              .          
+p2 .t10        -INF          -49.4713          .              .          
+p2 .t11        -INF          -88.1602          .              .          
+p2 .t12        -INF         -137.9236          .              .          
+p2 .t13        -INF         -137.9236          .              .          
+p2 .t14        -INF         -137.9236          .              .          
+p2 .t15        -INF         -137.9236          .              .          
+p2 .t16        -INF         -137.9236          .              .          
+p2 .t17        -INF         -137.9236          .              .          
+p2 .t18        -INF             .              .              .          
+p2 .t19        -INF         -114.2609          .              .          
+p2 .t20        -INF         -137.9236          .              .          
+p2 .t21        -INF           -3.7682          .              .          
+p2 .t22        -INF         -137.9236          .              .          
+p2 .t23        -INF          -27.7252          .              .          
+p2 .t24        -INF         -116.5246          .              .          
+p3 .t1         -INF             .              .            -0.0098      
+p3 .t2         -INF             .              .            -0.0098      
+p3 .t3         -INF             .              .            -0.3833      
+p3 .t4         -INF             .              .            -0.0098      
+p3 .t5         -INF             .              .              .          
+p3 .t6         -INF             .              .              .          
+p3 .t7         -INF             .              .            -0.0098      
+p3 .t8         -INF             .              .            -0.3833      
+p3 .t9         -INF             .              .            -0.3833      
+p3 .t10        -INF             .              .            -0.3833      
+p3 .t11        -INF             .              .              .          
+p3 .t12        -INF         -128.4167          .              .          
+p3 .t13        -INF          -46.7144          .              .          
+p3 .t14        -INF          -85.1603          .              .          
+p3 .t15        -INF             .              .            -0.2919      
+p3 .t16        -INF             .              .              .          
+p3 .t17        -INF             .              .              .          
+p3 .t18        -INF             .              .              .          
+p3 .t19        -INF             .              .            -0.3833      
+p3 .t20        -INF             .              .            -0.0098      
+p3 .t21        -INF             .              .            -0.3833      
+p3 .t22        -INF         -107.4608          .              .          
+p3 .t23        -INF             .              .              .          
+p3 .t24        -INF             .              .              .          
+p4 .t1         -INF             .              .              .          
+p4 .t2         -INF             .              .              .          
+p4 .t3         -INF             .              .              .          
+p4 .t4         -INF             .              .              .          
+p4 .t5         -INF             .              .              .          
+p4 .t6         -INF             .              .              .          
+p4 .t7         -INF             .              .              .          
+p4 .t8         -INF             .              .              .          
+p4 .t9         -INF             .              .              .          
+p4 .t10        -INF             .              .              .          
+p4 .t11        -INF             .              .              .          
+p4 .t12        -INF             .              .              .          
+p4 .t13        -INF             .              .              .          
+p4 .t14        -INF             .              .              .          
+p4 .t15        -INF             .              .              .          
+p4 .t16        -INF             .              .              .          
+p4 .t17        -INF             .              .              .          
+p4 .t18        -INF             .              .              .          
+p4 .t19        -INF             .              .              .          
+p4 .t20        -INF             .              .              .          
+p4 .t21        -INF             .              .              .          
+p4 .t22        -INF             .              .              .          
+p4 .t23        -INF             .              .              .          
+p4 .t24        -INF             .              .              .          
+p5 .t1         -INF          -16.5607          .              .          
+p5 .t2         -INF          -81.5828          .              .          
+p5 .t3         -INF             .              .            -0.3735      
+p5 .t4         -INF           -1.3893          .              .          
+p5 .t5         -INF             .              .              .          
+p5 .t6         -INF             .              .              .          
+p5 .t7         -INF          -27.3742          .              .          
+p5 .t8         -INF             .              .            -0.3735      
+p5 .t9         -INF             .              .            -0.3735      
+p5 .t10        -INF             .              .            -0.3735      
+p5 .t11        -INF             .              .              .          
+p5 .t12        -INF             .              .              .          
+p5 .t13        -INF             .              .              .          
+p5 .t14        -INF             .              .              .          
+p5 .t15        -INF             .              .            -0.2821      
+p5 .t16        -INF          -33.8562          .              .          
+p5 .t17        -INF          -24.5726          .              .          
+p5 .t18        -INF             .              .            -0.2821      
+p5 .t19        -INF             .              .            -0.3735      
+p5 .t20        -INF          -29.8942          .              .          
+p5 .t21        -INF             .              .              .          
+p5 .t22        -INF             .              .              .          
+p5 .t23        -INF             .              .              .          
+p5 .t24        -INF             .              .              .          
+p6 .t1         -INF             .              .              .          
+p6 .t2         -INF             .              .              .          
+p6 .t3         -INF             .              .              .          
+p6 .t4         -INF             .              .              .          
+p6 .t5         -INF             .              .              .          
+p6 .t6         -INF             .              .              .          
+p6 .t7         -INF             .              .              .          
+p6 .t8         -INF             .              .              .          
+p6 .t9         -INF             .              .              .          
+p6 .t10        -INF             .              .              .          
+p6 .t11        -INF             .              .              .          
+p6 .t12        -INF             .              .              .          
+p6 .t13        -INF             .              .              .          
+p6 .t14        -INF             .              .              .          
+p6 .t15        -INF             .              .              .          
+p6 .t16        -INF             .              .              .          
+p6 .t17        -INF             .              .              .          
+p6 .t18        -INF             .              .              .          
+p6 .t19        -INF             .              .              .          
+p6 .t20        -INF             .              .              .          
+p6 .t21        -INF             .              .              .          
+p6 .t22        -INF             .              .              .          
+p6 .t23        -INF             .              .              .          
+p6 .t24        -INF             .              .              .          
+p7 .t1         -INF             .              .              .          
+p7 .t2         -INF             .              .              .          
+p7 .t3         -INF             .              .              .          
+p7 .t4         -INF             .              .              .          
+p7 .t5         -INF             .              .              .          
+p7 .t6         -INF             .              .              .          
+p7 .t7         -INF             .              .              .          
+p7 .t8         -INF             .              .              .          
+p7 .t9         -INF             .              .              .          
+p7 .t10        -INF             .              .              .          
+p7 .t11        -INF             .              .              .          
+p7 .t12        -INF             .              .              .          
+p7 .t13        -INF             .              .              .          
+p7 .t14        -INF             .              .              .          
+p7 .t15        -INF             .              .              .          
+p7 .t16        -INF             .              .              .          
+p7 .t17        -INF             .              .              .          
+p7 .t18        -INF             .              .              .          
+p7 .t19        -INF             .              .              .          
+p7 .t20        -INF             .              .              .          
+p7 .t21        -INF             .              .              .          
+p7 .t22        -INF             .              .              .          
+p7 .t23        -INF             .              .              .          
+p7 .t24        -INF             .              .              .          
+p8 .t1         -INF             .              .              .          
+p8 .t2         -INF             .              .              .          
+p8 .t3         -INF             .              .              .          
+p8 .t4         -INF             .              .              .          
+p8 .t5         -INF             .              .              .          
+p8 .t6         -INF             .              .              .          
+p8 .t7         -INF             .              .              .          
+p8 .t8         -INF             .              .              .          
+p8 .t9         -INF             .              .              .          
+p8 .t10        -INF             .              .              .          
+p8 .t11        -INF             .              .              .          
+p8 .t12        -INF             .              .              .          
+p8 .t13        -INF             .              .              .          
+p8 .t14        -INF             .              .              .          
+p8 .t15        -INF             .              .            -0.0810      
+p8 .t16        -INF             .              .              .          
+p8 .t17        -INF             .              .              .          
+p8 .t18        -INF             .              .              .          
+p8 .t19        -INF             .              .              .          
+p8 .t20        -INF             .              .              .          
+p8 .t21        -INF             .              .              .          
+p8 .t22        -INF             .              .              .          
+p8 .t23        -INF             .              .              .          
+p8 .t24        -INF             .              .              .          
+p9 .t1         -INF             .              .              .          
+p9 .t2         -INF             .              .              .          
+p9 .t3         -INF             .              .              .          
+p9 .t4         -INF             .              .              .          
+p9 .t5         -INF             .              .              .          
+p9 .t6         -INF             .              .              .          
+p9 .t7         -INF             .              .              .          
+p9 .t8         -INF             .              .              .          
+p9 .t9         -INF             .              .              .          
+p9 .t10        -INF             .              .              .          
+p9 .t11        -INF             .              .              .          
+p9 .t12        -INF             .              .              .          
+p9 .t13        -INF             .              .              .          
+p9 .t14        -INF             .              .              .          
+p9 .t15        -INF             .              .              .          
+p9 .t16        -INF             .              .              .          
+p9 .t17        -INF             .              .              .          
+p9 .t18        -INF             .              .              .          
+p9 .t19        -INF             .              .              .          
+p9 .t20        -INF             .              .              .          
+p9 .t21        -INF             .              .              .          
+p9 .t22        -INF             .              .              .          
+p9 .t23        -INF             .              .              .          
+p9 .t24        -INF             .              .              .          
+p10.t1         -INF             .              .              .          
+p10.t2         -INF             .              .              .          
+p10.t3         -INF             .              .              .          
+p10.t4         -INF         -114.5502          .              .          
+p10.t5         -INF             .              .              .          
+p10.t6         -INF          -15.3830          .              .          
+p10.t7         -INF         -114.5502          .              .          
+p10.t8         -INF             .              .              .          
+p10.t9         -INF             .              .              .          
+p10.t10        -INF             .              .              .          
+p10.t11        -INF             .              .              .          
+p10.t12        -INF             .              .              .          
+p10.t13        -INF             .              .              .          
+p10.t14        -INF             .              .              .          
+p10.t15        -INF          -30.6748          .              .          
+p10.t16        -INF             .              .              .          
+p10.t17        -INF             .              .              .          
+p10.t18        -INF           -0.3535          .              .          
+p10.t19        -INF             .              .              .          
+p10.t20        -INF             .              .              .          
+p10.t21        -INF             .              .              .          
+p10.t22        -INF             .              .              .          
+p10.t23        -INF             .              .              .          
+p10.t24        -INF             .              .              .          
+
+---- EQU UpperBoundConstraint  
+
+               LOWER          LEVEL          UPPER         MARGINAL
+
+p1 .t1           .              .            +INF             .          
+p1 .t2           .              .            +INF             .          
+p1 .t3           .              .            +INF             .          
+p1 .t4           .           125.6170        +INF             .          
+p1 .t5           .           114.3246        +INF             .          
+p1 .t6           .           125.6170        +INF             .          
+p1 .t7           .           125.6170        +INF             .          
+p1 .t8           .              .            +INF             .          
+p1 .t9           .              .            +INF             .          
+p1 .t10          .              .            +INF             .          
+p1 .t11          .              .            +INF             .          
+p1 .t12          .              .            +INF             .          
+p1 .t13          .              .            +INF             .          
+p1 .t14          .           125.6170        +INF             .          
+p1 .t15          .           125.6170        +INF             .          
+p1 .t16          .           125.6170        +INF             .          
+p1 .t17          .           125.6170        +INF             .          
+p1 .t18          .              .            +INF             .          
+p1 .t19          .              .            +INF             .          
+p1 .t20          .              .            +INF             .          
+p1 .t21          .              .            +INF             .          
+p1 .t22          .              .            +INF             .          
+p1 .t23          .              .            +INF             .          
+p1 .t24          .              .            +INF             .          
+p2 .t1           .              .            +INF            0.3735      
+p2 .t2           .              .            +INF            0.3735      
+p2 .t3           .            18.5547        +INF             .          
+p2 .t4           .              .            +INF            0.3735      
+p2 .t5           .              .            +INF            1.0780      
+p2 .t6           .              .            +INF            0.0914      
+p2 .t7           .              .            +INF            0.3735      
+p2 .t8           .            90.8587        +INF             .          
+p2 .t9           .           135.9196        +INF             .          
+p2 .t10          .            88.4523        +INF             .          
+p2 .t11          .            49.7634        +INF             .          
+p2 .t12          .              .            +INF            0.3833      
+p2 .t13          .              .            +INF            0.3833      
+p2 .t14          .              .            +INF            0.3833      
+p2 .t15          .              .            +INF            0.0914      
+p2 .t16          .              .            +INF            0.3735      
+p2 .t17          .              .            +INF            0.3735      
+p2 .t18          .              .            +INF            0.0914      
+p2 .t19          .            23.6627        +INF             .          
+p2 .t20          .              .            +INF            0.3735      
+p2 .t21          .           134.1554        +INF             .          
+p2 .t22          .              .            +INF            0.3833      
+p2 .t23          .           110.1984        +INF             .          
+p2 .t24          .            21.3990        +INF             .          
+p3 .t1           .           134.8137        +INF             .          
+p3 .t2           .           134.8137        +INF             .          
+p3 .t3           .           134.8137        +INF             .          
+p3 .t4           .           134.8137        +INF             .          
+p3 .t5           .              .            +INF            0.6947      
+p3 .t6           .              .            +INF             .          
+p3 .t7           .           134.8137        +INF             .          
+p3 .t8           .           134.8137        +INF             .          
+p3 .t9           .           134.8137        +INF             .          
+p3 .t10          .           134.8137        +INF             .          
+p3 .t11          .              .            +INF             .          
+p3 .t12          .             6.3970        +INF             .          
+p3 .t13          .            88.0993        +INF             .          
+p3 .t14          .            49.6534        +INF             .          
+p3 .t15          .           134.8137        +INF             .          
+p3 .t16          .              .            +INF             .          
+p3 .t17          .              .            +INF             .          
+p3 .t18          .              .            +INF             .          
+p3 .t19          .           134.8137        +INF             .          
+p3 .t20          .           134.8137        +INF             .          
+p3 .t21          .           134.8137        +INF             .          
+p3 .t22          .            27.3529        +INF             .          
+p3 .t23          .              .            +INF             .          
+p3 .t24          .              .            +INF             .          
+p4 .t1           .              .            +INF             .          
+p4 .t2           .              .            +INF             .          
+p4 .t3           .              .            +INF             .          
+p4 .t4           .              .            +INF             .          
+p4 .t5           .              .            +INF             .          
+p4 .t6           .              .            +INF             .          
+p4 .t7           .              .            +INF             .          
+p4 .t8           .              .            +INF             .          
+p4 .t9           .              .            +INF             .          
+p4 .t10          .              .            +INF             .          
+p4 .t11          .              .            +INF             .          
+p4 .t12          .              .            +INF             .          
+p4 .t13          .              .            +INF             .          
+p4 .t14          .              .            +INF             .          
+p4 .t15          .              .            +INF             .          
+p4 .t16          .              .            +INF             .          
+p4 .t17          .              .            +INF             .          
+p4 .t18          .              .            +INF             .          
+p4 .t19          .              .            +INF             .          
+p4 .t20          .              .            +INF             .          
+p4 .t21          .              .            +INF             .          
+p4 .t22          .              .            +INF             .          
+p4 .t23          .              .            +INF             .          
+p4 .t24          .              .            +INF             .          
+p5 .t1           .           103.0876        +INF             .          
+p5 .t2           .            38.0655        +INF             .          
+p5 .t3           .           119.6483        +INF             .          
+p5 .t4           .           118.2590        +INF             .          
+p5 .t5           .              .            +INF            0.7045      
+p5 .t6           .              .            +INF             .          
+p5 .t7           .            92.2741        +INF             .          
+p5 .t8           .           119.6483        +INF             .          
+p5 .t9           .           119.6483        +INF             .          
+p5 .t10          .           119.6483        +INF             .          
+p5 .t11          .              .            +INF             .          
+p5 .t12          .              .            +INF            0.0098      
+p5 .t13          .              .            +INF            0.0098      
+p5 .t14          .              .            +INF            0.0098      
+p5 .t15          .           119.6483        +INF             .          
+p5 .t16          .            85.7921        +INF             .          
+p5 .t17          .            95.0757        +INF             .          
+p5 .t18          .           119.6483        +INF             .          
+p5 .t19          .           119.6483        +INF             .          
+p5 .t20          .            89.7541        +INF             .          
+p5 .t21          .              .            +INF             .          
+p5 .t22          .              .            +INF            0.0098      
+p5 .t23          .              .            +INF             .          
+p5 .t24          .              .            +INF             .          
+p6 .t1           .              .            +INF             .          
+p6 .t2           .              .            +INF             .          
+p6 .t3           .              .            +INF             .          
+p6 .t4           .              .            +INF             .          
+p6 .t5           .              .            +INF            0.1733      
+p6 .t6           .              .            +INF             .          
+p6 .t7           .              .            +INF             .          
+p6 .t8           .              .            +INF             .          
+p6 .t9           .              .            +INF             .          
+p6 .t10          .              .            +INF             .          
+p6 .t11          .              .            +INF             .          
+p6 .t12          .              .            +INF             .          
+p6 .t13          .              .            +INF             .          
+p6 .t14          .              .            +INF             .          
+p6 .t15          .              .            +INF             .          
+p6 .t16          .              .            +INF             .          
+p6 .t17          .              .            +INF             .          
+p6 .t18          .              .            +INF             .          
+p6 .t19          .              .            +INF             .          
+p6 .t20          .              .            +INF             .          
+p6 .t21          .              .            +INF             .          
+p6 .t22          .              .            +INF             .          
+p6 .t23          .              .            +INF             .          
+p6 .t24          .              .            +INF             .          
+p7 .t1           .              .            +INF             .          
+p7 .t2           .              .            +INF             .          
+p7 .t3           .              .            +INF             .          
+p7 .t4           .              .            +INF             .          
+p7 .t5           .              .            +INF             .          
+p7 .t6           .              .            +INF             .          
+p7 .t7           .              .            +INF             .          
+p7 .t8           .              .            +INF             .          
+p7 .t9           .              .            +INF             .          
+p7 .t10          .              .            +INF             .          
+p7 .t11          .              .            +INF             .          
+p7 .t12          .              .            +INF             .          
+p7 .t13          .              .            +INF             .          
+p7 .t14          .              .            +INF             .          
+p7 .t15          .              .            +INF             .          
+p7 .t16          .              .            +INF             .          
+p7 .t17          .              .            +INF             .          
+p7 .t18          .              .            +INF             .          
+p7 .t19          .              .            +INF             .          
+p7 .t20          .              .            +INF             .          
+p7 .t21          .              .            +INF             .          
+p7 .t22          .              .            +INF             .          
+p7 .t23          .              .            +INF             .          
+p7 .t24          .              .            +INF             .          
+p8 .t1           .              .            +INF            0.2011      
+p8 .t2           .              .            +INF            0.2011      
+p8 .t3           .              .            +INF             .          
+p8 .t4           .              .            +INF            0.2011      
+p8 .t5           .              .            +INF            0.9057      
+p8 .t6           .              .            +INF             .          
+p8 .t7           .              .            +INF            0.2011      
+p8 .t8           .              .            +INF             .          
+p8 .t9           .              .            +INF             .          
+p8 .t10          .              .            +INF             .          
+p8 .t11          .              .            +INF             .          
+p8 .t12          .              .            +INF            0.2110      
+p8 .t13          .              .            +INF            0.2110      
+p8 .t14          .              .            +INF            0.2110      
+p8 .t15          .           132.9887        +INF             .          
+p8 .t16          .              .            +INF            0.2011      
+p8 .t17          .              .            +INF            0.2011      
+p8 .t18          .              .            +INF             .          
+p8 .t19          .              .            +INF             .          
+p8 .t20          .              .            +INF            0.2011      
+p8 .t21          .              .            +INF             .          
+p8 .t22          .              .            +INF            0.2110      
+p8 .t23          .              .            +INF             .          
+p8 .t24          .              .            +INF             .          
+p9 .t1           .              .            +INF             .          
+p9 .t2           .              .            +INF             .          
+p9 .t3           .              .            +INF             .          
+p9 .t4           .              .            +INF             .          
+p9 .t5           .              .            +INF             .          
+p9 .t6           .              .            +INF             .          
+p9 .t7           .              .            +INF             .          
+p9 .t8           .              .            +INF             .          
+p9 .t9           .              .            +INF             .          
+p9 .t10          .              .            +INF             .          
+p9 .t11          .              .            +INF             .          
+p9 .t12          .              .            +INF             .          
+p9 .t13          .              .            +INF             .          
+p9 .t14          .              .            +INF             .          
+p9 .t15          .              .            +INF             .          
+p9 .t16          .              .            +INF             .          
+p9 .t17          .              .            +INF             .          
+p9 .t18          .              .            +INF             .          
+p9 .t19          .              .            +INF             .          
+p9 .t20          .              .            +INF             .          
+p9 .t21          .              .            +INF             .          
+p9 .t22          .              .            +INF             .          
+p9 .t23          .              .            +INF             .          
+p9 .t24          .              .            +INF             .          
+p10.t1           .              .            +INF            0.2821      
+p10.t2           .              .            +INF            0.2821      
+p10.t3           .              .            +INF             .          
+p10.t4           .              .            +INF            0.2821      
+p10.t5           .              .            +INF            0.9866      
+p10.t6           .            99.1671        +INF             .          
+p10.t7           .              .            +INF            0.2821      
+p10.t8           .              .            +INF             .          
+p10.t9           .              .            +INF             .          
+p10.t10          .              .            +INF             .          
+p10.t11          .              .            +INF             .          
+p10.t12          .              .            +INF            0.2919      
+p10.t13          .              .            +INF            0.2919      
+p10.t14          .              .            +INF            0.2919      
+p10.t15          .            83.8754        +INF             .          
+p10.t16          .              .            +INF            0.2821      
+p10.t17          .              .            +INF            0.2821      
+p10.t18          .           114.1967        +INF             .          
+p10.t19          .              .            +INF             .          
+p10.t20          .              .            +INF            0.2821      
+p10.t21          .              .            +INF             .          
+p10.t22          .              .            +INF            0.2919      
+p10.t23          .              .            +INF             .          
+p10.t24          .              .            +INF             .          
+
+---- EQU NuclearConstraint  
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t1           .             2.0000        +INF             .          
+t2           .             2.0000        +INF             .          
+t3           .             2.0000        +INF             .          
+t4           .              .            +INF             .          
+t5           .             1.0000        +INF             .          
+t6           .             1.0000        +INF             .          
+t7           .              .            +INF             .          
+t8           .             2.0000        +INF             .          
+t9           .             2.0000        +INF             .          
+t10          .             2.0000        +INF             .          
+t11          .              .            +INF             .          
+t12          .             1.0000        +INF             .          
+t13          .             1.0000        +INF             .          
+t14          .             2.0000        +INF             .          
+t15          .              .            +INF             .          
+t16          .             2.0000        +INF             .          
+t17          .             2.0000        +INF             .          
+t18          .             1.0000        +INF             .          
+t19          .             2.0000        +INF             .          
+t20          .             2.0000        +INF             .          
+t21          .             1.0000        +INF             .          
+t22          .             1.0000        +INF             .          
+t23          .              .            +INF             .          
+t24          .              .            +INF             .          
+
+---- EQU SafetyConstraint  
+
+              LOWER          LEVEL          UPPER         MARGINAL
+
+p1.t1           .             1.0000        +INF             .          
+p1.t2           .             2.0000        +INF             .          
+p1.t3           .             3.0000        +INF             .          
+p1.t4           .              .            +INF             .          
+p1.t5           .             3.0000        +INF             .          
+p1.t6           .             2.0000        +INF             .          
+p1.t7           .             1.0000        +INF             .          
+p1.t8           .              .            +INF             .          
+p1.t9           .              .            +INF             .          
+p1.t10          .              .            +INF             .          
+p1.t11          .             1.0000        +INF             .          
+p1.t12          .             2.0000        +INF             .          
+p1.t13          .             3.0000        +INF             .          
+p1.t14          .              .            +INF             .          
+p1.t15          .             3.0000        +INF             .          
+p1.t16          .             2.0000        +INF             .          
+p1.t17          .             1.0000        +INF             .          
+p1.t18          .              .            +INF             .          
+p1.t19          .              .            +INF             .          
+p1.t20          .              .            +INF             .          
+p1.t21          .              .            +INF             .          
+p1.t22          .              .            +INF             .          
+p1.t23          .              .            +INF             .          
+p1.t24          .              .            +INF             .          
+p3.t1           .              .            +INF             .          
+p3.t2           .             3.0000        +INF             .          
+p3.t3           .             2.0000        +INF             .          
+p3.t4           .             2.0000        +INF             .          
+p3.t5           .             2.0000        +INF             .          
+p3.t6           .             3.0000        +INF             .          
+p3.t7           .              .            +INF             .          
+p3.t8           .             3.0000        +INF             .          
+p3.t9           .             3.0000        +INF             .          
+p3.t10          .             3.0000        +INF             .          
+p3.t11          .             3.0000        +INF             .          
+p3.t12          .              .            +INF             .          
+p3.t13          .             3.0000        +INF             .          
+p3.t14          .             2.0000        +INF             .          
+p3.t15          .             1.0000        +INF             .          
+p3.t16          .             1.0000        +INF             .          
+p3.t17          .             2.0000        +INF             .          
+p3.t18          .             3.0000        +INF             .          
+p3.t19          .              .            +INF             .          
+p3.t20          .             3.0000        +INF             .          
+p3.t21          .             2.0000        +INF             .          
+p3.t22          .             1.0000        +INF             .          
+p3.t23          .              .            +INF             .          
+p3.t24          .              .            +INF             .          
+p5.t1           .              .            +INF             .          
+p5.t2           .             3.0000        +INF             .          
+p5.t3           .             2.0000        +INF             .          
+p5.t4           .             2.0000        +INF             .          
+p5.t5           .             2.0000        +INF             .          
+p5.t6           .             3.0000        +INF             .          
+p5.t7           .              .            +INF             .          
+p5.t8           .             3.0000        +INF             .          
+p5.t9           .             2.0000        +INF             .          
+p5.t10          .             1.0000        +INF             .          
+p5.t11          .              .            +INF             .          
+p5.t12          .             1.0000        +INF             .          
+p5.t13          .             2.0000        +INF             .          
+p5.t14          .             3.0000        +INF             .          
+p5.t15          .              .            +INF             .          
+p5.t16          .             4.0000        +INF             .          
+p5.t17          .             4.0000        +INF             .          
+p5.t18          .             3.0000        +INF             .          
+p5.t19          .             2.0000        +INF             .          
+p5.t20          .             1.0000        +INF             .          
+p5.t21          .              .            +INF             .          
+p5.t22          .              .            +INF             .          
+p5.t23          .              .            +INF             .          
+p5.t24          .              .            +INF             .          
+p7.t1           .              .            +INF             .          
+p7.t2           .              .            +INF             .          
+p7.t3           .              .            +INF             .          
+p7.t4           .              .            +INF             .          
+p7.t5           .              .            +INF             .          
+p7.t6           .              .            +INF             .          
+p7.t7           .              .            +INF             .          
+p7.t8           .              .            +INF             .          
+p7.t9           .              .            +INF             .          
+p7.t10          .              .            +INF             .          
+p7.t11          .              .            +INF             .          
+p7.t12          .              .            +INF             .          
+p7.t13          .              .            +INF             .          
+p7.t14          .              .            +INF             .          
+p7.t15          .              .            +INF             .          
+p7.t16          .              .            +INF             .          
+p7.t17          .              .            +INF             .          
+p7.t18          .              .            +INF             .          
+p7.t19          .              .            +INF             .          
+p7.t20          .              .            +INF             .          
+p7.t21          .              .            +INF             .          
+p7.t22          .              .            +INF             .          
+p7.t23          .              .            +INF             .          
+p7.t24          .              .            +INF             .          
+p9.t1           .              .            +INF             .          
+p9.t2           .              .            +INF             .          
+p9.t3           .              .            +INF             .          
+p9.t4           .              .            +INF             .          
+p9.t5           .              .            +INF             .          
+p9.t6           .              .            +INF             .          
+p9.t7           .              .            +INF             .          
+p9.t8           .              .            +INF             .          
+p9.t9           .              .            +INF             .          
+p9.t10          .              .            +INF             .          
+p9.t11          .              .            +INF             .          
+p9.t12          .              .            +INF             .          
+p9.t13          .              .            +INF             .          
+p9.t14          .              .            +INF             .          
+p9.t15          .              .            +INF             .          
+p9.t16          .              .            +INF             .          
+p9.t17          .              .            +INF             .          
+p9.t18          .              .            +INF             .          
+p9.t19          .              .            +INF             .          
+p9.t20          .              .            +INF             .          
+p9.t21          .              .            +INF             .          
+p9.t22          .              .            +INF             .          
+p9.t23          .              .            +INF             .          
+p9.t24          .              .            +INF             .          
+
+---- EQU Coal1  
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t1         -1.0000        -1.0000        +INF             .          
+t2         -1.0000          .            +INF             .          
+t3         -1.0000        -1.0000        +INF             .          
+t4         -1.0000         2.0000        +INF             .          
+t5         -1.0000          .            +INF             .          
+t6         -1.0000        -1.0000        +INF             .          
+t7         -1.0000         2.0000        +INF             .          
+t8         -1.0000        -1.0000        +INF             .          
+t9         -1.0000        -1.0000        +INF             .          
+t10        -1.0000        -1.0000        +INF             .          
+t11        -1.0000        -1.0000        +INF             .          
+t12        -1.0000        -1.0000        +INF             .          
+t13        -1.0000        -1.0000        +INF             .          
+t14        -1.0000        -1.0000        +INF             .          
+t15        -1.0000         1.0000        +INF             .          
+t16        -1.0000        -1.0000        +INF             .          
+t17        -1.0000        -1.0000        +INF             .          
+t18        -1.0000        -1.0000        +INF             .          
+t19        -1.0000        -1.0000        +INF             .          
+t20        -1.0000        -1.0000        +INF             .          
+t21        -1.0000        -1.0000        +INF             .          
+t22        -1.0000        -1.0000        +INF             .          
+t23        -1.0000        -1.0000        +INF             .          
+t24        -1.0000        -1.0000        +INF             .          
+
+---- EQU Coal2  
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t1         -INF           -1.0000          .              .          
+t2         -INF             .              .              .          
+t3         -INF           -1.0000          .              .          
+t4         -INF             .              .              .          
+t5         -INF             .              .              .          
+t6         -INF           -1.0000          .              .          
+t7         -INF             .              .              .          
+t8         -INF           -1.0000          .              .          
+t9         -INF           -1.0000          .              .          
+t10        -INF           -1.0000          .              .          
+t11        -INF           -1.0000          .              .          
+t12        -INF           -1.0000          .              .          
+t13        -INF           -1.0000          .              .          
+t14        -INF           -1.0000          .              .          
+t15        -INF           -1.0000          .              .          
+t16        -INF           -1.0000          .              .          
+t17        -INF           -1.0000          .              .          
+t18        -INF           -1.0000          .              .          
+t19        -INF           -1.0000          .              .          
+t20        -INF           -1.0000          .              .          
+t21        -INF           -1.0000          .              .          
+t22        -INF           -1.0000          .              .          
+t23        -INF           -1.0000          .              .          
+t24        -INF           -1.0000          .              .          
+
+---- EQU button1  
+
+              LOWER          LEVEL          UPPER         MARGINAL
+
+p1.t1         -1.0000          .            +INF             .          
+p1.t2         -1.0000          .            +INF             .          
+p1.t3         -1.0000          .            +INF             .          
+p1.t4         -1.0000        -1.0000        +INF             .          
+p1.t5         -1.0000          .            +INF             .          
+p1.t6         -1.0000          .            +INF             .          
+p1.t7         -1.0000          .            +INF             .          
+p1.t8         -1.0000        -1.0000        +INF             .          
+p1.t9         -1.0000          .            +INF             .          
+p1.t10        -1.0000          .            +INF             .          
+p1.t11        -1.0000          .            +INF             .          
+p1.t12        -1.0000          .            +INF             .          
+p1.t13        -1.0000          .            +INF             .          
+p1.t14        -1.0000        -1.0000        +INF             .          
+p1.t15        -1.0000          .            +INF             .          
+p1.t16        -1.0000          .            +INF             .          
+p1.t17        -1.0000          .            +INF             .          
+p1.t18        -1.0000        -1.0000        +INF             .          
+p1.t19        -1.0000          .            +INF             .          
+p1.t20        -1.0000          .            +INF             .          
+p1.t21        -1.0000          .            +INF             .          
+p1.t22        -1.0000          .            +INF             .          
+p1.t23        -1.0000          .            +INF             .          
+p1.t24        -1.0000          .            +INF             .          
+p3.t1         -1.0000        -1.0000        +INF             .          
+p3.t2         -1.0000          .            +INF             .          
+p3.t3         -1.0000          .            +INF             .          
+p3.t4         -1.0000          .            +INF             .          
+p3.t5         -1.0000        -1.0000        +INF             .          
+p3.t6         -1.0000          .            +INF             .          
+p3.t7         -1.0000        -1.0000        +INF             .          
+p3.t8         -1.0000          .            +INF             .          
+p3.t9         -1.0000          .            +INF             .          
+p3.t10        -1.0000          .            +INF             .          
+p3.t11        -1.0000        -1.0000        +INF             .          
+p3.t12        -1.0000        -1.0000        +INF             .          
+p3.t13        -1.0000          .            +INF             .          
+p3.t14        -1.0000          .            +INF             .          
+p3.t15        -1.0000          .            +INF             .          
+p3.t16        -1.0000        -1.0000        +INF             .          
+p3.t17        -1.0000          .            +INF             .          
+p3.t18        -1.0000          .            +INF             .          
+p3.t19        -1.0000        -1.0000        +INF             .          
+p3.t20        -1.0000          .            +INF             .          
+p3.t21        -1.0000          .            +INF             .          
+p3.t22        -1.0000          .            +INF             .          
+p3.t23        -1.0000        -1.0000        +INF             .          
+p3.t24        -1.0000          .            +INF             .          
+p5.t1         -1.0000        -1.0000        +INF             .          
+p5.t2         -1.0000          .            +INF             .          
+p5.t3         -1.0000          .            +INF             .          
+p5.t4         -1.0000          .            +INF             .          
+p5.t5         -1.0000        -1.0000        +INF             .          
+p5.t6         -1.0000          .            +INF             .          
+p5.t7         -1.0000        -1.0000        +INF             .          
+p5.t8         -1.0000          .            +INF             .          
+p5.t9         -1.0000          .            +INF             .          
+p5.t10        -1.0000          .            +INF             .          
+p5.t11        -1.0000        -1.0000        +INF             .          
+p5.t12        -1.0000          .            +INF             .          
+p5.t13        -1.0000          .            +INF             .          
+p5.t14        -1.0000          .            +INF             .          
+p5.t15        -1.0000        -1.0000        +INF             .          
+p5.t16        -1.0000          .            +INF             .          
+p5.t17        -1.0000          .            +INF             .          
+p5.t18        -1.0000          .            +INF             .          
+p5.t19        -1.0000          .            +INF             .          
+p5.t20        -1.0000          .            +INF             .          
+p5.t21        -1.0000        -1.0000        +INF             .          
+p5.t22        -1.0000          .            +INF             .          
+p5.t23        -1.0000          .            +INF             .          
+p5.t24        -1.0000          .            +INF             .          
+p7.t1         -1.0000          .            +INF             .          
+p7.t2         -1.0000          .            +INF             .          
+p7.t3         -1.0000          .            +INF             .          
+p7.t4         -1.0000          .            +INF             .          
+p7.t5         -1.0000          .            +INF             .          
+p7.t6         -1.0000          .            +INF             .          
+p7.t7         -1.0000          .            +INF             .          
+p7.t8         -1.0000          .            +INF             .          
+p7.t9         -1.0000          .            +INF             .          
+p7.t10        -1.0000          .            +INF             .          
+p7.t11        -1.0000          .            +INF             .          
+p7.t12        -1.0000          .            +INF             .          
+p7.t13        -1.0000          .            +INF             .          
+p7.t14        -1.0000          .            +INF             .          
+p7.t15        -1.0000          .            +INF             .          
+p7.t16        -1.0000          .            +INF             .          
+p7.t17        -1.0000          .            +INF             .          
+p7.t18        -1.0000          .            +INF             .          
+p7.t19        -1.0000          .            +INF             .          
+p7.t20        -1.0000          .            +INF             .          
+p7.t21        -1.0000          .            +INF             .          
+p7.t22        -1.0000          .            +INF             .          
+p7.t23        -1.0000          .            +INF             .          
+p7.t24        -1.0000          .            +INF             .          
+p9.t1         -1.0000          .            +INF             .          
+p9.t2         -1.0000          .            +INF             .          
+p9.t3         -1.0000          .            +INF             .          
+p9.t4         -1.0000          .            +INF             .          
+p9.t5         -1.0000          .            +INF             .          
+p9.t6         -1.0000          .            +INF             .          
+p9.t7         -1.0000          .            +INF             .          
+p9.t8         -1.0000          .            +INF             .          
+p9.t9         -1.0000          .            +INF             .          
+p9.t10        -1.0000          .            +INF             .          
+p9.t11        -1.0000          .            +INF             .          
+p9.t12        -1.0000          .            +INF             .          
+p9.t13        -1.0000          .            +INF             .          
+p9.t14        -1.0000          .            +INF             .          
+p9.t15        -1.0000          .            +INF             .          
+p9.t16        -1.0000          .            +INF             .          
+p9.t17        -1.0000          .            +INF             .          
+p9.t18        -1.0000          .            +INF             .          
+p9.t19        -1.0000          .            +INF             .          
+p9.t20        -1.0000          .            +INF             .          
+p9.t21        -1.0000          .            +INF             .          
+p9.t22        -1.0000          .            +INF             .          
+p9.t23        -1.0000          .            +INF             .          
+p9.t24        -1.0000          .            +INF             .          
+
+---- EQU button2  
+
+              LOWER          LEVEL          UPPER         MARGINAL
+
+p1.t1         -INF             .              .              .          
+p1.t2         -INF             .              .              .          
+p1.t3         -INF             .              .              .          
+p1.t4         -INF             .              .              .          
+p1.t5         -INF             .              .              .          
+p1.t6         -INF             .              .              .          
+p1.t7         -INF             .              .              .          
+p1.t8         -INF           -1.0000          .              .          
+p1.t9         -INF             .              .              .          
+p1.t10        -INF             .              .              .          
+p1.t11        -INF             .              .              .          
+p1.t12        -INF             .              .              .          
+p1.t13        -INF             .              .              .          
+p1.t14        -INF             .              .              .          
+p1.t15        -INF             .              .              .          
+p1.t16        -INF             .              .              .          
+p1.t17        -INF             .              .              .          
+p1.t18        -INF           -1.0000          .              .          
+p1.t19        -INF             .              .              .          
+p1.t20        -INF             .              .              .          
+p1.t21        -INF             .              .              .          
+p1.t22        -INF             .              .              .          
+p1.t23        -INF             .              .              .          
+p1.t24        -INF             .              .              .          
+p3.t1         -INF             .              .              .          
+p3.t2         -INF             .              .              .          
+p3.t3         -INF             .              .              .          
+p3.t4         -INF             .              .              .          
+p3.t5         -INF           -1.0000          .              .          
+p3.t6         -INF             .              .              .          
+p3.t7         -INF             .              .              .          
+p3.t8         -INF             .              .              .          
+p3.t9         -INF             .              .              .          
+p3.t10        -INF             .              .              .          
+p3.t11        -INF           -1.0000          .              .          
+p3.t12        -INF             .              .              .          
+p3.t13        -INF             .              .              .          
+p3.t14        -INF             .              .              .          
+p3.t15        -INF             .              .              .          
+p3.t16        -INF           -1.0000          .              .          
+p3.t17        -INF             .              .              .          
+p3.t18        -INF             .              .              .          
+p3.t19        -INF             .              .              .          
+p3.t20        -INF             .              .              .          
+p3.t21        -INF             .              .              .          
+p3.t22        -INF             .              .              .          
+p3.t23        -INF           -1.0000          .              .          
+p3.t24        -INF             .              .              .          
+p5.t1         -INF             .              .              .          
+p5.t2         -INF             .              .              .          
+p5.t3         -INF             .              .              .          
+p5.t4         -INF             .              .              .          
+p5.t5         -INF           -1.0000          .              .          
+p5.t6         -INF             .              .              .          
+p5.t7         -INF             .              .              .          
+p5.t8         -INF             .              .              .          
+p5.t9         -INF             .              .              .          
+p5.t10        -INF             .              .              .          
+p5.t11        -INF           -1.0000          .              .          
+p5.t12        -INF             .              .              .          
+p5.t13        -INF             .              .              .          
+p5.t14        -INF             .              .              .          
+p5.t15        -INF             .              .              .          
+p5.t16        -INF             .              .              .          
+p5.t17        -INF             .              .              .          
+p5.t18        -INF             .              .              .          
+p5.t19        -INF             .              .              .          
+p5.t20        -INF             .              .              .          
+p5.t21        -INF           -1.0000          .              .          
+p5.t22        -INF             .              .              .          
+p5.t23        -INF             .              .              .          
+p5.t24        -INF             .              .              .          
+p7.t1         -INF             .              .              .          
+p7.t2         -INF             .              .              .          
+p7.t3         -INF             .              .              .          
+p7.t4         -INF             .              .              .          
+p7.t5         -INF             .              .              .          
+p7.t6         -INF             .              .              .          
+p7.t7         -INF             .              .              .          
+p7.t8         -INF             .              .              .          
+p7.t9         -INF             .              .              .          
+p7.t10        -INF             .              .              .          
+p7.t11        -INF             .              .              .          
+p7.t12        -INF             .              .              .          
+p7.t13        -INF             .              .              .          
+p7.t14        -INF             .              .              .          
+p7.t15        -INF             .              .              .          
+p7.t16        -INF             .              .              .          
+p7.t17        -INF             .              .              .          
+p7.t18        -INF             .              .              .          
+p7.t19        -INF             .              .              .          
+p7.t20        -INF             .              .              .          
+p7.t21        -INF             .              .              .          
+p7.t22        -INF             .              .              .          
+p7.t23        -INF             .              .              .          
+p7.t24        -INF             .              .              .          
+p9.t1         -INF             .              .              .          
+p9.t2         -INF             .              .              .          
+p9.t3         -INF             .              .              .          
+p9.t4         -INF             .              .              .          
+p9.t5         -INF             .              .              .          
+p9.t6         -INF             .              .              .          
+p9.t7         -INF             .              .              .          
+p9.t8         -INF             .              .              .          
+p9.t9         -INF             .              .              .          
+p9.t10        -INF             .              .              .          
+p9.t11        -INF             .              .              .          
+p9.t12        -INF             .              .              .          
+p9.t13        -INF             .              .              .          
+p9.t14        -INF             .              .              .          
+p9.t15        -INF             .              .              .          
+p9.t16        -INF             .              .              .          
+p9.t17        -INF             .              .              .          
+p9.t18        -INF             .              .              .          
+p9.t19        -INF             .              .              .          
+p9.t20        -INF             .              .              .          
+p9.t21        -INF             .              .              .          
+p9.t22        -INF             .              .              .          
+p9.t23        -INF             .              .              .          
+p9.t24        -INF             .              .              .          
+
+---- VAR g  
+
+               LOWER          LEVEL          UPPER         MARGINAL
+
+p1 .t1           .              .            +INF            0.7045      
+p1 .t2           .              .            +INF            0.7045      
+p1 .t3           .              .            +INF            1.0780      
+p1 .t4           .           125.6170        +INF             .          
+p1 .t5           .           136.9094        +INF             .          
+p1 .t6           .           125.6170        +INF             .          
+p1 .t7           .           125.6170        +INF             .          
+p1 .t8           .              .            +INF            1.0780      
+p1 .t9           .              .            +INF            1.0780      
+p1 .t10          .              .            +INF            1.0780      
+p1 .t11          .              .            +INF            1.0780      
+p1 .t12          .              .            +INF            0.6947      
+p1 .t13          .              .            +INF            0.6947      
+p1 .t14          .           125.6170        +INF             .          
+p1 .t15          .           125.6170        +INF             .          
+p1 .t16          .           125.6170        +INF             .          
+p1 .t17          .           125.6170        +INF             .          
+p1 .t18          .              .            +INF            0.9866      
+p1 .t19          .              .            +INF            1.0780      
+p1 .t20          .              .            +INF            0.7045      
+p1 .t21          .              .            +INF            1.0780      
+p1 .t22          .              .            +INF            0.6947      
+p1 .t23          .              .            +INF            1.0780      
+p1 .t24          .              .            +INF            1.0780      
+p2 .t1           .           275.8472        +INF             .          
+p2 .t2           .              .            +INF             .          
+p2 .t3           .           257.2924        +INF             .          
+p2 .t4           .           275.8472        +INF             .          
+p2 .t5           .              .            +INF             .          
+p2 .t6           .              .            +INF             .          
+p2 .t7           .           275.8472        +INF             .          
+p2 .t8           .           184.9885        +INF             .          
+p2 .t9           .           139.9276        +INF             .          
+p2 .t10          .           187.3949        +INF             .          
+p2 .t11          .           226.0837        +INF             .          
+p2 .t12          .           275.8472        +INF             .          
+p2 .t13          .           275.8472        +INF             .          
+p2 .t14          .           275.8472        +INF             .          
+p2 .t15          .           275.8472        +INF             .          
+p2 .t16          .           275.8472        +INF             .          
+p2 .t17          .           275.8472        +INF             .          
+p2 .t18          .              .            +INF             .          
+p2 .t19          .           252.1845        +INF             .          
+p2 .t20          .           275.8472        +INF             .          
+p2 .t21          .           141.6918        +INF             .          
+p2 .t22          .           275.8472        +INF             .          
+p2 .t23          .           165.6488        +INF             .          
+p2 .t24          .           254.4482        +INF             .          
+p3 .t1           .           134.8137        +INF             .          
+p3 .t2           .           134.8137        +INF             .          
+p3 .t3           .           134.8137        +INF             .          
+p3 .t4           .           134.8137        +INF             .          
+p3 .t5           .              .            +INF             .          
+p3 .t6           .              .            +INF            0.2919      
+p3 .t7           .           134.8137        +INF             .          
+p3 .t8           .           134.8137        +INF             .          
+p3 .t9           .           134.8137        +INF             .          
+p3 .t10          .           134.8137        +INF             .          
+p3 .t11          .              .            +INF            0.3833      
+p3 .t12          .           263.2304        +INF             .          
+p3 .t13          .           181.5282        +INF             .          
+p3 .t14          .           219.9740        +INF             .          
+p3 .t15          .           134.8137        +INF             .          
+p3 .t16          .              .            +INF            0.0098      
+p3 .t17          .              .            +INF            0.0098      
+p3 .t18          .              .            +INF            0.2919      
+p3 .t19          .           134.8137        +INF             .          
+p3 .t20          .           134.8137        +INF             .          
+p3 .t21          .           134.8137        +INF             .          
+p3 .t22          .           242.2745        +INF             .          
+p3 .t23          .              .            +INF            0.3833      
+p3 .t24          .              .            +INF            0.3833      
+p4 .t1           .              .            +INF            0.7085      
+p4 .t2           .              .            +INF            0.7085      
+p4 .t3           .              .            +INF            1.0820      
+p4 .t4           .              .            +INF            0.7085      
+p4 .t5           .              .            +INF            0.0040      
+p4 .t6           .              .            +INF            0.9906      
+p4 .t7           .              .            +INF            0.7085      
+p4 .t8           .              .            +INF            1.0820      
+p4 .t9           .              .            +INF            1.0820      
+p4 .t10          .              .            +INF            1.0820      
+p4 .t11          .              .            +INF            1.0820      
+p4 .t12          .              .            +INF            0.6987      
+p4 .t13          .              .            +INF            0.6987      
+p4 .t14          .              .            +INF            0.6987      
+p4 .t15          .              .            +INF            0.9906      
+p4 .t16          .              .            +INF            0.7085      
+p4 .t17          .              .            +INF            0.7085      
+p4 .t18          .              .            +INF            0.9906      
+p4 .t19          .              .            +INF            1.0820      
+p4 .t20          .              .            +INF            0.7085      
+p4 .t21          .              .            +INF            1.0820      
+p4 .t22          .              .            +INF            0.6987      
+p4 .t23          .              .            +INF            1.0820      
+p4 .t24          .              .            +INF            1.0820      
+p5 .t1           .           136.2090        +INF             .          
+p5 .t2           .           201.2311        +INF             .          
+p5 .t3           .           119.6483        +INF             .          
+p5 .t4           .           121.0376        +INF             .          
+p5 .t5           .              .            +INF             .          
+p5 .t6           .              .            +INF            0.2821      
+p5 .t7           .           147.0225        +INF             .          
+p5 .t8           .           119.6483        +INF             .          
+p5 .t9           .           119.6483        +INF             .          
+p5 .t10          .           119.6483        +INF             .          
+p5 .t11          .              .            +INF            0.3735      
+p5 .t12          .              .            +INF             .          
+p5 .t13          .              .            +INF             .          
+p5 .t14          .              .            +INF             .          
+p5 .t15          .           119.6483        +INF             .          
+p5 .t16          .           153.5045        +INF             .          
+p5 .t17          .           144.2209        +INF             .          
+p5 .t18          .           119.6483        +INF             .          
+p5 .t19          .           119.6483        +INF             .          
+p5 .t20          .           149.5425        +INF             .          
+p5 .t21          .              .            +INF            0.3735      
+p5 .t22          .              .            +INF             .          
+p5 .t23          .              .            +INF            0.3735      
+p5 .t24          .              .            +INF            0.3735      
+p6 .t1           .              .            +INF            0.5312      
+p6 .t2           .              .            +INF            0.5312      
+p6 .t3           .              .            +INF            0.9047      
+p6 .t4           .              .            +INF            0.5312      
+p6 .t5           .              .            +INF             .          
+p6 .t6           .              .            +INF            0.8133      
+p6 .t7           .              .            +INF            0.5312      
+p6 .t8           .              .            +INF            0.9047      
+p6 .t9           .              .            +INF            0.9047      
+p6 .t10          .              .            +INF            0.9047      
+p6 .t11          .              .            +INF            0.9047      
+p6 .t12          .              .            +INF            0.5214      
+p6 .t13          .              .            +INF            0.5214      
+p6 .t14          .              .            +INF            0.5214      
+p6 .t15          .              .            +INF            0.8133      
+p6 .t16          .              .            +INF            0.5312      
+p6 .t17          .              .            +INF            0.5312      
+p6 .t18          .              .            +INF            0.8133      
+p6 .t19          .              .            +INF            0.9047      
+p6 .t20          .              .            +INF            0.5312      
+p6 .t21          .              .            +INF            0.9047      
+p6 .t22          .              .            +INF            0.5214      
+p6 .t23          .              .            +INF            0.9047      
+p6 .t24          .              .            +INF            0.9047      
+p7 .t1           .              .            +INF            1.0946      
+p7 .t2           .              .            +INF            1.0946      
+p7 .t3           .              .            +INF            1.4681      
+p7 .t4           .              .            +INF            1.0946      
+p7 .t5           .              .            +INF            0.3900      
+p7 .t6           .              .            +INF            1.3767      
+p7 .t7           .              .            +INF            1.0946      
+p7 .t8           .              .            +INF            1.4681      
+p7 .t9           .              .            +INF            1.4681      
+p7 .t10          .              .            +INF            1.4681      
+p7 .t11          .              .            +INF            1.4681      
+p7 .t12          .              .            +INF            1.0847      
+p7 .t13          .              .            +INF            1.0847      
+p7 .t14          .              .            +INF            1.0847      
+p7 .t15          .              .            +INF            1.3767      
+p7 .t16          .              .            +INF            1.0946      
+p7 .t17          .              .            +INF            1.0946      
+p7 .t18          .              .            +INF            1.3767      
+p7 .t19          .              .            +INF            1.4681      
+p7 .t20          .              .            +INF            1.0946      
+p7 .t21          .              .            +INF            1.4681      
+p7 .t22          .              .            +INF            1.0847      
+p7 .t23          .              .            +INF            1.4681      
+p7 .t24          .              .            +INF            1.4681      
+p8 .t1           .              .            +INF             .          
+p8 .t2           .              .            +INF             .          
+p8 .t3           .              .            +INF            0.1724      
+p8 .t4           .              .            +INF             .          
+p8 .t5           .              .            +INF             .          
+p8 .t6           .              .            +INF            0.0810      
+p8 .t7           .              .            +INF             .          
+p8 .t8           .              .            +INF            0.1724      
+p8 .t9           .              .            +INF            0.1724      
+p8 .t10          .              .            +INF            0.1724      
+p8 .t11          .              .            +INF            0.1724      
+p8 .t12          .              .            +INF             .          
+p8 .t13          .              .            +INF             .          
+p8 .t14          .              .            +INF             .          
+p8 .t15          .           132.9887        +INF             .          
+p8 .t16          .              .            +INF             .          
+p8 .t17          .              .            +INF             .          
+p8 .t18          .              .            +INF            0.0810      
+p8 .t19          .              .            +INF            0.1724      
+p8 .t20          .              .            +INF             .          
+p8 .t21          .              .            +INF            0.1724      
+p8 .t22          .              .            +INF             .          
+p8 .t23          .              .            +INF            0.1724      
+p8 .t24          .              .            +INF            0.1724      
+p9 .t1           .              .            +INF            0.8774      
+p9 .t2           .              .            +INF            0.8774      
+p9 .t3           .              .            +INF            1.2509      
+p9 .t4           .              .            +INF            0.8774      
+p9 .t5           .              .            +INF            0.1729      
+p9 .t6           .              .            +INF            1.1595      
+p9 .t7           .              .            +INF            0.8774      
+p9 .t8           .              .            +INF            1.2509      
+p9 .t9           .              .            +INF            1.2509      
+p9 .t10          .              .            +INF            1.2509      
+p9 .t11          .              .            +INF            1.2509      
+p9 .t12          .              .            +INF            0.8676      
+p9 .t13          .              .            +INF            0.8676      
+p9 .t14          .              .            +INF            0.8676      
+p9 .t15          .              .            +INF            1.1595      
+p9 .t16          .              .            +INF            0.8774      
+p9 .t17          .              .            +INF            0.8774      
+p9 .t18          .              .            +INF            1.1595      
+p9 .t19          .              .            +INF            1.2509      
+p9 .t20          .              .            +INF            0.8774      
+p9 .t21          .              .            +INF            1.2509      
+p9 .t22          .              .            +INF            0.8676      
+p9 .t23          .              .            +INF            1.2509      
+p9 .t24          .              .            +INF            1.2509      
+p10.t1           .              .            +INF             .          
+p10.t2           .              .            +INF             .          
+p10.t3           .              .            +INF            0.0914      
+p10.t4           .           229.1003        +INF             .          
+p10.t5           .              .            +INF             .          
+p10.t6           .           129.9332        +INF             .          
+p10.t7           .           229.1003        +INF             .          
+p10.t8           .              .            +INF            0.0914      
+p10.t9           .              .            +INF            0.0914      
+p10.t10          .              .            +INF            0.0914      
+p10.t11          .              .            +INF            0.0914      
+p10.t12          .              .            +INF             .          
+p10.t13          .              .            +INF             .          
+p10.t14          .              .            +INF             .          
+p10.t15          .           145.2250        +INF             .          
+p10.t16          .              .            +INF             .          
+p10.t17          .              .            +INF             .          
+p10.t18          .           114.9037        +INF             .          
+p10.t19          .              .            +INF            0.0914      
+p10.t20          .              .            +INF             .          
+p10.t21          .              .            +INF            0.0914      
+p10.t22          .              .            +INF             .          
+p10.t23          .              .            +INF            0.0914      
+p10.t24          .              .            +INF            0.0914      
+
+---- VAR x  
+
+               LOWER          LEVEL          UPPER         MARGINAL
+
+p1 .t1           .              .             1.0000         EPS         
+p1 .t2           .              .             1.0000         EPS         
+p1 .t3           .              .             1.0000         EPS         
+p1 .t4           .             1.0000         1.0000        88.4995      
+p1 .t5           .             1.0000         1.0000         EPS         
+p1 .t6           .             1.0000         1.0000       123.9371      
+p1 .t7           .             1.0000         1.0000        88.4995      
+p1 .t8           .              .             1.0000         EPS         
+p1 .t9           .              .             1.0000         EPS         
+p1 .t10          .              .             1.0000         EPS         
+p1 .t11          .              .             1.0000         EPS         
+p1 .t12          .              .             1.0000         EPS         
+p1 .t13          .              .             1.0000         EPS         
+p1 .t14          .             1.0000         1.0000        87.2651      
+p1 .t15          .             1.0000         1.0000       123.9371      
+p1 .t16          .             1.0000         1.0000        88.4995      
+p1 .t17          .             1.0000         1.0000        88.4995      
+p1 .t18          .              .             1.0000         EPS         
+p1 .t19          .              .             1.0000         EPS         
+p1 .t20          .              .             1.0000         EPS         
+p1 .t21          .              .             1.0000         EPS         
+p1 .t22          .              .             1.0000         EPS         
+p1 .t23          .              .             1.0000         EPS         
+p1 .t24          .              .             1.0000         EPS         
+p2 .t1           .             1.0000         1.0000      -103.0257      
+p2 .t2           .              .             1.0000      -103.0257      
+p2 .t3           .             1.0000         1.0000         EPS         
+p2 .t4           .             1.0000         1.0000      -103.0257      
+p2 .t5           .              .             1.0000      -297.3651      
+p2 .t6           .              .             1.0000       -25.2068      
+p2 .t7           .             1.0000         1.0000      -103.0257      
+p2 .t8           .             1.0000         1.0000         EPS         
+p2 .t9           .             1.0000         1.0000         EPS         
+p2 .t10          .             1.0000         1.0000         EPS         
+p2 .t11          .             1.0000         1.0000         EPS         
+p2 .t12          .             1.0000         1.0000      -105.7363      
+p2 .t13          .             1.0000         1.0000      -105.7363      
+p2 .t14          .             1.0000         1.0000      -105.7363      
+p2 .t15          .             1.0000         1.0000       -25.2068      
+p2 .t16          .             1.0000         1.0000      -103.0257      
+p2 .t17          .             1.0000         1.0000      -103.0257      
+p2 .t18          .              .             1.0000       -25.2068      
+p2 .t19          .             1.0000         1.0000         EPS         
+p2 .t20          .             1.0000         1.0000      -103.0257      
+p2 .t21          .             1.0000         1.0000         EPS         
+p2 .t22          .             1.0000         1.0000      -105.7363      
+p2 .t23          .             1.0000         1.0000         EPS         
+p2 .t24          .             1.0000         1.0000         EPS         
+p3 .t1           .             1.0000         1.0000         1.3247      
+p3 .t2           .             1.0000         1.0000         1.3247      
+p3 .t3           .             1.0000         1.0000        51.6761      
+p3 .t4           .             1.0000         1.0000         1.3247      
+p3 .t5           .              .             1.0000      -187.3080      
+p3 .t6           .              .             1.0000         EPS         
+p3 .t7           .             1.0000         1.0000         1.3247      
+p3 .t8           .             1.0000         1.0000        51.6761      
+p3 .t9           .             1.0000         1.0000        51.6761      
+p3 .t10          .             1.0000         1.0000        51.6761      
+p3 .t11          .              .             1.0000         EPS         
+p3 .t12          .             1.0000         1.0000         EPS         
+p3 .t13          .             1.0000         1.0000         EPS         
+p3 .t14          .             1.0000         1.0000         EPS         
+p3 .t15          .             1.0000         1.0000        39.3569      
+p3 .t16          .              .             1.0000         EPS         
+p3 .t17          .              .             1.0000         EPS         
+p3 .t18          .              .             1.0000         EPS         
+p3 .t19          .             1.0000         1.0000        51.6761      
+p3 .t20          .             1.0000         1.0000         1.3247      
+p3 .t21          .             1.0000         1.0000        51.6761      
+p3 .t22          .             1.0000         1.0000         EPS         
+p3 .t23          .              .             1.0000         EPS         
+p3 .t24          .              .             1.0000         EPS         
+p4 .t1           .              .             1.0000         EPS         
+p4 .t2           .              .             1.0000         EPS         
+p4 .t3           .              .             1.0000         EPS         
+p4 .t4           .              .             1.0000         EPS         
+p4 .t5           .              .             1.0000         EPS         
+p4 .t6           .              .             1.0000         EPS         
+p4 .t7           .              .             1.0000         EPS         
+p4 .t8           .              .             1.0000         EPS         
+p4 .t9           .              .             1.0000         EPS         
+p4 .t10          .              .             1.0000         EPS         
+p4 .t11          .              .             1.0000         EPS         
+p4 .t12          .              .             1.0000         EPS         
+p4 .t13          .              .             1.0000         EPS         
+p4 .t14          .              .             1.0000         EPS         
+p4 .t15          .              .             1.0000         EPS         
+p4 .t16          .              .             1.0000         EPS         
+p4 .t17          .              .             1.0000         EPS         
+p4 .t18          .              .             1.0000         EPS         
+p4 .t19          .              .             1.0000         EPS         
+p4 .t20          .              .             1.0000         EPS         
+p4 .t21          .              .             1.0000         EPS         
+p4 .t22          .              .             1.0000         EPS         
+p4 .t23          .              .             1.0000         EPS         
+p4 .t24          .              .             1.0000         EPS         
+p5 .t1           .             1.0000         1.0000         EPS         
+p5 .t2           .             1.0000         1.0000         EPS         
+p5 .t3           .             1.0000         1.0000        44.6872      
+p5 .t4           .             1.0000         1.0000         EPS         
+p5 .t5           .              .             1.0000      -168.5888      
+p5 .t6           .              .             1.0000         EPS         
+p5 .t7           .             1.0000         1.0000         EPS         
+p5 .t8           .             1.0000         1.0000        44.6872      
+p5 .t9           .             1.0000         1.0000        44.6872      
+p5 .t10          .             1.0000         1.0000        44.6872      
+p5 .t11          .              .             1.0000         EPS         
+p5 .t12          .              .             1.0000        -2.3514      
+p5 .t13          .              .             1.0000        -2.3514      
+p5 .t14          .              .             1.0000        -2.3514      
+p5 .t15          .             1.0000         1.0000        33.7538      
+p5 .t16          .             1.0000         1.0000         EPS         
+p5 .t17          .             1.0000         1.0000         EPS         
+p5 .t18          .             1.0000         1.0000        33.7538      
+p5 .t19          .             1.0000         1.0000        44.6872      
+p5 .t20          .             1.0000         1.0000         EPS         
+p5 .t21          .              .             1.0000         EPS         
+p5 .t22          .              .             1.0000        -2.3514      
+p5 .t23          .              .             1.0000         EPS         
+p5 .t24          .              .             1.0000         EPS         
+p6 .t1           .              .             1.0000         EPS         
+p6 .t2           .              .             1.0000         EPS         
+p6 .t3           .              .             1.0000         EPS         
+p6 .t4           .              .             1.0000         EPS         
+p6 .t5           .              .             1.0000       -36.4014      
+p6 .t6           .              .             1.0000         EPS         
+p6 .t7           .              .             1.0000         EPS         
+p6 .t8           .              .             1.0000         EPS         
+p6 .t9           .              .             1.0000         EPS         
+p6 .t10          .              .             1.0000         EPS         
+p6 .t11          .              .             1.0000         EPS         
+p6 .t12          .              .             1.0000         EPS         
+p6 .t13          .              .             1.0000         EPS         
+p6 .t14          .              .             1.0000         EPS         
+p6 .t15          .              .             1.0000         EPS         
+p6 .t16          .              .             1.0000         EPS         
+p6 .t17          .              .             1.0000         EPS         
+p6 .t18          .              .             1.0000         EPS         
+p6 .t19          .              .             1.0000         EPS         
+p6 .t20          .              .             1.0000         EPS         
+p6 .t21          .              .             1.0000         EPS         
+p6 .t22          .              .             1.0000         EPS         
+p6 .t23          .              .             1.0000         EPS         
+p6 .t24          .              .             1.0000         EPS         
+p7 .t1           .              .             1.0000         EPS         
+p7 .t2           .              .             1.0000         EPS         
+p7 .t3           .              .             1.0000         EPS         
+p7 .t4           .              .             1.0000         EPS         
+p7 .t5           .              .             1.0000         EPS         
+p7 .t6           .              .             1.0000         EPS         
+p7 .t7           .              .             1.0000         EPS         
+p7 .t8           .              .             1.0000         EPS         
+p7 .t9           .              .             1.0000         EPS         
+p7 .t10          .              .             1.0000         EPS         
+p7 .t11          .              .             1.0000         EPS         
+p7 .t12          .              .             1.0000         EPS         
+p7 .t13          .              .             1.0000         EPS         
+p7 .t14          .              .             1.0000         EPS         
+p7 .t15          .              .             1.0000         EPS         
+p7 .t16          .              .             1.0000         EPS         
+p7 .t17          .              .             1.0000         EPS         
+p7 .t18          .              .             1.0000         EPS         
+p7 .t19          .              .             1.0000         EPS         
+p7 .t20          .              .             1.0000         EPS         
+p7 .t21          .              .             1.0000         EPS         
+p7 .t22          .              .             1.0000         EPS         
+p7 .t23          .              .             1.0000         EPS         
+p7 .t24          .              .             1.0000         EPS         
+p8 .t1           .              .             1.0000       -53.4979      
+p8 .t2           .              .             1.0000       -53.4979      
+p8 .t3           .              .             1.0000         EPS         
+p8 .t4           .              .             1.0000       -53.4979      
+p8 .t5           .              .             1.0000      -240.8839      
+p8 .t6           .              .             1.0000         EPS         
+p8 .t7           .              .             1.0000       -53.4979      
+p8 .t8           .              .             1.0000         EPS         
+p8 .t9           .              .             1.0000         EPS         
+p8 .t10          .              .             1.0000         EPS         
+p8 .t11          .              .             1.0000         EPS         
+p8 .t12          .              .             1.0000       -56.1115      
+p8 .t13          .              .             1.0000       -56.1115      
+p8 .t14          .              .             1.0000       -56.1115      
+p8 .t15          .             1.0000         1.0000        10.7683      
+p8 .t16          .              .             1.0000       -53.4979      
+p8 .t17          .              .             1.0000       -53.4979      
+p8 .t18          .              .             1.0000         EPS         
+p8 .t19          .              .             1.0000         EPS         
+p8 .t20          .              .             1.0000       -53.4979      
+p8 .t21          .              .             1.0000         EPS         
+p8 .t22          .              .             1.0000       -56.1115      
+p8 .t23          .              .             1.0000         EPS         
+p8 .t24          .              .             1.0000         EPS         
+p9 .t1           .              .             1.0000         EPS         
+p9 .t2           .              .             1.0000         EPS         
+p9 .t3           .              .             1.0000         EPS         
+p9 .t4           .              .             1.0000         EPS         
+p9 .t5           .              .             1.0000         EPS         
+p9 .t6           .              .             1.0000         EPS         
+p9 .t7           .              .             1.0000         EPS         
+p9 .t8           .              .             1.0000         EPS         
+p9 .t9           .              .             1.0000         EPS         
+p9 .t10          .              .             1.0000         EPS         
+p9 .t11          .              .             1.0000         EPS         
+p9 .t12          .              .             1.0000         EPS         
+p9 .t13          .              .             1.0000         EPS         
+p9 .t14          .              .             1.0000         EPS         
+p9 .t15          .              .             1.0000         EPS         
+p9 .t16          .              .             1.0000         EPS         
+p9 .t17          .              .             1.0000         EPS         
+p9 .t18          .              .             1.0000         EPS         
+p9 .t19          .              .             1.0000         EPS         
+p9 .t20          .              .             1.0000         EPS         
+p9 .t21          .              .             1.0000         EPS         
+p9 .t22          .              .             1.0000         EPS         
+p9 .t23          .              .             1.0000         EPS         
+p9 .t24          .              .             1.0000         EPS         
+p10.t1           .              .             1.0000       -64.6312      
+p10.t2           .              .             1.0000       -64.6312      
+p10.t3           .              .             1.0000         EPS         
+p10.t4           .             1.0000         1.0000       -64.6312      
+p10.t5           .              .             1.0000      -226.0366      
+p10.t6           .             1.0000         1.0000         EPS         
+p10.t7           .             1.0000         1.0000       -64.6312      
+p10.t8           .              .             1.0000         EPS         
+p10.t9           .              .             1.0000         EPS         
+p10.t10          .              .             1.0000         EPS         
+p10.t11          .              .             1.0000         EPS         
+p10.t12          .              .             1.0000       -66.8824      
+p10.t13          .              .             1.0000       -66.8824      
+p10.t14          .              .             1.0000       -66.8824      
+p10.t15          .             1.0000         1.0000         EPS         
+p10.t16          .              .             1.0000       -64.6312      
+p10.t17          .              .             1.0000       -64.6312      
+p10.t18          .             1.0000         1.0000         EPS         
+p10.t19          .              .             1.0000         EPS         
+p10.t20          .              .             1.0000       -64.6312      
+p10.t21          .              .             1.0000         EPS         
+p10.t22          .              .             1.0000       -66.8824      
+p10.t23          .              .             1.0000         EPS         
+p10.t24          .              .             1.0000         EPS         
+
+---- VAR count  
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+t1           .              .             1.0000         EPS         
+t2           .              .             1.0000         EPS         
+t3           .              .             1.0000         EPS         
+t4           .             1.0000         1.0000         EPS         
+t5           .              .             1.0000         EPS         
+t6           .              .             1.0000         EPS         
+t7           .             1.0000         1.0000         EPS         
+t8           .              .             1.0000         EPS         
+t9           .              .             1.0000         EPS         
+t10          .              .             1.0000         EPS         
+t11          .              .             1.0000         EPS         
+t12          .              .             1.0000         EPS         
+t13          .              .             1.0000         EPS         
+t14          .              .             1.0000         EPS         
+t15          .             1.0000         1.0000         EPS         
+t16          .              .             1.0000         EPS         
+t17          .              .             1.0000         EPS         
+t18          .              .             1.0000         EPS         
+t19          .              .             1.0000         EPS         
+t20          .              .             1.0000         EPS         
+t21          .              .             1.0000         EPS         
+t22          .              .             1.0000         EPS         
+t23          .              .             1.0000         EPS         
+t24          .              .             1.0000         EPS         
+
+---- VAR y  
+
+              LOWER          LEVEL          UPPER         MARGINAL
+
+p1.t1           .              .             1.0000         EPS         
+p1.t2           .              .             1.0000         EPS         
+p1.t3           .              .             1.0000         EPS         
+p1.t4           .             1.0000         1.0000         EPS         
+p1.t5           .              .             1.0000         EPS         
+p1.t6           .              .             1.0000         EPS         
+p1.t7           .              .             1.0000         EPS         
+p1.t8           .              .             1.0000         EPS         
+p1.t9           .              .             1.0000         EPS         
+p1.t10          .              .             1.0000         EPS         
+p1.t11          .              .             1.0000         EPS         
+p1.t12          .              .             1.0000         EPS         
+p1.t13          .              .             1.0000         EPS         
+p1.t14          .             1.0000         1.0000         EPS         
+p1.t15          .              .             1.0000         EPS         
+p1.t16          .              .             1.0000         EPS         
+p1.t17          .              .             1.0000         EPS         
+p1.t18          .              .             1.0000         EPS         
+p1.t19          .              .             1.0000         EPS         
+p1.t20          .              .             1.0000         EPS         
+p1.t21          .              .             1.0000         EPS         
+p1.t22          .              .             1.0000         EPS         
+p1.t23          .              .             1.0000         EPS         
+p1.t24          .              .             1.0000         EPS         
+p3.t1           .             1.0000         1.0000         EPS         
+p3.t2           .              .             1.0000         EPS         
+p3.t3           .              .             1.0000         EPS         
+p3.t4           .              .             1.0000         EPS         
+p3.t5           .              .             1.0000         EPS         
+p3.t6           .              .             1.0000         EPS         
+p3.t7           .             1.0000         1.0000         EPS         
+p3.t8           .              .             1.0000         EPS         
+p3.t9           .              .             1.0000         EPS         
+p3.t10          .              .             1.0000         EPS         
+p3.t11          .              .             1.0000         EPS         
+p3.t12          .             1.0000         1.0000         EPS         
+p3.t13          .              .             1.0000         EPS         
+p3.t14          .              .             1.0000         EPS         
+p3.t15          .              .             1.0000         EPS         
+p3.t16          .              .             1.0000         EPS         
+p3.t17          .              .             1.0000         EPS         
+p3.t18          .              .             1.0000         EPS         
+p3.t19          .             1.0000         1.0000         EPS         
+p3.t20          .              .             1.0000         EPS         
+p3.t21          .              .             1.0000         EPS         
+p3.t22          .              .             1.0000         EPS         
+p3.t23          .              .             1.0000         EPS         
+p3.t24          .              .             1.0000         EPS         
+p5.t1           .             1.0000         1.0000         EPS         
+p5.t2           .              .             1.0000         EPS         
+p5.t3           .              .             1.0000         EPS         
+p5.t4           .              .             1.0000         EPS         
+p5.t5           .              .             1.0000         EPS         
+p5.t6           .              .             1.0000         EPS         
+p5.t7           .             1.0000         1.0000         EPS         
+p5.t8           .              .             1.0000         EPS         
+p5.t9           .              .             1.0000         EPS         
+p5.t10          .              .             1.0000         EPS         
+p5.t11          .              .             1.0000         EPS         
+p5.t12          .              .             1.0000         EPS         
+p5.t13          .              .             1.0000         EPS         
+p5.t14          .              .             1.0000         EPS         
+p5.t15          .             1.0000         1.0000         EPS         
+p5.t16          .              .             1.0000         EPS         
+p5.t17          .              .             1.0000         EPS         
+p5.t18          .              .             1.0000         EPS         
+p5.t19          .              .             1.0000         EPS         
+p5.t20          .              .             1.0000         EPS         
+p5.t21          .              .             1.0000         EPS         
+p5.t22          .              .             1.0000         EPS         
+p5.t23          .              .             1.0000         EPS         
+p5.t24          .              .             1.0000         EPS         
+p7.t1           .              .             1.0000         EPS         
+p7.t2           .              .             1.0000         EPS         
+p7.t3           .              .             1.0000         EPS         
+p7.t4           .              .             1.0000         EPS         
+p7.t5           .              .             1.0000         EPS         
+p7.t6           .              .             1.0000         EPS         
+p7.t7           .              .             1.0000         EPS         
+p7.t8           .              .             1.0000         EPS         
+p7.t9           .              .             1.0000         EPS         
+p7.t10          .              .             1.0000         EPS         
+p7.t11          .              .             1.0000         EPS         
+p7.t12          .              .             1.0000         EPS         
+p7.t13          .              .             1.0000         EPS         
+p7.t14          .              .             1.0000         EPS         
+p7.t15          .              .             1.0000         EPS         
+p7.t16          .              .             1.0000         EPS         
+p7.t17          .              .             1.0000         EPS         
+p7.t18          .              .             1.0000         EPS         
+p7.t19          .              .             1.0000         EPS         
+p7.t20          .              .             1.0000         EPS         
+p7.t21          .              .             1.0000         EPS         
+p7.t22          .              .             1.0000         EPS         
+p7.t23          .              .             1.0000         EPS         
+p7.t24          .              .             1.0000         EPS         
+p9.t1           .              .             1.0000         EPS         
+p9.t2           .              .             1.0000         EPS         
+p9.t3           .              .             1.0000         EPS         
+p9.t4           .              .             1.0000         EPS         
+p9.t5           .              .             1.0000         EPS         
+p9.t6           .              .             1.0000         EPS         
+p9.t7           .              .             1.0000         EPS         
+p9.t8           .              .             1.0000         EPS         
+p9.t9           .              .             1.0000         EPS         
+p9.t10          .              .             1.0000         EPS         
+p9.t11          .              .             1.0000         EPS         
+p9.t12          .              .             1.0000         EPS         
+p9.t13          .              .             1.0000         EPS         
+p9.t14          .              .             1.0000         EPS         
+p9.t15          .              .             1.0000         EPS         
+p9.t16          .              .             1.0000         EPS         
+p9.t17          .              .             1.0000         EPS         
+p9.t18          .              .             1.0000         EPS         
+p9.t19          .              .             1.0000         EPS         
+p9.t20          .              .             1.0000         EPS         
+p9.t21          .              .             1.0000         EPS         
+p9.t22          .              .             1.0000         EPS         
+p9.t23          .              .             1.0000         EPS         
+p9.t24          .              .             1.0000         EPS         
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR TotalCost         -INF        73087.2112        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/09/23 23:42:56 Page 8
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----     66 SET oper  
+
+p1 .t4 
+p1 .t5 
+p1 .t6 
+p1 .t7 
+p1 .t14
+p1 .t15
+p1 .t16
+p1 .t17
+p2 .t1 
+p2 .t3 
+p2 .t4 
+p2 .t7 
+p2 .t8 
+p2 .t9 
+p2 .t10
+p2 .t11
+p2 .t12
+p2 .t13
+p2 .t14
+p2 .t15
+p2 .t16
+p2 .t17
+p2 .t19
+p2 .t20
+p2 .t21
+p2 .t22
+p2 .t23
+p2 .t24
+p3 .t1 
+p3 .t2 
+p3 .t3 
+p3 .t4 
+p3 .t7 
+p3 .t8 
+p3 .t9 
+p3 .t10
+p3 .t12
+p3 .t13
+p3 .t14
+p3 .t15
+p3 .t19
+p3 .t20
+p3 .t21
+p3 .t22
+p5 .t1 
+p5 .t2 
+p5 .t3 
+p5 .t4 
+p5 .t7 
+p5 .t8 
+p5 .t9 
+p5 .t10
+p5 .t15
+p5 .t16
+p5 .t17
+p5 .t18
+p5 .t19
+p5 .t20
+p8 .t15
+p10.t4 
+p10.t6 
+p10.t7 
+p10.t15
+p10.t18
+
+
+
+EXECUTION TIME       =        0.188 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+
+
+USER: Introduction to Optimization (CS/ISyE/ECE 524) G230906|0002AS-GEN
+      UW-Madison, CS Dept., Fall 2023, Prof. Ferris              DCE850
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      C:\Users\lanya\Documents\GAMS\Studio\workspace\hw7-2.gms
+Output     C:\Users\lanya\Documents\GAMS\Studio\workspace\hw7-2.lst

@@ -1,0 +1,548 @@
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:30:10 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   1  *2.1
+   2  sets
+   3      nodes /A, B, C, D, E, F, G, H, I, J/
+   4      doors /d1*d8/;
+   5  alias(nodes, n);
+   6   
+   7  * Mapping of which doors cover which nodes
+   8  table cover1(n,doors)
+   9         d1  d2  d3  d4  d5  d6  d7  d8
+  10      A  1   0   1   1   0   0   0   1
+  11      B  0   0   1   0   0   0   0   0
+  12      C  0   0   0   1   0   0   0   0
+  13      D  0   0   0   0   0   0   1   0
+  14      E  0   0   0   0   0   1   1   0
+  15      F  0   0   0   0   1   1   0   1
+  16      G  0   1   0   0   1   0   0   0
+  17      H  0   1   0   0   0   0   0   0
+  18      I  1   0   0   0   0   0   0   0
+  19      J  1   0   0   0   0   0   0   0;
+  20   
+  21  binary Variable x1(doors);
+  22   
+  23  variable totalGuards;
+  24   
+  25  equations
+  26      guardObjective,
+  27      coverEachNode(n);
+  28   
+  29  guardObjective..
+  30  totalGuards =e= sum(doors, x1(doors));
+  31   
+  32  coverEachNode(n)..
+  33  sum(doors$cover1(n,doors), x1(doors)) =g= 1;
+  34   
+  35  model museumGuardProblem /all/;
+  36   
+  37  solve museumGuardProblem using MIP minimizing totalGuards;
+  38   
+  39  option limcol=0;
+  40  display x1.l,totalGuards.l;
+  41   
+  42  *2.2
+  43  set s "room set" /A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,W,X,Y,Z/;
+  44  set d "doors" /d1*d28/;
+  45  alias (s,i);
+  46   
+  47  set cover2(i,d) "room i is seen from door d"
+  48  /A.d1,A.d2,A.d3,
+  49   B.d3,B.d6,
+  50   C.d6,C.d10,C.d11,
+  51   D.d10,
+  52   E.d7,E.d11,E.d17,E.d19,
+  53   F.d7,
+  54   G.d19,G.d24,
+  55   H.d24,
+  56   I.d16,I.d17,I.d18,
+  57   J.d18,
+  58   K.d15,K.d16,K.d23,
+  59   L.d23,L.d25,L.d26,
+  60   M.d25,
+  61   N.d26,
+  62   O.d14,O.d15,
+  63   P.d12,P.d13,P.d14,
+  64   Q.d21,Q.d27,
+  65   R.d27,R.d28,
+  66   S.d20,S.d28,
+  67   T.d13,T.d20,
+  68   U.d12,U.d8,U.d9,
+  69   W.d9,
+  70   X.d4,X.d8,
+  71   Y.d4,
+  72   Z.d2,Z.d5/;
+  73   
+  74  binary variables x2(d);
+  75  variable totalUsed;
+  76   
+  77  equation
+  78  coverConstraint(i)
+  79  objective;
+  80   
+  81  objective..
+  82      totalUsed =e= sum(d, x2(d));
+  83   
+  84  coverConstraint(i)..
+  85      sum(d$cover2(i,d), x2(d)) =g= 1;
+  86   
+  87  model setcover /all/;
+  88   
+  89  setcover.optca = 0.999;
+  90   
+  91  solve setcover using mip minimizing totalUsed;
+  92   
+  93  display x2.l,totalUsed.l;
+  94   
+  95  set stations(d, s) 'stations showing guards placed at doors';
+  96   
+  97  loop((d)$(x2.l(d) > 0.5),
+  98      loop((i, s)$(cover2(i, d) and ord(i) < ord(s) and cover2(s, d)),
+  99          stations(d, i) = yes;
+ 100          stations(d, s) = yes;
+ 101      )
+ 102  );
+ 103   
+ 104  display stations;
+ 105   
+
+
+COMPILATION TIME     =        0.000 SECONDS      3 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:30:10 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE museumGuardProblem Using MIP From line 37
+
+
+---- guardObjective  =E=  
+
+guardObjective..  - x1(d1) - x1(d2) - x1(d3) - x1(d4) - x1(d5) - x1(d6) - x1(d7) - x1(d8) + totalGuards =E= 0 ; (LHS = 0)
+     
+
+---- coverEachNode  =G=  
+
+coverEachNode(A)..  x1(d1) + x1(d3) + x1(d4) + x1(d8) =G= 1 ; (LHS = 0, INFES = 1 ****)
+     
+coverEachNode(B)..  x1(d3) =G= 1 ; (LHS = 0, INFES = 1 ****)
+     
+coverEachNode(C)..  x1(d4) =G= 1 ; (LHS = 0, INFES = 1 ****)
+     
+REMAINING 7 ENTRIES SKIPPED
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:30:10 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE museumGuardProblem Using MIP From line 37
+
+
+---- x1  
+
+x1(d1)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+       -1       guardObjective
+        1       coverEachNode(A)
+        1       coverEachNode(I)
+        1       coverEachNode(J)
+
+x1(d2)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+       -1       guardObjective
+        1       coverEachNode(G)
+        1       coverEachNode(H)
+
+x1(d3)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+       -1       guardObjective
+        1       coverEachNode(A)
+        1       coverEachNode(B)
+
+REMAINING 5 ENTRIES SKIPPED
+
+---- totalGuards  
+
+totalGuards
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+        1       guardObjective
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:30:10 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE museumGuardProblem Using MIP From line 37
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 1.000E+00, 1.000E+00] - Zero values observed as well
+Bound     [min, max] : [ 1.000E+00, 1.000E+00] - Zero values observed as well
+Matrix    [min, max] : [ 1.000E+00, 1.000E+00]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:30:10 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE museumGuardProblem Using MIP From line 37
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           2     SINGLE EQUATIONS           11
+BLOCKS OF VARIABLES           2     SINGLE VARIABLES            9
+NON ZERO ELEMENTS            26     DISCRETE VARIABLES          8
+
+
+GENERATION TIME      =        0.015 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:30:10 Page 6
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE museumGuardProblem Using MIP From line 37
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   museumGuardProblem   OBJECTIVE  totalGuards
+     TYPE    MIP                  DIRECTION  MINIMIZE
+     SOLVER  CPLEX                FROM LINE  37
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE                6.0000
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT         0    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.50 Mb (peak 0.50 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.00 Mb)
+--- Starting Cplex
+
+
+--- MIP status (101): integer optimal solution.
+--- Cplex Time: 0.00sec (det. 0.01 ticks)
+
+--- Returning a primal only solution to GAMS (marginals all set to NA).
+--- Fixing integer variables and solving final LP...
+
+
+--- Fixed MIP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.01 ticks)
+
+
+Proven optimal solution
+MIP Solution:            6.000000    (0 iterations, 0 nodes)
+Final Solve:             6.000000    (0 iterations)
+
+Best possible:           6.000000
+Absolute gap:            0.000000
+Relative gap:            0.000000
+
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU guardObje~          .              .              .             1.0000      
+
+---- EQU coverEachNode  
+
+         LOWER          LEVEL          UPPER         MARGINAL
+
+A         1.0000         4.0000        +INF             .          
+B         1.0000         1.0000        +INF             .          
+C         1.0000         1.0000        +INF             .          
+D         1.0000         1.0000        +INF             .          
+E         1.0000         1.0000        +INF             .          
+F         1.0000         1.0000        +INF             .          
+G         1.0000         1.0000        +INF             .          
+H         1.0000         1.0000        +INF             .          
+I         1.0000         1.0000        +INF             .          
+J         1.0000         1.0000        +INF             .          
+
+---- VAR x1  
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+d1          .             1.0000         1.0000         1.0000      
+d2          .             1.0000         1.0000         1.0000      
+d3          .             1.0000         1.0000         1.0000      
+d4          .             1.0000         1.0000         1.0000      
+d5          .              .             1.0000         1.0000      
+d6          .              .             1.0000         1.0000      
+d7          .             1.0000         1.0000         1.0000      
+d8          .             1.0000         1.0000         1.0000      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR totalGuar~        -INF            6.0000        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:30:10 Page 7
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----     40 VARIABLE x1.L  
+
+d1 1.000,    d2 1.000,    d3 1.000,    d4 1.000,    d7 1.000,    d8 1.000
+
+
+----     40 VARIABLE totalGuards.L         =        6.000  
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:30:10 Page 8
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE setcover Using MIP From line 91
+
+
+---- guardObjective  =E=  
+
+guardObjective..  - x1(d1) - x1(d2) - x1(d3) - x1(d4) - x1(d5) - x1(d6) - x1(d7) - x1(d8) + totalGuards =E= 0 ; (LHS = 0)
+     
+
+---- coverEachNode  =G=  
+
+coverEachNode(A)..  x1(d1) + x1(d3) + x1(d4) + x1(d8) =G= 1 ; (LHS = 4)
+     
+coverEachNode(B)..  x1(d3) =G= 1 ; (LHS = 1)
+     
+coverEachNode(C)..  x1(d4) =G= 1 ; (LHS = 1)
+     
+REMAINING 7 ENTRIES SKIPPED
+
+
+---- coverConstraint  =G=  
+
+coverConstraint(A)..  x2(d1) + x2(d2) + x2(d3) =G= 1 ; (LHS = 0, INFES = 1 ****)
+     
+coverConstraint(B)..  x2(d3) + x2(d6) =G= 1 ; (LHS = 0, INFES = 1 ****)
+     
+coverConstraint(C)..  x2(d6) + x2(d10) + x2(d11) =G= 1 ; (LHS = 0, INFES = 1 ****)
+     
+REMAINING 22 ENTRIES SKIPPED
+
+
+---- objective  =E=  
+
+objective..  - x2(d1) - x2(d2) - x2(d3) - x2(d4) - x2(d5) - x2(d6) - x2(d7) - x2(d8) - x2(d9) - x2(d10) - x2(d11) - x2(d12) - x2(d13) - x2(d14) - x2(d15) - x2(d16) - x2(d17) - x2(d18) - x2(d19) - x2(d20) - x2(d21) - x2(d22) - x2(d23) - x2(d24) - x2(d25) - x2(d26) - x2(d27) - x2(d28) + totalUsed =E= 0 ; (LHS = 0)
+     
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:30:10 Page 9
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE setcover Using MIP From line 91
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 1.000E+00, 1.000E+00] - Zero values observed as well
+Bound     [min, max] : [ 1.000E+00, 1.000E+00] - Zero values observed as well
+Matrix    [min, max] : [ 1.000E+00, 1.000E+00]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:30:10 Page 10
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE setcover Using MIP From line 91
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           4     SINGLE EQUATIONS           37
+BLOCKS OF VARIABLES           4     SINGLE VARIABLES           38
+NON ZERO ELEMENTS           106     DISCRETE VARIABLES         36
+
+
+GENERATION TIME      =        0.000 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:30:10 Page 11
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE setcover Using MIP From line 91
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   setcover            OBJECTIVE  totalUsed
+     TYPE    MIP                 DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  91
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE               14.0000
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT         0    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.51 Mb (peak 0.51 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.00 Mb)
+--- Starting Cplex
+
+
+--- MIP status (101): integer optimal solution.
+--- Cplex Time: 0.00sec (det. 0.05 ticks)
+
+--- Returning a primal only solution to GAMS (marginals all set to NA).
+--- Fixing integer variables and solving final LP...
+
+
+--- Fixed MIP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.03 ticks)
+
+
+Proven optimal solution
+MIP Solution:           14.000000    (0 iterations, 0 nodes)
+Final Solve:            14.000000    (0 iterations)
+
+Best possible:          14.000000
+Absolute gap:            0.000000
+Relative gap:            0.000000
+
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU guardObje~          .              .              .             EPS         
+
+---- EQU coverEachNode  
+
+         LOWER          LEVEL          UPPER         MARGINAL
+
+A         1.0000         4.0000        +INF             .          
+B         1.0000         1.0000        +INF             .          
+C         1.0000         1.0000        +INF             .          
+D         1.0000         1.0000        +INF             .          
+E         1.0000         2.0000        +INF             .          
+F         1.0000         3.0000        +INF             .          
+G         1.0000         2.0000        +INF             .          
+H         1.0000         1.0000        +INF             .          
+I         1.0000         1.0000        +INF             .          
+J         1.0000         1.0000        +INF             .          
+
+---- EQU coverConstraint  
+
+         LOWER          LEVEL          UPPER         MARGINAL
+
+A         1.0000         2.0000        +INF             .          
+B         1.0000         1.0000        +INF             .          
+C         1.0000         1.0000        +INF             .          
+D         1.0000         1.0000        +INF             .          
+E         1.0000         1.0000        +INF             .          
+F         1.0000         1.0000        +INF             .          
+G         1.0000         1.0000        +INF             .          
+H         1.0000         1.0000        +INF             .          
+I         1.0000         1.0000        +INF             .          
+J         1.0000         1.0000        +INF             .          
+K         1.0000         1.0000        +INF             .          
+L         1.0000         2.0000        +INF             .          
+M         1.0000         1.0000        +INF             .          
+N         1.0000         1.0000        +INF             .          
+O         1.0000         1.0000        +INF             .          
+P         1.0000         1.0000        +INF             .          
+Q         1.0000         1.0000        +INF             .          
+R         1.0000         1.0000        +INF             .          
+S         1.0000         1.0000        +INF             .          
+T         1.0000         2.0000        +INF             .          
+U         1.0000         1.0000        +INF             .          
+W         1.0000         1.0000        +INF             .          
+X         1.0000         1.0000        +INF             .          
+Y         1.0000         1.0000        +INF             .          
+Z         1.0000         1.0000        +INF             .          
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU objective           .              .              .             1.0000      
+
+---- VAR x1  
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+d1          .             1.0000         1.0000         EPS         
+d2          .             1.0000         1.0000         EPS         
+d3          .             1.0000         1.0000         EPS         
+d4          .             1.0000         1.0000         EPS         
+d5          .             1.0000         1.0000         EPS         
+d6          .             1.0000         1.0000         EPS         
+d7          .             1.0000         1.0000         EPS         
+d8          .             1.0000         1.0000         EPS         
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR totalGuar~        -INF            8.0000        +INF             .          
+
+---- VAR x2  
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+d1           .              .             1.0000         1.0000      
+d2           .             1.0000         1.0000         1.0000      
+d3           .             1.0000         1.0000         1.0000      
+d4           .             1.0000         1.0000         1.0000      
+d5           .              .             1.0000         1.0000      
+d6           .              .             1.0000         1.0000      
+d7           .             1.0000         1.0000         1.0000      
+d8           .              .             1.0000         1.0000      
+d9           .             1.0000         1.0000         1.0000      
+d10          .             1.0000         1.0000         1.0000      
+d11          .              .             1.0000         1.0000      
+d12          .              .             1.0000         1.0000      
+d13          .             1.0000         1.0000         1.0000      
+d14          .              .             1.0000         1.0000      
+d15          .             1.0000         1.0000         1.0000      
+d16          .              .             1.0000         1.0000      
+d17          .              .             1.0000         1.0000      
+d18          .             1.0000         1.0000         1.0000      
+d19          .              .             1.0000         1.0000      
+d20          .             1.0000         1.0000         1.0000      
+d21          .              .             1.0000         1.0000      
+d22          .              .             1.0000         1.0000      
+d23          .              .             1.0000         1.0000      
+d24          .             1.0000         1.0000         1.0000      
+d25          .             1.0000         1.0000         1.0000      
+d26          .             1.0000         1.0000         1.0000      
+d27          .             1.0000         1.0000         1.0000      
+d28          .              .             1.0000         1.0000      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR totalUsed         -INF           14.0000        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:30:10 Page 12
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----     93 VARIABLE x2.L  
+
+d2  1.000,    d3  1.000,    d4  1.000,    d7  1.000,    d9  1.000,    d10 1.000,    d13 1.000,    d15 1.000,    d18 1.000,    d20 1.000,    d24 1.000,    d25 1.000,    d26 1.000,    d27 1.000
+
+
+----     93 VARIABLE totalUsed.L           =       14.000  
+
+----    104 SET stations  stations showing guards placed at doors
+
+              A           B           C           D           E           F           G           H           I           J           K           L           M           N           O           P           Q           R           S           T           U           W           X           Y           Z
+
+d2          YES                                                                                                                                                                                                                                                                                             YES
+d3          YES         YES
+d4                                                                                                                                                                                                                                                                                  YES         YES
+d7                                                          YES         YES
+d9                                                                                                                                                                                                                                                          YES         YES
+d10                                 YES         YES
+d13                                                                                                                                                                                             YES                                             YES
+d15                                                                                                                                 YES                                             YES
+d18                                                                                                         YES         YES
+d20                                                                                                                                                                                                                                 YES         YES
+d24                                                                                 YES         YES
+d25                                                                                                                                             YES         YES
+d26                                                                                                                                             YES                     YES
+d27                                                                                                                                                                                                         YES         YES
+
+
+
+EXECUTION TIME       =        0.094 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+
+
+USER: Introduction to Optimization (CS/ISyE/ECE 524) G230906|0002AS-GEN
+      UW-Madison, CS Dept., Fall 2023, Prof. Ferris              DCE850
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      D:\GAMS\CODE\hw6-2.gms
+Output     D:\GAMS\CODE\hw6-2.lst

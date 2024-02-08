@@ -1,0 +1,3135 @@
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   1  *1.1
+   2  set t/t1*t3/
+   3      p/salsa, ketchup, tomato-paste/
+   4      r/tomatoes, sugar, labor, spices/
+   5      sc/s1*s4/;
+   6   
+   7  set s(sc);
+   8   
+   9  table c(p,t)
+  10                 t1      t2      t3
+  11  salsa         2.5     2.75     3
+  12  ketchup       1.5     1.75     2.0
+  13  tomato-paste  1.0     1.1      1.2;
+  14   
+  15  table a(p,r)
+  16                tomatoes  sugar  labor  spices
+  17  salsa            0.5     1.0    1.0    3.0
+  18  ketchup          0.5     0.5    0.8    1.0
+  19  tomato-paste     1.0      0     0.5    0.25 ;
+  20   
+  21  parameter alpha(p)
+  22                  /"tomato-paste" 0.5, "ketchup" 0.25, "salsa" 0.2/
+  23   
+  24            beta(p)
+  25                 /"tomato-Paste" 4.0, "ketchup" 6.0, "salsa" 12.0/
+  26   
+  27            b(R)
+  28                /tomatoes 250, sugar 300, labor 200, spices 100/
+  29            g(R)
+  30                /tomatoes 0.5, sugar 1.0, labor 2.0, spices 1.0/
+  31            rho(sc)
+  32                /s1 0.15,s2 0.4,s3 0.15,s4 0.3/
+  33   
+  34            demand(P,T);
+  35   
+  36  table d(p,t,sc)
+  37                     s1         s2         s3        s4
+  38  salsa.t1            5          5          5         5
+  39  ketchup.t1         30         30         30        30
+  40  tomato-paste.t1   100        100        100       100
+  41  salsa.t2            5          5         20        20
+  42  ketchup.t2         30         30         40        40
+  43  tomato-paste.t2   100        100        200       200
+  44  salsa.t3            5         20          5        20
+  45  ketchup.t3         30         40         30        40
+  46  tomato-paste.t3   100        200        100       200;
+  47   
+  48  parameter results(*);
+  49  positive variable
+  50                 x(p,t)
+  51                 y(r,t,sc)
+  52                 sur(p,t,sc)
+  53                 un(p,t,sc)
+  54                 x_d(p,t)
+  55                 y_d(r,t)
+  56                 sur_d(p,t)
+  57                 un_d(p,t);
+  58   
+  59  variable tc,tc_d,tc_vss;
+  60   
+  61  demand(P,T)= sum(sc, rho(sc)*d(P,T,sc));
+  62  *display demand;
+  63   
+  64  equations
+  65            obj
+  66            obj_d
+  67            obj_vss
+  68            res
+  69            res_d
+  70            res_vss
+  71            dem
+  72            dem_d
+  73            dem_vss;
+  74  obj..
+  75   tC =e= sum((P,T), (c(P, T) * x(P, T))) + sum((sc,p,t),rho(sc)* alpha(P) * sur(p,t,sc)) +
+  76      sum((sc,p,t),beta(P)*un(p,t,sc)*rho(sc)) + sum((r,sc,t),y(r,t,sc)*g(r)*rho(sc));
+  77   
+  78  obj_d..
+  79   tc_d =e= sum((P,T), (c(P, T) * x_d(P, T)) +  (alpha(P) * sur_d(p,t)) +
+  80     (beta(P)*un_d(p,t))) + sum((r,t),y_d(r,t)*g(r));
+  81   
+  82  obj_vss..
+  83   tC_vss =e= sum((P,T), (c(P, T) * x(P, T))) + sum((s,p,t),rho(s)* alpha(P) * sur(p,t,s)) +
+  84      sum((s,p,t),beta(P)*un(p,t,s)*rho(s)) + sum((r,s,t),y(r,t,s)*g(r)*rho(s));
+  85   
+  86  res(r,sc,T)..
+  87   sum(p,x(p,t)*a(p,r))=l=b(r)+y(r,t,sc);
+  88   
+  89  res_d(r,T)..
+  90   sum(p,x_d(p,t)*a(p,r))=l=b(r)+y_d(r,t);
+  91   
+  92  res_vss(r,s,T)..
+  93   sum(p,x(p,t)*a(p,r))=l=b(r)+y(r,t,s);
+  94   
+  95  dem(p,t,sc)..
+  96   x(p,t)+un(p,t,sc)+sur(p,t-1,sc)=e=d(P,T,sc)+sur(p,t,sc);
+  97   
+  98  dem_d(p,t)..
+  99   x_d(p,t)+un_d(p,t)+sur_d(p,t-1)=e=demand(P,T)+sur_d(p,t);
+ 100   
+ 101  dem_vss(p,t,s)..
+ 102   x(p,t)+un(p,t,s)+sur(p,t-1,s)=e=d(P,T,S)+sur(p,t,s);
+ 103   
+ 104  model TTT /res_d,obj_d,dem_d/;
+ 105   
+ 106  solve TTT using lp minimizing tc_d;
+ 107   
+ 108  results('MeanValue')=tc_d.l;
+ 109   
+ 110  model TTT_d /res,dem,obj/;
+ 111  solve TTT_d using lp minimizing tc;
+ 112  results('Stochastic')=tc.l;
+ 113  model TTT_vss /res_vss,dem_vss,obj_vss/;
+ 114   
+ 115  *1.2
+ 116  s(sc) = yes;
+ 117  scalar vss;
+ 118  x.fx(p,t) = x_d.l(p,t);
+ 119  solve TTT_vss using lp minimizing tc_vss;
+ 120  display tc_vss.l;
+ 121  vss = -tc_vss.l;
+ 122   
+ 123  x.lo(p,t) = 0;
+ 124  x.up(p,t) = inf;
+ 125  solve TTT_vss using lp minimizing tc_vss;
+ 126  vss = - tc_vss.l-vss;
+ 127   
+ 128  *1.3
+ 129  scalar evpi;
+ 130  evpi = tc.l;
+ 131  display evpi;
+ 132   
+ 133  parameter objval(sc),pi(sc);
+ 134  s(sc) = no;
+ 135  loop(sc,
+ 136    s(sc) = yes;
+ 137    pi(sc)=rho(sc);
+ 138    rho(sc) = 1;
+ 139    solve TTT_vss using lp minimizing tc_vss;
+ 140    objval(sc)=tc_vss.l;
+ 141    s(sc) = no; rho(sc) = 0;
+ 142  );
+ 143  evpi=evpi-sum(sc,pi(sc)*objval(sc));
+ 144  display vss,evpi,results;
+
+
+COMPILATION TIME     =        0.000 SECONDS      3 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE TTT Using LP From line 106
+
+
+---- res_d  =L=  
+
+res_d(tomatoes,t1)..  0.5*x_d(salsa,t1) + 0.5*x_d(ketchup,t1) + x_d(tomato-paste,t1) - y_d(tomatoes,t1) =L= 250 ; (LHS = 0)
+     
+res_d(tomatoes,t2)..  0.5*x_d(salsa,t2) + 0.5*x_d(ketchup,t2) + x_d(tomato-paste,t2) - y_d(tomatoes,t2) =L= 250 ; (LHS = 0)
+     
+res_d(tomatoes,t3)..  0.5*x_d(salsa,t3) + 0.5*x_d(ketchup,t3) + x_d(tomato-paste,t3) - y_d(tomatoes,t3) =L= 250 ; (LHS = 0)
+     
+REMAINING 9 ENTRIES SKIPPED
+
+
+---- obj_d  =E=  
+
+obj_d..  - 2.5*x_d(salsa,t1) - 2.75*x_d(salsa,t2) - 3*x_d(salsa,t3) - 1.5*x_d(ketchup,t1) - 1.75*x_d(ketchup,t2) - 2*x_d(ketchup,t3) - x_d(tomato-paste,t1) - 1.1*x_d(tomato-paste,t2) - 1.2*x_d(tomato-paste,t3) - 0.5*y_d(tomatoes,t1) - 0.5*y_d(tomatoes,t2) - 0.5*y_d(tomatoes,t3) - y_d(sugar,t1) - y_d(sugar,t2) - y_d(sugar,t3) - 2*y_d(labor,t1) - 2*y_d(labor,t2) - 2*y_d(labor,t3) - y_d(spices,t1) - y_d(spices,t2) - y_d(spices,t3) - 0.2*sur_d(salsa,t1) - 0.2*sur_d(salsa,t2) - 0.2*sur_d(salsa,t3) - 0.25*sur_d(ketchup,t1) - 0.25*sur_d(ketchup,t2) - 0.25*sur_d(ketchup,t3) - 0.5*sur_d(tomato-paste,t1) - 0.5*sur_d(tomato-paste,t2) - 0.5*sur_d(tomato-paste,t3) - 12*un_d(salsa,t1) - 12*un_d(salsa,t2) - 12*un_d(salsa,t3) - 6*un_d(ketchup,t1) - 6*un_d(ketchup,t2) - 6*un_d(ketchup,t3) - 4*un_d(tomato-paste,t1) - 4*un_d(tomato-paste,t2) - 4*un_d(tomato-paste,t3) + tc_d =E= 0 ; (LHS = 0)
+     
+
+---- dem_d  =E=  
+
+dem_d(salsa,t1)..  x_d(salsa,t1) - sur_d(salsa,t1) + un_d(salsa,t1) =E= 5 ; (LHS = 0, INFES = 5 ****)
+     
+dem_d(salsa,t2)..  x_d(salsa,t2) + sur_d(salsa,t1) - sur_d(salsa,t2) + un_d(salsa,t2) =E= 11.75 ; (LHS = 0, INFES = 11.75 ****)
+     
+dem_d(salsa,t3)..  x_d(salsa,t3) + sur_d(salsa,t2) - sur_d(salsa,t3) + un_d(salsa,t3) =E= 15.5 ; (LHS = 0, INFES = 15.5 ****)
+     
+REMAINING 6 ENTRIES SKIPPED
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE TTT Using LP From line 106
+
+
+---- x_d  
+
+x_d(salsa,t1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        0.5     res_d(tomatoes,t1)
+        1       res_d(sugar,t1)
+        1       res_d(labor,t1)
+        3       res_d(spices,t1)
+       -2.5     obj_d
+        1       dem_d(salsa,t1)
+
+x_d(salsa,t2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        0.5     res_d(tomatoes,t2)
+        1       res_d(sugar,t2)
+        1       res_d(labor,t2)
+        3       res_d(spices,t2)
+       -2.75    obj_d
+        1       dem_d(salsa,t2)
+
+x_d(salsa,t3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        0.5     res_d(tomatoes,t3)
+        1       res_d(sugar,t3)
+        1       res_d(labor,t3)
+        3       res_d(spices,t3)
+       -3       obj_d
+        1       dem_d(salsa,t3)
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- y_d  
+
+y_d(tomatoes,t1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       res_d(tomatoes,t1)
+       -0.5     obj_d
+
+y_d(tomatoes,t2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       res_d(tomatoes,t2)
+       -0.5     obj_d
+
+y_d(tomatoes,t3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       res_d(tomatoes,t3)
+       -0.5     obj_d
+
+REMAINING 9 ENTRIES SKIPPED
+
+---- sur_d  
+
+sur_d(salsa,t1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -0.2     obj_d
+       -1       dem_d(salsa,t1)
+        1       dem_d(salsa,t2)
+
+sur_d(salsa,t2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -0.2     obj_d
+       -1       dem_d(salsa,t2)
+        1       dem_d(salsa,t3)
+
+sur_d(salsa,t3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -0.2     obj_d
+       -1       dem_d(salsa,t3)
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- un_d  
+
+un_d(salsa,t1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+      -12       obj_d
+        1       dem_d(salsa,t1)
+
+un_d(salsa,t2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+      -12       obj_d
+        1       dem_d(salsa,t2)
+
+un_d(salsa,t3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+      -12       obj_d
+        1       dem_d(salsa,t3)
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- tc_d  
+
+tc_d
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+        1       obj_d
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE TTT Using LP From line 106
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 5.000E+00, 3.000E+02] - Zero values observed as well
+Bound     [min, max] : [        NA,        NA] - Zero values observed as well
+Matrix    [min, max] : [ 2.000E-01, 1.200E+01]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE TTT Using LP From line 106
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           3     SINGLE EQUATIONS           22
+BLOCKS OF VARIABLES           5     SINGLE VARIABLES           40
+NON ZERO ELEMENTS           118
+
+
+GENERATION TIME      =        0.016 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 6
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE TTT Using LP From line 106
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   TTT                 OBJECTIVE  tc_d
+     TYPE    LP                  DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  106
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE              735.2208
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT        12    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.50 Mb (peak 0.50 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.00 Mb)
+--- Starting Cplex
+
+
+--- LP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.07 ticks)
+
+
+Optimal solution found
+Objective:          735.220833
+
+
+---- EQU res_d  
+
+                   LOWER          LEVEL          UPPER         MARGINAL
+
+tomatoes.t1        -INF          122.8333       250.0000          .          
+tomatoes.t2        -INF          167.1250       250.0000          .          
+tomatoes.t3        -INF          191.9167       250.0000          .          
+sugar   .t1        -INF           30.6667       300.0000          .          
+sugar   .t2        -INF           27.0000       300.0000          .          
+sugar   .t3        -INF           25.3333       300.0000          .          
+labor   .t1        -INF           89.6667       200.0000          .          
+labor   .t2        -INF          109.8500       200.0000          .          
+labor   .t3        -INF          121.4333       200.0000          .          
+spices  .t1        -INF          100.0000       100.0000        -1.0000      
+spices  .t2        -INF          100.0000       100.0000        -0.9833      
+spices  .t3        -INF          100.0000       100.0000        -0.9667      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU obj_d               .              .              .             1.0000      
+
+---- EQU dem_d  
+
+                       LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1         5.0000         5.0000         5.0000         5.5000      
+salsa       .t2        11.7500        11.7500        11.7500         5.7000      
+salsa       .t3        15.5000        15.5000        15.5000         5.9000      
+ketchup     .t1        30.0000        30.0000        30.0000         2.5000      
+ketchup     .t2        34.5000        34.5000        34.5000         2.7333      
+ketchup     .t3        37.0000        37.0000        37.0000         2.9667      
+tomato-paste.t1       100.0000       100.0000       100.0000         1.2500      
+tomato-paste.t2       145.0000       145.0000       145.0000         1.3458      
+tomato-paste.t3       170.0000       170.0000       170.0000         1.4417      
+
+---- VAR x_d  
+
+                       LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1          .            15.6667        +INF             .          
+salsa       .t2          .             9.7500        +INF             .          
+salsa       .t3          .             6.8333        +INF             .          
+ketchup     .t1          .            30.0000        +INF             .          
+ketchup     .t2          .            34.5000        +INF             .          
+ketchup     .t3          .            37.0000        +INF             .          
+tomato-paste.t1          .           100.0000        +INF             .          
+tomato-paste.t2          .           145.0000        +INF             .          
+tomato-paste.t3          .           170.0000        +INF             .          
+
+---- VAR y_d  
+
+                   LOWER          LEVEL          UPPER         MARGINAL
+
+tomatoes.t1          .              .            +INF            0.5000      
+tomatoes.t2          .              .            +INF            0.5000      
+tomatoes.t3          .              .            +INF            0.5000      
+sugar   .t1          .              .            +INF            1.0000      
+sugar   .t2          .              .            +INF            1.0000      
+sugar   .t3          .              .            +INF            1.0000      
+labor   .t1          .              .            +INF            2.0000      
+labor   .t2          .              .            +INF            2.0000      
+labor   .t3          .              .            +INF            2.0000      
+spices  .t1          .             2.0000        +INF             .          
+spices  .t2          .              .            +INF            0.0167      
+spices  .t3          .              .            +INF            0.0333      
+
+---- VAR sur_d  
+
+                       LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1          .            10.6667        +INF             .          
+salsa       .t2          .             8.6667        +INF             .          
+salsa       .t3          .              .            +INF            6.1000      
+ketchup     .t1          .              .            +INF            0.0167      
+ketchup     .t2          .              .            +INF            0.0167      
+ketchup     .t3          .              .            +INF            3.2167      
+tomato-paste.t1          .              .            +INF            0.4042      
+tomato-paste.t2          .              .            +INF            0.4042      
+tomato-paste.t3          .              .            +INF            1.9417      
+
+---- VAR un_d  
+
+                       LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1          .              .            +INF            6.5000      
+salsa       .t2          .              .            +INF            6.3000      
+salsa       .t3          .              .            +INF            6.1000      
+ketchup     .t1          .              .            +INF            3.5000      
+ketchup     .t2          .              .            +INF            3.2667      
+ketchup     .t3          .              .            +INF            3.0333      
+tomato-paste.t1          .              .            +INF            2.7500      
+tomato-paste.t2          .              .            +INF            2.6542      
+tomato-paste.t3          .              .            +INF            2.5583      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR tc_d              -INF          735.2208        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 7
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE TTT_d Using LP From line 111
+
+
+---- res  =L=  
+
+res(tomatoes,s1,t1)..  0.5*x(salsa,t1) + 0.5*x(ketchup,t1) + x(tomato-paste,t1) - y(tomatoes,t1,s1) =L= 250 ; (LHS = 0)
+     
+res(tomatoes,s1,t2)..  0.5*x(salsa,t2) + 0.5*x(ketchup,t2) + x(tomato-paste,t2) - y(tomatoes,t2,s1) =L= 250 ; (LHS = 0)
+     
+res(tomatoes,s1,t3)..  0.5*x(salsa,t3) + 0.5*x(ketchup,t3) + x(tomato-paste,t3) - y(tomatoes,t3,s1) =L= 250 ; (LHS = 0)
+     
+REMAINING 45 ENTRIES SKIPPED
+
+
+---- dem  =E=  
+
+dem(salsa,t1,s1)..  x(salsa,t1) - sur(salsa,t1,s1) + un(salsa,t1,s1) =E= 5 ; (LHS = 0, INFES = 5 ****)
+     
+dem(salsa,t1,s2)..  x(salsa,t1) - sur(salsa,t1,s2) + un(salsa,t1,s2) =E= 5 ; (LHS = 0, INFES = 5 ****)
+     
+dem(salsa,t1,s3)..  x(salsa,t1) - sur(salsa,t1,s3) + un(salsa,t1,s3) =E= 5 ; (LHS = 0, INFES = 5 ****)
+     
+REMAINING 33 ENTRIES SKIPPED
+
+
+---- obj  =E=  
+
+obj..  - 2.5*x(salsa,t1) - 2.75*x(salsa,t2) - 3*x(salsa,t3) - 1.5*x(ketchup,t1) - 1.75*x(ketchup,t2) - 2*x(ketchup,t3) - x(tomato-paste,t1) - 1.1*x(tomato-paste,t2) - 1.2*x(tomato-paste,t3) - 0.075*y(tomatoes,t1,s1) - 0.2*y(tomatoes,t1,s2) - 0.075*y(tomatoes,t1,s3) - 0.15*y(tomatoes,t1,s4) - 0.075*y(tomatoes,t2,s1) - 0.2*y(tomatoes,t2,s2) - 0.075*y(tomatoes,t2,s3) - 0.15*y(tomatoes,t2,s4) - 0.075*y(tomatoes,t3,s1) - 0.2*y(tomatoes,t3,s2) - 0.075*y(tomatoes,t3,s3) - 0.15*y(tomatoes,t3,s4) - 0.15*y(sugar,t1,s1) - 0.4*y(sugar,t1,s2) - 0.15*y(sugar,t1,s3) - 0.3*y(sugar,t1,s4) - 0.15*y(sugar,t2,s1) - 0.4*y(sugar,t2,s2) - 0.15*y(sugar,t2,s3) - 0.3*y(sugar,t2,s4) - 0.15*y(sugar,t3,s1) - 0.4*y(sugar,t3,s2) - 0.15*y(sugar,t3,s3) - 0.3*y(sugar,t3,s4) - 0.3*y(labor,t1,s1) - 0.8*y(labor,t1,s2) - 0.3*y(labor,t1,s3) - 0.6*y(labor,t1,s4) - 0.3*y(labor,t2,s1) - 0.8*y(labor,t2,s2) - 0.3*y(labor,t2,s3) - 0.6*y(labor,t2,s4) - 0.3*y(labor,t3,s1) - 0.8*y(labor,t3,s2) - 0.3*y(labor,t3,s3) - 0.6*y(labor,t3,s4) - 0.15*y(spices,t1,s1) - 0.4*y(spices,t1,s2) - 0.15*y(spices,t1,s3) - 0.3*y(spices,t1,s4) - 0.15*y(spices,t2,s1) - 0.4*y(spices,t2,s2) - 0.15*y(spices,t2,s3) - 0.3*y(spices,t2,s4) - 0.15*y(spices,t3,s1) - 0.4*y(spices,t3,s2) - 0.15*y(spices,t3,s3) - 0.3*y(spices,t3,s4) - 0.03*sur(salsa,t1,s1) - 0.08*sur(salsa,t1,s2) - 0.03*sur(salsa,t1,s3) - 0.06*sur(salsa,t1,s4) - 0.03*sur(salsa,t2,s1) - 0.08*sur(salsa,t2,s2) - 0.03*sur(salsa,t2,s3) - 0.06*sur(salsa,t2,s4) - 0.03*sur(salsa,t3,s1) - 0.08*sur(salsa,t3,s2) - 0.03*sur(salsa,t3,s3) - 0.06*sur(salsa,t3,s4) - 0.0375*sur(ketchup,t1,s1) - 0.1*sur(ketchup,t1,s2) - 0.0375*sur(ketchup,t1,s3) - 0.075*sur(ketchup,t1,s4) - 0.0375*sur(ketchup,t2,s1) - 0.1*sur(ketchup,t2,s2) - 0.0375*sur(ketchup,t2,s3) - 0.075*sur(ketchup,t2,s4) - 0.0375*sur(ketchup,t3,s1) - 0.1*sur(ketchup,t3,s2) - 0.0375*sur(ketchup,t3,s3) - 0.075*sur(ketchup,t3,s4) - 0.075*sur(tomato-paste,t1,s1) - 0.2*sur(tomato-paste,t1,s2) - 0.075*sur(tomato-paste,t1,s3) - 0.15*sur(tomato-paste,t1,s4) - 0.075*sur(tomato-paste,t2,s1) - 0.2*sur(tomato-paste,t2,s2) - 0.075*sur(tomato-paste,t2,s3) - 0.15*sur(tomato-paste,t2,s4) - 0.075*sur(tomato-paste,t3,s1) - 0.2*sur(tomato-paste,t3,s2) - 0.075*sur(tomato-paste,t3,s3) - 0.15*sur(tomato-paste,t3,s4) - 1.8*un(salsa,t1,s1) - 4.8*un(salsa,t1,s2) - 1.8*un(salsa,t1,s3) - 3.6*un(salsa,t1,s4) - 1.8*un(salsa,t2,s1) - 4.8*un(salsa,t2,s2) - 1.8*un(salsa,t2,s3) - 3.6*un(salsa,t2,s4) - 1.8*un(salsa,t3,s1) - 4.8*un(salsa,t3,s2) - 1.8*un(salsa,t3,s3) - 3.6*un(salsa,t3,s4) - 0.9*un(ketchup,t1,s1) - 2.4*un(ketchup,t1,s2) - 0.9*un(ketchup,t1,s3) - 1.8*un(ketchup,t1,s4) - 0.9*un(ketchup,t2,s1) - 2.4*un(ketchup,t2,s2) - 0.9*un(ketchup,t2,s3) - 1.8*un(ketchup,t2,s4) - 0.9*un(ketchup,t3,s1) - 2.4*un(ketchup,t3,s2) - 0.9*un(ketchup,t3,s3) - 1.8*un(ketchup,t3,s4) - 0.6*un(tomato-paste,t1,s1) - 1.6*un(tomato-paste,t1,s2) - 0.6*un(tomato-paste,t1,s3) - 1.2*un(tomato-paste,t1,s4) - 0.6*un(tomato-paste,t2,s1) - 1.6*un(tomato-paste,t2,s2) - 0.6*un(tomato-paste,t2,s3) - 1.2*un(tomato-paste,t2,s4) - 0.6*un(tomato-paste,t3,s1) - 1.6*un(tomato-paste,t3,s2) - 0.6*un(tomato-paste,t3,s3) - 1.2*un(tomato-paste,t3,s4) + tc =E= 0 ; (LHS = 0)
+     
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 8
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE TTT_d Using LP From line 111
+
+
+---- x  
+
+x(salsa,t1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        0.5     res(tomatoes,s1,t1)
+        0.5     res(tomatoes,s2,t1)
+        0.5     res(tomatoes,s3,t1)
+        0.5     res(tomatoes,s4,t1)
+        1       res(sugar,s1,t1)
+        1       res(sugar,s2,t1)
+        1       res(sugar,s3,t1)
+        1       res(sugar,s4,t1)
+        1       res(labor,s1,t1)
+        1       res(labor,s2,t1)
+        1       res(labor,s3,t1)
+        1       res(labor,s4,t1)
+        3       res(spices,s1,t1)
+        3       res(spices,s2,t1)
+        3       res(spices,s3,t1)
+        3       res(spices,s4,t1)
+        1       dem(salsa,t1,s1)
+        1       dem(salsa,t1,s2)
+        1       dem(salsa,t1,s3)
+        1       dem(salsa,t1,s4)
+       -2.5     obj
+
+x(salsa,t2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        0.5     res(tomatoes,s1,t2)
+        0.5     res(tomatoes,s2,t2)
+        0.5     res(tomatoes,s3,t2)
+        0.5     res(tomatoes,s4,t2)
+        1       res(sugar,s1,t2)
+        1       res(sugar,s2,t2)
+        1       res(sugar,s3,t2)
+        1       res(sugar,s4,t2)
+        1       res(labor,s1,t2)
+        1       res(labor,s2,t2)
+        1       res(labor,s3,t2)
+        1       res(labor,s4,t2)
+        3       res(spices,s1,t2)
+        3       res(spices,s2,t2)
+        3       res(spices,s3,t2)
+        3       res(spices,s4,t2)
+        1       dem(salsa,t2,s1)
+        1       dem(salsa,t2,s2)
+        1       dem(salsa,t2,s3)
+        1       dem(salsa,t2,s4)
+       -2.75    obj
+
+x(salsa,t3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        0.5     res(tomatoes,s1,t3)
+        0.5     res(tomatoes,s2,t3)
+        0.5     res(tomatoes,s3,t3)
+        0.5     res(tomatoes,s4,t3)
+        1       res(sugar,s1,t3)
+        1       res(sugar,s2,t3)
+        1       res(sugar,s3,t3)
+        1       res(sugar,s4,t3)
+        1       res(labor,s1,t3)
+        1       res(labor,s2,t3)
+        1       res(labor,s3,t3)
+        1       res(labor,s4,t3)
+        3       res(spices,s1,t3)
+        3       res(spices,s2,t3)
+        3       res(spices,s3,t3)
+        3       res(spices,s4,t3)
+        1       dem(salsa,t3,s1)
+        1       dem(salsa,t3,s2)
+        1       dem(salsa,t3,s3)
+        1       dem(salsa,t3,s4)
+       -3       obj
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- y  
+
+y(tomatoes,t1,s1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       res(tomatoes,s1,t1)
+       -0.075   obj
+
+y(tomatoes,t1,s2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       res(tomatoes,s2,t1)
+       -0.2     obj
+
+y(tomatoes,t1,s3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       res(tomatoes,s3,t1)
+       -0.075   obj
+
+REMAINING 45 ENTRIES SKIPPED
+
+---- sur  
+
+sur(salsa,t1,s1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       dem(salsa,t1,s1)
+        1       dem(salsa,t2,s1)
+       -0.03    obj
+
+sur(salsa,t1,s2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       dem(salsa,t1,s2)
+        1       dem(salsa,t2,s2)
+       -0.08    obj
+
+sur(salsa,t1,s3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       dem(salsa,t1,s3)
+        1       dem(salsa,t2,s3)
+       -0.03    obj
+
+REMAINING 33 ENTRIES SKIPPED
+
+---- un  
+
+un(salsa,t1,s1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       dem(salsa,t1,s1)
+       -1.8     obj
+
+un(salsa,t1,s2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       dem(salsa,t1,s2)
+       -4.8     obj
+
+un(salsa,t1,s3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       dem(salsa,t1,s3)
+       -1.8     obj
+
+REMAINING 33 ENTRIES SKIPPED
+
+---- tc  
+
+tc
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+        1       obj
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 9
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE TTT_d Using LP From line 111
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 5.000E+00, 3.000E+02] - Zero values observed as well
+Bound     [min, max] : [        NA,        NA] - Zero values observed as well
+Matrix    [min, max] : [ 3.000E-02, 4.800E+00]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 10
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE TTT_d Using LP From line 111
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           3     SINGLE EQUATIONS           85
+BLOCKS OF VARIABLES           5     SINGLE VARIABLES          130
+NON ZERO ELEMENTS           442
+
+
+GENERATION TIME      =        0.000 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 11
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE TTT_d Using LP From line 111
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   TTT_d               OBJECTIVE  tc
+     TYPE    LP                  DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  111
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE              939.4500
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT        47    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.53 Mb (peak 0.53 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.01 Mb)
+--- Starting Cplex
+
+
+--- LP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.46 ticks)
+
+
+Optimal solution found
+Objective:          939.450000
+
+
+---- EQU res  
+
+                      LOWER          LEVEL          UPPER         MARGINAL
+
+tomatoes.s1.t1        -INF          122.5000       250.0000          .          
+tomatoes.s1.t2        -INF          221.6667       250.0000          .          
+tomatoes.s1.t3        -INF          122.5000       250.0000          .          
+tomatoes.s2.t1        -INF          122.5000       250.0000          .          
+tomatoes.s2.t2        -INF          221.6667       250.0000          .          
+tomatoes.s2.t3        -INF          122.5000       250.0000          .          
+tomatoes.s3.t1        -INF          122.5000       250.0000          .          
+tomatoes.s3.t2        -INF          221.6667       250.0000          .          
+tomatoes.s3.t3        -INF          122.5000       250.0000          .          
+tomatoes.s4.t1        -INF          122.5000       250.0000          .          
+tomatoes.s4.t2        -INF          221.6667       250.0000          .          
+tomatoes.s4.t3        -INF          122.5000       250.0000          .          
+sugar   .s1.t1        -INF           30.0000       300.0000          .          
+sugar   .s1.t2        -INF           23.3333       300.0000          .          
+sugar   .s1.t3        -INF           30.0000       300.0000          .          
+sugar   .s2.t1        -INF           30.0000       300.0000          .          
+sugar   .s2.t2        -INF           23.3333       300.0000          .          
+sugar   .s2.t3        -INF           30.0000       300.0000          .          
+sugar   .s3.t1        -INF           30.0000       300.0000          .          
+sugar   .s3.t2        -INF           23.3333       300.0000          .          
+sugar   .s3.t3        -INF           30.0000       300.0000          .          
+sugar   .s4.t1        -INF           30.0000       300.0000          .          
+sugar   .s4.t2        -INF           23.3333       300.0000          .          
+sugar   .s4.t3        -INF           30.0000       300.0000          .          
+labor   .s1.t1        -INF           89.0000       200.0000          .          
+labor   .s1.t2        -INF          135.3333       200.0000          .          
+labor   .s1.t3        -INF           89.0000       200.0000          .          
+labor   .s2.t1        -INF           89.0000       200.0000          .          
+labor   .s2.t2        -INF          135.3333       200.0000          .          
+labor   .s2.t3        -INF           89.0000       200.0000          .          
+labor   .s3.t1        -INF           89.0000       200.0000          .          
+labor   .s3.t2        -INF          135.3333       200.0000          .          
+labor   .s3.t3        -INF           89.0000       200.0000          .          
+labor   .s4.t1        -INF           89.0000       200.0000          .          
+labor   .s4.t2        -INF          135.3333       200.0000          .          
+labor   .s4.t3        -INF           89.0000       200.0000          .          
+spices  .s1.t1        -INF          100.0000       100.0000        -0.1267      
+spices  .s1.t2        -INF          100.0000       100.0000        -0.1100      
+spices  .s1.t3        -INF          100.0000       100.0000        -0.1500      
+spices  .s2.t1        -INF          100.0000       100.0000        -0.4000      
+spices  .s2.t2        -INF          100.0000       100.0000        -0.4000      
+spices  .s2.t3        -INF          100.0000       100.0000          .          
+spices  .s3.t1        -INF          100.0000       100.0000          .          
+spices  .s3.t2        -INF          100.0000       100.0000          .          
+spices  .s3.t3        -INF          100.0000       100.0000        -0.0033      
+spices  .s4.t1        -INF          100.0000       100.0000        -0.3000      
+spices  .s4.t2        -INF          100.0000       100.0000        -0.3000      
+spices  .s4.t3        -INF          100.0000       100.0000          .          
+
+---- EQU dem  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s1         5.0000         5.0000         5.0000        -0.0900      
+salsa       .t1.s2         5.0000         5.0000         5.0000        -0.2400      
+salsa       .t1.s3         5.0000         5.0000         5.0000         1.7700      
+salsa       .t1.s4         5.0000         5.0000         5.0000         3.5400      
+salsa       .t2.s1         5.0000         5.0000         5.0000        -0.0600      
+salsa       .t2.s2         5.0000         5.0000         5.0000        -0.1600      
+salsa       .t2.s3        20.0000        20.0000        20.0000         1.8000      
+salsa       .t2.s4        20.0000        20.0000        20.0000         3.6000      
+salsa       .t3.s1         5.0000         5.0000         5.0000        -0.0300      
+salsa       .t3.s2        20.0000        20.0000        20.0000        -0.0800      
+salsa       .t3.s3         5.0000         5.0000         5.0000        -0.0300      
+salsa       .t3.s4        20.0000        20.0000        20.0000         3.6000      
+ketchup     .t1.s1        30.0000        30.0000        30.0000        -0.0958      
+ketchup     .t1.s2        30.0000        30.0000        30.0000          .          
+ketchup     .t1.s3        30.0000        30.0000        30.0000         0.6975      
+ketchup     .t1.s4        30.0000        30.0000        30.0000         1.7250      
+ketchup     .t2.s1        30.0000        30.0000        30.0000        -0.0750      
+ketchup     .t2.s2        30.0000        30.0000        30.0000         0.1000      
+ketchup     .t2.s3        40.0000        40.0000        40.0000         0.7350      
+ketchup     .t2.s4        40.0000        40.0000        40.0000         1.8000      
+ketchup     .t3.s1        30.0000        30.0000        30.0000        -0.0375      
+ketchup     .t3.s2        40.0000        40.0000        40.0000         0.2000      
+ketchup     .t3.s3        30.0000        30.0000        30.0000         0.1908      
+ketchup     .t3.s4        40.0000        40.0000        40.0000         1.8000      
+tomato-paste.t1.s1       100.0000       100.0000       100.0000        -0.0325      
+tomato-paste.t1.s2       100.0000       100.0000       100.0000          .          
+tomato-paste.t1.s3       100.0000       100.0000       100.0000         0.1892      
+tomato-paste.t1.s4       100.0000       100.0000       100.0000         1.0500      
+tomato-paste.t2.s1       100.0000       100.0000       100.0000        -0.1500      
+tomato-paste.t2.s2       100.0000       100.0000       100.0000        -0.0117      
+tomato-paste.t2.s3       200.0000       200.0000       200.0000         0.2642      
+tomato-paste.t2.s4       200.0000       200.0000       200.0000         1.2000      
+tomato-paste.t3.s1       100.0000       100.0000       100.0000        -0.0750      
+tomato-paste.t3.s2       200.0000       200.0000       200.0000         0.1883      
+tomato-paste.t3.s3       100.0000       100.0000       100.0000        -0.0750      
+tomato-paste.t3.s4       200.0000       200.0000       200.0000         1.2000      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU obj                 .              .              .             1.0000      
+
+---- VAR x  
+
+                       LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1          .            15.0000        +INF             .          
+salsa       .t2          .             3.3333        +INF             .          
+salsa       .t3          .            15.0000        +INF             .          
+ketchup     .t1          .            30.0000        +INF             .          
+ketchup     .t2          .            40.0000        +INF             .          
+ketchup     .t3          .            30.0000        +INF             .          
+tomato-paste.t1          .           100.0000        +INF             .          
+tomato-paste.t2          .           200.0000        +INF             .          
+tomato-paste.t3          .           100.0000        +INF             .          
+
+---- VAR y  
+
+                      LOWER          LEVEL          UPPER         MARGINAL
+
+tomatoes.t1.s1          .              .            +INF            0.0750      
+tomatoes.t1.s2          .              .            +INF            0.2000      
+tomatoes.t1.s3          .              .            +INF            0.0750      
+tomatoes.t1.s4          .              .            +INF            0.1500      
+tomatoes.t2.s1          .              .            +INF            0.0750      
+tomatoes.t2.s2          .              .            +INF            0.2000      
+tomatoes.t2.s3          .              .            +INF            0.0750      
+tomatoes.t2.s4          .              .            +INF            0.1500      
+tomatoes.t3.s1          .              .            +INF            0.0750      
+tomatoes.t3.s2          .              .            +INF            0.2000      
+tomatoes.t3.s3          .              .            +INF            0.0750      
+tomatoes.t3.s4          .              .            +INF            0.1500      
+sugar   .t1.s1          .              .            +INF            0.1500      
+sugar   .t1.s2          .              .            +INF            0.4000      
+sugar   .t1.s3          .              .            +INF            0.1500      
+sugar   .t1.s4          .              .            +INF            0.3000      
+sugar   .t2.s1          .              .            +INF            0.1500      
+sugar   .t2.s2          .              .            +INF            0.4000      
+sugar   .t2.s3          .              .            +INF            0.1500      
+sugar   .t2.s4          .              .            +INF            0.3000      
+sugar   .t3.s1          .              .            +INF            0.1500      
+sugar   .t3.s2          .              .            +INF            0.4000      
+sugar   .t3.s3          .              .            +INF            0.1500      
+sugar   .t3.s4          .              .            +INF            0.3000      
+labor   .t1.s1          .              .            +INF            0.3000      
+labor   .t1.s2          .              .            +INF            0.8000      
+labor   .t1.s3          .              .            +INF            0.3000      
+labor   .t1.s4          .              .            +INF            0.6000      
+labor   .t2.s1          .              .            +INF            0.3000      
+labor   .t2.s2          .              .            +INF            0.8000      
+labor   .t2.s3          .              .            +INF            0.3000      
+labor   .t2.s4          .              .            +INF            0.6000      
+labor   .t3.s1          .              .            +INF            0.3000      
+labor   .t3.s2          .              .            +INF            0.8000      
+labor   .t3.s3          .              .            +INF            0.3000      
+labor   .t3.s4          .              .            +INF            0.6000      
+spices  .t1.s1          .              .            +INF            0.0233      
+spices  .t1.s2          .       -1.42109E-14        +INF             .          
+spices  .t1.s3          .              .            +INF            0.1500      
+spices  .t1.s4          .       -1.42109E-14        +INF             .          
+spices  .t2.s1          .              .            +INF            0.0400      
+spices  .t2.s2          .       -3.55271E-15        +INF             .          
+spices  .t2.s3          .              .            +INF            0.1500      
+spices  .t2.s4          .       -3.55271E-15        +INF             .          
+spices  .t3.s1          .       -1.42109E-14        +INF             .          
+spices  .t3.s2          .              .            +INF            0.4000      
+spices  .t3.s3          .              .            +INF            0.1467      
+spices  .t3.s4          .              .            +INF            0.3000      
+
+---- VAR sur  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s1          .            10.0000        +INF             .          
+salsa       .t1.s2          .            10.0000        +INF             .          
+salsa       .t1.s3          .            10.0000        +INF             .          
+salsa       .t1.s4          .            10.0000        +INF             .          
+salsa       .t2.s1          .             8.3333        +INF             .          
+salsa       .t2.s2          .             8.3333        +INF             .          
+salsa       .t2.s3          .              .            +INF            1.8600      
+salsa       .t2.s4          .              .            +INF            0.0600      
+salsa       .t3.s1          .            18.3333        +INF             .          
+salsa       .t3.s2          .             3.3333        +INF             .          
+salsa       .t3.s3          .            10.0000        +INF             .          
+salsa       .t3.s4          .              .            +INF            3.6600      
+ketchup     .t1.s1          .              .            +INF            0.0167      
+ketchup     .t1.s2          .              .            +INF             .          
+ketchup     .t1.s3          .              .            +INF             .          
+ketchup     .t1.s4          .              .            +INF             .          
+ketchup     .t2.s1          .            10.0000        +INF             .          
+ketchup     .t2.s2          .            10.0000        +INF             .          
+ketchup     .t2.s3          .              .            +INF            0.5817      
+ketchup     .t2.s4          .              .            +INF            0.0750      
+ketchup     .t3.s1          .            10.0000        +INF             .          
+ketchup     .t3.s2          .              .            +INF            0.3000      
+ketchup     .t3.s3          .              .            +INF            0.2283      
+ketchup     .t3.s4          .              .            +INF            1.8750      
+tomato-paste.t1.s1          .              .            +INF            0.1925      
+tomato-paste.t1.s2          .              .            +INF            0.2117      
+tomato-paste.t1.s3          .              .            +INF             .          
+tomato-paste.t1.s4          .              .            +INF             .          
+tomato-paste.t2.s1          .           100.0000        +INF             .          
+tomato-paste.t2.s2          .           100.0000        +INF             .          
+tomato-paste.t2.s3          .              .            +INF            0.4142      
+tomato-paste.t2.s4          .              .            +INF            0.1500      
+tomato-paste.t3.s1          .           100.0000        +INF             .          
+tomato-paste.t3.s2          .              .            +INF            0.3883      
+tomato-paste.t3.s3          .              .            +INF             .          
+tomato-paste.t3.s4          .              .            +INF            1.3500      
+
+---- VAR un  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s1          .              .            +INF            1.8900      
+salsa       .t1.s2          .              .            +INF            5.0400      
+salsa       .t1.s3          .              .            +INF            0.0300      
+salsa       .t1.s4          .              .            +INF            0.0600      
+salsa       .t2.s1          .              .            +INF            1.8600      
+salsa       .t2.s2          .              .            +INF            4.9600      
+salsa       .t2.s3          .             6.6667        +INF             .          
+salsa       .t2.s4          .             6.6667        +INF             .          
+salsa       .t3.s1          .              .            +INF            1.8300      
+salsa       .t3.s2          .              .            +INF            4.8800      
+salsa       .t3.s3          .              .            +INF            1.8300      
+salsa       .t3.s4          .             5.0000        +INF             .          
+ketchup     .t1.s1          .              .            +INF            0.9958      
+ketchup     .t1.s2          .              .            +INF            2.4000      
+ketchup     .t1.s3          .              .            +INF            0.2025      
+ketchup     .t1.s4          .              .            +INF            0.0750      
+ketchup     .t2.s1          .              .            +INF            0.9750      
+ketchup     .t2.s2          .              .            +INF            2.3000      
+ketchup     .t2.s3          .              .            +INF            0.1650      
+ketchup     .t2.s4          .              .            +INF             .          
+ketchup     .t3.s1          .              .            +INF            0.9375      
+ketchup     .t3.s2          .              .            +INF            2.2000      
+ketchup     .t3.s3          .              .            +INF            0.7092      
+ketchup     .t3.s4          .            10.0000        +INF             .          
+tomato-paste.t1.s1          .              .            +INF            0.6325      
+tomato-paste.t1.s2          .              .            +INF            1.6000      
+tomato-paste.t1.s3          .              .            +INF            0.4108      
+tomato-paste.t1.s4          .              .            +INF            0.1500      
+tomato-paste.t2.s1          .              .            +INF            0.7500      
+tomato-paste.t2.s2          .              .            +INF            1.6117      
+tomato-paste.t2.s3          .              .            +INF            0.3358      
+tomato-paste.t2.s4          .              .            +INF             .          
+tomato-paste.t3.s1          .              .            +INF            0.6750      
+tomato-paste.t3.s2          .              .            +INF            1.4117      
+tomato-paste.t3.s3          .              .            +INF            0.6750      
+tomato-paste.t3.s4          .           100.0000        +INF             .          
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR tc                -INF          939.4500        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 12
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE TTT_vss Using LP From line 119
+
+
+---- res_vss  =L=  
+
+res_vss(tomatoes,s1,t1)..  0.5*x(salsa,t1) + 0.5*x(ketchup,t1) + x(tomato-paste,t1) - y(tomatoes,t1,s1) =L= 250 ; (LHS = 122.833333333333)
+     
+res_vss(tomatoes,s1,t2)..  0.5*x(salsa,t2) + 0.5*x(ketchup,t2) + x(tomato-paste,t2) - y(tomatoes,t2,s1) =L= 250 ; (LHS = 167.125)
+     
+res_vss(tomatoes,s1,t3)..  0.5*x(salsa,t3) + 0.5*x(ketchup,t3) + x(tomato-paste,t3) - y(tomatoes,t3,s1) =L= 250 ; (LHS = 191.916666666667)
+     
+REMAINING 45 ENTRIES SKIPPED
+
+
+---- dem_vss  =E=  
+
+dem_vss(salsa,t1,s1)..  x(salsa,t1) - sur(salsa,t1,s1) + un(salsa,t1,s1) =E= 5 ; (LHS = 5.66666666666668, INFES = 0.666666666666679 ****)
+     
+dem_vss(salsa,t1,s2)..  x(salsa,t1) - sur(salsa,t1,s2) + un(salsa,t1,s2) =E= 5 ; (LHS = 5.66666666666668, INFES = 0.666666666666679 ****)
+     
+dem_vss(salsa,t1,s3)..  x(salsa,t1) - sur(salsa,t1,s3) + un(salsa,t1,s3) =E= 5 ; (LHS = 5.66666666666668, INFES = 0.666666666666679 ****)
+     
+REMAINING 33 ENTRIES SKIPPED
+
+
+---- obj_vss  =E=  
+
+obj_vss..  - 2.5*x(salsa,t1) - 2.75*x(salsa,t2) - 3*x(salsa,t3) - 1.5*x(ketchup,t1) - 1.75*x(ketchup,t2) - 2*x(ketchup,t3) - x(tomato-paste,t1) - 1.1*x(tomato-paste,t2) - 1.2*x(tomato-paste,t3) - 0.075*y(tomatoes,t1,s1) - 0.2*y(tomatoes,t1,s2) - 0.075*y(tomatoes,t1,s3) - 0.15*y(tomatoes,t1,s4) - 0.075*y(tomatoes,t2,s1) - 0.2*y(tomatoes,t2,s2) - 0.075*y(tomatoes,t2,s3) - 0.15*y(tomatoes,t2,s4) - 0.075*y(tomatoes,t3,s1) - 0.2*y(tomatoes,t3,s2) - 0.075*y(tomatoes,t3,s3) - 0.15*y(tomatoes,t3,s4) - 0.15*y(sugar,t1,s1) - 0.4*y(sugar,t1,s2) - 0.15*y(sugar,t1,s3) - 0.3*y(sugar,t1,s4) - 0.15*y(sugar,t2,s1) - 0.4*y(sugar,t2,s2) - 0.15*y(sugar,t2,s3) - 0.3*y(sugar,t2,s4) - 0.15*y(sugar,t3,s1) - 0.4*y(sugar,t3,s2) - 0.15*y(sugar,t3,s3) - 0.3*y(sugar,t3,s4) - 0.3*y(labor,t1,s1) - 0.8*y(labor,t1,s2) - 0.3*y(labor,t1,s3) - 0.6*y(labor,t1,s4) - 0.3*y(labor,t2,s1) - 0.8*y(labor,t2,s2) - 0.3*y(labor,t2,s3) - 0.6*y(labor,t2,s4) - 0.3*y(labor,t3,s1) - 0.8*y(labor,t3,s2) - 0.3*y(labor,t3,s3) - 0.6*y(labor,t3,s4) - 0.15*y(spices,t1,s1) - 0.4*y(spices,t1,s2) - 0.15*y(spices,t1,s3) - 0.3*y(spices,t1,s4) - 0.15*y(spices,t2,s1) - 0.4*y(spices,t2,s2) - 0.15*y(spices,t2,s3) - 0.3*y(spices,t2,s4) - 0.15*y(spices,t3,s1) - 0.4*y(spices,t3,s2) - 0.15*y(spices,t3,s3) - 0.3*y(spices,t3,s4) - 0.03*sur(salsa,t1,s1) - 0.08*sur(salsa,t1,s2) - 0.03*sur(salsa,t1,s3) - 0.06*sur(salsa,t1,s4) - 0.03*sur(salsa,t2,s1) - 0.08*sur(salsa,t2,s2) - 0.03*sur(salsa,t2,s3) - 0.06*sur(salsa,t2,s4) - 0.03*sur(salsa,t3,s1) - 0.08*sur(salsa,t3,s2) - 0.03*sur(salsa,t3,s3) - 0.06*sur(salsa,t3,s4) - 0.0375*sur(ketchup,t1,s1) - 0.1*sur(ketchup,t1,s2) - 0.0375*sur(ketchup,t1,s3) - 0.075*sur(ketchup,t1,s4) - 0.0375*sur(ketchup,t2,s1) - 0.1*sur(ketchup,t2,s2) - 0.0375*sur(ketchup,t2,s3) - 0.075*sur(ketchup,t2,s4) - 0.0375*sur(ketchup,t3,s1) - 0.1*sur(ketchup,t3,s2) - 0.0375*sur(ketchup,t3,s3) - 0.075*sur(ketchup,t3,s4) - 0.075*sur(tomato-paste,t1,s1) - 0.2*sur(tomato-paste,t1,s2) - 0.075*sur(tomato-paste,t1,s3) - 0.15*sur(tomato-paste,t1,s4) - 0.075*sur(tomato-paste,t2,s1) - 0.2*sur(tomato-paste,t2,s2) - 0.075*sur(tomato-paste,t2,s3) - 0.15*sur(tomato-paste,t2,s4) - 0.075*sur(tomato-paste,t3,s1) - 0.2*sur(tomato-paste,t3,s2) - 0.075*sur(tomato-paste,t3,s3) - 0.15*sur(tomato-paste,t3,s4) - 1.8*un(salsa,t1,s1) - 4.8*un(salsa,t1,s2) - 1.8*un(salsa,t1,s3) - 3.6*un(salsa,t1,s4) - 1.8*un(salsa,t2,s1) - 4.8*un(salsa,t2,s2) - 1.8*un(salsa,t2,s3) - 3.6*un(salsa,t2,s4) - 1.8*un(salsa,t3,s1) - 4.8*un(salsa,t3,s2) - 1.8*un(salsa,t3,s3) - 3.6*un(salsa,t3,s4) - 0.9*un(ketchup,t1,s1) - 2.4*un(ketchup,t1,s2) - 0.9*un(ketchup,t1,s3) - 1.8*un(ketchup,t1,s4) - 0.9*un(ketchup,t2,s1) - 2.4*un(ketchup,t2,s2) - 0.9*un(ketchup,t2,s3) - 1.8*un(ketchup,t2,s4) - 0.9*un(ketchup,t3,s1) - 2.4*un(ketchup,t3,s2) - 0.9*un(ketchup,t3,s3) - 1.8*un(ketchup,t3,s4) - 0.6*un(tomato-paste,t1,s1) - 1.6*un(tomato-paste,t1,s2) - 0.6*un(tomato-paste,t1,s3) - 1.2*un(tomato-paste,t1,s4) - 0.6*un(tomato-paste,t2,s1) - 1.6*un(tomato-paste,t2,s2) - 0.6*un(tomato-paste,t2,s3) - 1.2*un(tomato-paste,t2,s4) - 0.6*un(tomato-paste,t3,s1) - 1.6*un(tomato-paste,t3,s2) - 0.6*un(tomato-paste,t3,s3) - 1.2*un(tomato-paste,t3,s4) + tc_vss =E= 0 ; (LHS = -962.1375, INFES = 962.1375 ****)
+     
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 13
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE TTT_vss Using LP From line 119
+
+
+---- x  
+
+x(salsa,t1)
+                (.LO, .L, .UP, .M = 15.6666666666667, 15.6666666666667, 15.6666666666667, 0)
+        0.5     res_vss(tomatoes,s1,t1)
+        0.5     res_vss(tomatoes,s2,t1)
+        0.5     res_vss(tomatoes,s3,t1)
+        0.5     res_vss(tomatoes,s4,t1)
+        1       res_vss(sugar,s1,t1)
+        1       res_vss(sugar,s2,t1)
+        1       res_vss(sugar,s3,t1)
+        1       res_vss(sugar,s4,t1)
+        1       res_vss(labor,s1,t1)
+        1       res_vss(labor,s2,t1)
+        1       res_vss(labor,s3,t1)
+        1       res_vss(labor,s4,t1)
+        3       res_vss(spices,s1,t1)
+        3       res_vss(spices,s2,t1)
+        3       res_vss(spices,s3,t1)
+        3       res_vss(spices,s4,t1)
+        1       dem_vss(salsa,t1,s1)
+        1       dem_vss(salsa,t1,s2)
+        1       dem_vss(salsa,t1,s3)
+        1       dem_vss(salsa,t1,s4)
+       -2.5     obj_vss
+
+x(salsa,t2)
+                (.LO, .L, .UP, .M = 9.75, 9.75, 9.75, 0)
+        0.5     res_vss(tomatoes,s1,t2)
+        0.5     res_vss(tomatoes,s2,t2)
+        0.5     res_vss(tomatoes,s3,t2)
+        0.5     res_vss(tomatoes,s4,t2)
+        1       res_vss(sugar,s1,t2)
+        1       res_vss(sugar,s2,t2)
+        1       res_vss(sugar,s3,t2)
+        1       res_vss(sugar,s4,t2)
+        1       res_vss(labor,s1,t2)
+        1       res_vss(labor,s2,t2)
+        1       res_vss(labor,s3,t2)
+        1       res_vss(labor,s4,t2)
+        3       res_vss(spices,s1,t2)
+        3       res_vss(spices,s2,t2)
+        3       res_vss(spices,s3,t2)
+        3       res_vss(spices,s4,t2)
+        1       dem_vss(salsa,t2,s1)
+        1       dem_vss(salsa,t2,s2)
+        1       dem_vss(salsa,t2,s3)
+        1       dem_vss(salsa,t2,s4)
+       -2.75    obj_vss
+
+x(salsa,t3)
+                (.LO, .L, .UP, .M = 6.83333333333333, 6.83333333333333, 6.83333333333333, 0)
+        0.5     res_vss(tomatoes,s1,t3)
+        0.5     res_vss(tomatoes,s2,t3)
+        0.5     res_vss(tomatoes,s3,t3)
+        0.5     res_vss(tomatoes,s4,t3)
+        1       res_vss(sugar,s1,t3)
+        1       res_vss(sugar,s2,t3)
+        1       res_vss(sugar,s3,t3)
+        1       res_vss(sugar,s4,t3)
+        1       res_vss(labor,s1,t3)
+        1       res_vss(labor,s2,t3)
+        1       res_vss(labor,s3,t3)
+        1       res_vss(labor,s4,t3)
+        3       res_vss(spices,s1,t3)
+        3       res_vss(spices,s2,t3)
+        3       res_vss(spices,s3,t3)
+        3       res_vss(spices,s4,t3)
+        1       dem_vss(salsa,t3,s1)
+        1       dem_vss(salsa,t3,s2)
+        1       dem_vss(salsa,t3,s3)
+        1       dem_vss(salsa,t3,s4)
+       -3       obj_vss
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- y  
+
+y(tomatoes,t1,s1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.075)
+       -1       res_vss(tomatoes,s1,t1)
+       -0.075   obj_vss
+
+y(tomatoes,t1,s2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.2)
+       -1       res_vss(tomatoes,s2,t1)
+       -0.2     obj_vss
+
+y(tomatoes,t1,s3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.075)
+       -1       res_vss(tomatoes,s3,t1)
+       -0.075   obj_vss
+
+REMAINING 45 ENTRIES SKIPPED
+
+---- sur  
+
+sur(salsa,t1,s1)
+                (.LO, .L, .UP, .M = 0, 10, +INF, 0)
+       -1       dem_vss(salsa,t1,s1)
+        1       dem_vss(salsa,t2,s1)
+       -0.03    obj_vss
+
+sur(salsa,t1,s2)
+                (.LO, .L, .UP, .M = 0, 10, +INF, 0)
+       -1       dem_vss(salsa,t1,s2)
+        1       dem_vss(salsa,t2,s2)
+       -0.08    obj_vss
+
+sur(salsa,t1,s3)
+                (.LO, .L, .UP, .M = 0, 10, +INF, 0)
+       -1       dem_vss(salsa,t1,s3)
+        1       dem_vss(salsa,t2,s3)
+       -0.03    obj_vss
+
+REMAINING 33 ENTRIES SKIPPED
+
+---- un  
+
+un(salsa,t1,s1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 1.89)
+        1       dem_vss(salsa,t1,s1)
+       -1.8     obj_vss
+
+un(salsa,t1,s2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 5.04)
+        1       dem_vss(salsa,t1,s2)
+       -4.8     obj_vss
+
+un(salsa,t1,s3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.03)
+        1       dem_vss(salsa,t1,s3)
+       -1.8     obj_vss
+
+REMAINING 33 ENTRIES SKIPPED
+
+---- tc_vss  
+
+tc_vss
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+        1       obj_vss
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 14
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE TTT_vss Using LP From line 119
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 5.000E+00, 3.000E+02] - Zero values observed as well
+Bound     [min, max] : [ 6.833E+00, 1.700E+02] - Zero values observed as well
+Matrix    [min, max] : [ 3.000E-02, 4.800E+00]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 15
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE TTT_vss Using LP From line 119
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           3     SINGLE EQUATIONS           85
+BLOCKS OF VARIABLES           5     SINGLE VARIABLES          130  5 projected
+NON ZERO ELEMENTS           442
+
+
+GENERATION TIME      =        0.000 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 16
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE TTT_vss Using LP From line 119
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   TTT_vss             OBJECTIVE  tc_vss
+     TYPE    LP                  DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  119
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE              967.8483
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT         0    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.53 Mb (peak 0.53 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.02 Mb)
+--- Starting Cplex
+
+
+--- LP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.09 ticks)
+
+
+Optimal solution found
+Objective:          967.848333
+
+
+---- EQU res_vss  
+
+                      LOWER          LEVEL          UPPER         MARGINAL
+
+tomatoes.s1.t1        -INF          122.8333       250.0000          .          
+tomatoes.s1.t2        -INF          167.1250       250.0000          .          
+tomatoes.s1.t3        -INF          191.9167       250.0000          .          
+tomatoes.s2.t1        -INF          122.8333       250.0000          .          
+tomatoes.s2.t2        -INF          167.1250       250.0000          .          
+tomatoes.s2.t3        -INF          191.9167       250.0000          .          
+tomatoes.s3.t1        -INF          122.8333       250.0000          .          
+tomatoes.s3.t2        -INF          167.1250       250.0000          .          
+tomatoes.s3.t3        -INF          191.9167       250.0000          .          
+tomatoes.s4.t1        -INF          122.8333       250.0000          .          
+tomatoes.s4.t2        -INF          167.1250       250.0000          .          
+tomatoes.s4.t3        -INF          191.9167       250.0000          .          
+sugar   .s1.t1        -INF           30.6667       300.0000          .          
+sugar   .s1.t2        -INF           27.0000       300.0000          .          
+sugar   .s1.t3        -INF           25.3333       300.0000          .          
+sugar   .s2.t1        -INF           30.6667       300.0000          .          
+sugar   .s2.t2        -INF           27.0000       300.0000          .          
+sugar   .s2.t3        -INF           25.3333       300.0000          .          
+sugar   .s3.t1        -INF           30.6667       300.0000          .          
+sugar   .s3.t2        -INF           27.0000       300.0000          .          
+sugar   .s3.t3        -INF           25.3333       300.0000          .          
+sugar   .s4.t1        -INF           30.6667       300.0000          .          
+sugar   .s4.t2        -INF           27.0000       300.0000          .          
+sugar   .s4.t3        -INF           25.3333       300.0000          .          
+labor   .s1.t1        -INF           89.6667       200.0000          .          
+labor   .s1.t2        -INF          109.8500       200.0000          .          
+labor   .s1.t3        -INF          121.4333       200.0000          .          
+labor   .s2.t1        -INF           89.6667       200.0000          .          
+labor   .s2.t2        -INF          109.8500       200.0000          .          
+labor   .s2.t3        -INF          121.4333       200.0000          .          
+labor   .s3.t1        -INF           89.6667       200.0000          .          
+labor   .s3.t2        -INF          109.8500       200.0000          .          
+labor   .s3.t3        -INF          121.4333       200.0000          .          
+labor   .s4.t1        -INF           89.6667       200.0000          .          
+labor   .s4.t2        -INF          109.8500       200.0000          .          
+labor   .s4.t3        -INF          121.4333       200.0000          .          
+spices  .s1.t1        -INF          100.0000       100.0000        -0.1500      
+spices  .s1.t2        -INF          100.0000       100.0000          .          
+spices  .s1.t3        -INF          100.0000       100.0000          .          
+spices  .s2.t1        -INF          100.0000       100.0000        -0.4000      
+spices  .s2.t2        -INF          100.0000       100.0000          .          
+spices  .s2.t3        -INF          100.0000       100.0000          .          
+spices  .s3.t1        -INF          100.0000       100.0000        -0.1500      
+spices  .s3.t2        -INF          100.0000       100.0000          .          
+spices  .s3.t3        -INF          100.0000       100.0000          .          
+spices  .s4.t1        -INF          100.0000       100.0000        -0.3000      
+spices  .s4.t2        -INF          100.0000       100.0000          .          
+spices  .s4.t3        -INF          100.0000       100.0000          .          
+
+---- EQU dem_vss  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s1         5.0000         5.0000         5.0000        -0.0900      
+salsa       .t1.s2         5.0000         5.0000         5.0000        -0.2400      
+salsa       .t1.s3         5.0000         5.0000         5.0000        -0.0900      
+salsa       .t1.s4         5.0000         5.0000         5.0000         3.4800      
+salsa       .t2.s1         5.0000         5.0000         5.0000        -0.0600      
+salsa       .t2.s2         5.0000         5.0000         5.0000        -0.1600      
+salsa       .t2.s3        20.0000        20.0000        20.0000        -0.0600      
+salsa       .t2.s4        20.0000        20.0000        20.0000         3.5400      
+salsa       .t3.s1         5.0000         5.0000         5.0000        -0.0300      
+salsa       .t3.s2        20.0000        20.0000        20.0000        -0.0800      
+salsa       .t3.s3         5.0000         5.0000         5.0000        -0.0300      
+salsa       .t3.s4        20.0000        20.0000        20.0000         3.6000      
+ketchup     .t1.s1        30.0000        30.0000        30.0000         0.9000      
+ketchup     .t1.s2        30.0000        30.0000        30.0000         2.4000      
+ketchup     .t1.s3        30.0000        30.0000        30.0000         0.9000      
+ketchup     .t1.s4        30.0000        30.0000        30.0000         1.8000      
+ketchup     .t2.s1        30.0000        30.0000        30.0000        -0.0750      
+ketchup     .t2.s2        30.0000        30.0000        30.0000        -0.2000      
+ketchup     .t2.s3        40.0000        40.0000        40.0000         0.9000      
+ketchup     .t2.s4        40.0000        40.0000        40.0000         1.8000      
+ketchup     .t3.s1        30.0000        30.0000        30.0000        -0.0375      
+ketchup     .t3.s2        40.0000        40.0000        40.0000        -0.1000      
+ketchup     .t3.s3        30.0000        30.0000        30.0000        -0.0375      
+ketchup     .t3.s4        40.0000        40.0000        40.0000         1.8000      
+tomato-paste.t1.s1       100.0000       100.0000       100.0000         0.6000      
+tomato-paste.t1.s2       100.0000       100.0000       100.0000         1.6000      
+tomato-paste.t1.s3       100.0000       100.0000       100.0000         0.6000      
+tomato-paste.t1.s4       100.0000       100.0000       100.0000         1.2000      
+tomato-paste.t2.s1       100.0000       100.0000       100.0000        -0.1500      
+tomato-paste.t2.s2       100.0000       100.0000       100.0000        -0.4000      
+tomato-paste.t2.s3       200.0000       200.0000       200.0000         0.6000      
+tomato-paste.t2.s4       200.0000       200.0000       200.0000         1.2000      
+tomato-paste.t3.s1       100.0000       100.0000       100.0000        -0.0750      
+tomato-paste.t3.s2       200.0000       200.0000       200.0000        -0.2000      
+tomato-paste.t3.s3       100.0000       100.0000       100.0000        -0.0750      
+tomato-paste.t3.s4       200.0000       200.0000       200.0000         1.2000      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU obj_vss             .              .              .             1.0000      
+
+---- VAR x  
+
+                       LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1        15.6667        15.6667        15.6667         2.4400      
+salsa       .t2         9.7500         9.7500         9.7500        -0.5100      
+salsa       .t3         6.8333         6.8333         6.8333        -0.4600      
+ketchup     .t1        30.0000        30.0000        30.0000        -3.5000      
+ketchup     .t2        34.5000        34.5000        34.5000        -0.6750      
+ketchup     .t3        37.0000        37.0000        37.0000         0.3750      
+tomato-paste.t1       100.0000       100.0000       100.0000        -2.7500      
+tomato-paste.t2       145.0000       145.0000       145.0000        -0.1500      
+tomato-paste.t3       170.0000       170.0000       170.0000         0.3500      
+
+---- VAR y  
+
+                      LOWER          LEVEL          UPPER         MARGINAL
+
+tomatoes.t1.s1          .              .            +INF            0.0750      
+tomatoes.t1.s2          .              .            +INF            0.2000      
+tomatoes.t1.s3          .              .            +INF            0.0750      
+tomatoes.t1.s4          .              .            +INF            0.1500      
+tomatoes.t2.s1          .              .            +INF            0.0750      
+tomatoes.t2.s2          .              .            +INF            0.2000      
+tomatoes.t2.s3          .              .            +INF            0.0750      
+tomatoes.t2.s4          .              .            +INF            0.1500      
+tomatoes.t3.s1          .              .            +INF            0.0750      
+tomatoes.t3.s2          .              .            +INF            0.2000      
+tomatoes.t3.s3          .              .            +INF            0.0750      
+tomatoes.t3.s4          .              .            +INF            0.1500      
+sugar   .t1.s1          .              .            +INF            0.1500      
+sugar   .t1.s2          .              .            +INF            0.4000      
+sugar   .t1.s3          .              .            +INF            0.1500      
+sugar   .t1.s4          .              .            +INF            0.3000      
+sugar   .t2.s1          .              .            +INF            0.1500      
+sugar   .t2.s2          .              .            +INF            0.4000      
+sugar   .t2.s3          .              .            +INF            0.1500      
+sugar   .t2.s4          .              .            +INF            0.3000      
+sugar   .t3.s1          .              .            +INF            0.1500      
+sugar   .t3.s2          .              .            +INF            0.4000      
+sugar   .t3.s3          .              .            +INF            0.1500      
+sugar   .t3.s4          .              .            +INF            0.3000      
+labor   .t1.s1          .              .            +INF            0.3000      
+labor   .t1.s2          .              .            +INF            0.8000      
+labor   .t1.s3          .              .            +INF            0.3000      
+labor   .t1.s4          .              .            +INF            0.6000      
+labor   .t2.s1          .              .            +INF            0.3000      
+labor   .t2.s2          .              .            +INF            0.8000      
+labor   .t2.s3          .              .            +INF            0.3000      
+labor   .t2.s4          .              .            +INF            0.6000      
+labor   .t3.s1          .              .            +INF            0.3000      
+labor   .t3.s2          .              .            +INF            0.8000      
+labor   .t3.s3          .              .            +INF            0.3000      
+labor   .t3.s4          .              .            +INF            0.6000      
+spices  .t1.s1          .             2.0000        +INF             .          
+spices  .t1.s2          .             2.0000        +INF             .          
+spices  .t1.s3          .             2.0000        +INF             .          
+spices  .t1.s4          .             2.0000        +INF             .          
+spices  .t2.s1          .              .            +INF            0.1500      
+spices  .t2.s2          .              .            +INF            0.4000      
+spices  .t2.s3          .              .            +INF            0.1500      
+spices  .t2.s4          .              .            +INF            0.3000      
+spices  .t3.s1          .              .            +INF            0.1500      
+spices  .t3.s2          .              .            +INF            0.4000      
+spices  .t3.s3          .              .            +INF            0.1500      
+spices  .t3.s4          .              .            +INF            0.3000      
+
+---- VAR sur  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s1          .            10.6667        +INF             .          
+salsa       .t1.s2          .            10.6667        +INF             .          
+salsa       .t1.s3          .            10.6667        +INF             .          
+salsa       .t1.s4          .            10.6667        +INF             .          
+salsa       .t2.s1          .            15.4167        +INF             .          
+salsa       .t2.s2          .            15.4167        +INF             .          
+salsa       .t2.s3          .             0.4167        +INF             .          
+salsa       .t2.s4          .             0.4167        +INF             .          
+salsa       .t3.s1          .            17.2500        +INF             .          
+salsa       .t3.s2          .             2.2500        +INF             .          
+salsa       .t3.s3          .             2.2500        +INF             .          
+salsa       .t3.s4          .              .            +INF            3.6600      
+ketchup     .t1.s1          .              .            +INF            1.0125      
+ketchup     .t1.s2          .              .            +INF            2.7000      
+ketchup     .t1.s3          .              .            +INF            0.0375      
+ketchup     .t1.s4          .              .            +INF            0.0750      
+ketchup     .t2.s1          .             4.5000        +INF             .          
+ketchup     .t2.s2          .             4.5000        +INF             .          
+ketchup     .t2.s3          .              .            +INF            0.9750      
+ketchup     .t2.s4          .              .            +INF            0.0750      
+ketchup     .t3.s1          .            11.5000        +INF             .          
+ketchup     .t3.s2          .             1.5000        +INF             .          
+ketchup     .t3.s3          .             7.0000        +INF             .          
+ketchup     .t3.s4          .              .            +INF            1.8750      
+tomato-paste.t1.s1          .              .            +INF            0.8250      
+tomato-paste.t1.s2          .              .            +INF            2.2000      
+tomato-paste.t1.s3          .              .            +INF            0.0750      
+tomato-paste.t1.s4          .              .            +INF            0.1500      
+tomato-paste.t2.s1          .            45.0000        +INF             .          
+tomato-paste.t2.s2          .            45.0000        +INF             .          
+tomato-paste.t2.s3          .              .            +INF            0.7500      
+tomato-paste.t2.s4          .              .            +INF            0.1500      
+tomato-paste.t3.s1          .           115.0000        +INF             .          
+tomato-paste.t3.s2          .            15.0000        +INF             .          
+tomato-paste.t3.s3          .            70.0000        +INF             .          
+tomato-paste.t3.s4          .              .            +INF            1.3500      
+
+---- VAR un  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s1          .              .            +INF            1.8900      
+salsa       .t1.s2          .              .            +INF            5.0400      
+salsa       .t1.s3          .              .            +INF            1.8900      
+salsa       .t1.s4          .              .            +INF            0.1200      
+salsa       .t2.s1          .              .            +INF            1.8600      
+salsa       .t2.s2          .              .            +INF            4.9600      
+salsa       .t2.s3          .              .            +INF            1.8600      
+salsa       .t2.s4          .              .            +INF            0.0600      
+salsa       .t3.s1          .              .            +INF            1.8300      
+salsa       .t3.s2          .              .            +INF            4.8800      
+salsa       .t3.s3          .              .            +INF            1.8300      
+salsa       .t3.s4          .            12.7500        +INF             .          
+ketchup     .t1.s1          .              .            +INF             .          
+ketchup     .t1.s2          .              .            +INF             .          
+ketchup     .t1.s3          .              .            +INF             .          
+ketchup     .t1.s4          .              .            +INF             .          
+ketchup     .t2.s1          .              .            +INF            0.9750      
+ketchup     .t2.s2          .              .            +INF            2.6000      
+ketchup     .t2.s3          .             5.5000        +INF             .          
+ketchup     .t2.s4          .             5.5000        +INF             .          
+ketchup     .t3.s1          .              .            +INF            0.9375      
+ketchup     .t3.s2          .              .            +INF            2.5000      
+ketchup     .t3.s3          .              .            +INF            0.9375      
+ketchup     .t3.s4          .             3.0000        +INF             .          
+tomato-paste.t1.s1          .              .            +INF             .          
+tomato-paste.t1.s2          .              .            +INF             .          
+tomato-paste.t1.s3          .              .            +INF             .          
+tomato-paste.t1.s4          .              .            +INF             .          
+tomato-paste.t2.s1          .              .            +INF            0.7500      
+tomato-paste.t2.s2          .              .            +INF            2.0000      
+tomato-paste.t2.s3          .            55.0000        +INF             .          
+tomato-paste.t2.s4          .            55.0000        +INF             .          
+tomato-paste.t3.s1          .              .            +INF            0.6750      
+tomato-paste.t3.s2          .              .            +INF            1.8000      
+tomato-paste.t3.s3          .              .            +INF            0.6750      
+tomato-paste.t3.s4          .            30.0000        +INF             .          
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR tc_vss            -INF          967.8483        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 17
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----    120 VARIABLE tc_vss.L              =      967.848  
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 18
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE TTT_vss Using LP From line 125
+
+
+---- res_vss  =L=  
+
+res_vss(tomatoes,s1,t1)..  0.5*x(salsa,t1) + 0.5*x(ketchup,t1) + x(tomato-paste,t1) - y(tomatoes,t1,s1) =L= 250 ; (LHS = 122.833333333333)
+     
+res_vss(tomatoes,s1,t2)..  0.5*x(salsa,t2) + 0.5*x(ketchup,t2) + x(tomato-paste,t2) - y(tomatoes,t2,s1) =L= 250 ; (LHS = 167.125)
+     
+res_vss(tomatoes,s1,t3)..  0.5*x(salsa,t3) + 0.5*x(ketchup,t3) + x(tomato-paste,t3) - y(tomatoes,t3,s1) =L= 250 ; (LHS = 191.916666666667)
+     
+REMAINING 45 ENTRIES SKIPPED
+
+
+---- dem_vss  =E=  
+
+dem_vss(salsa,t1,s1)..  x(salsa,t1) - sur(salsa,t1,s1) + un(salsa,t1,s1) =E= 5 ; (LHS = 5)
+     
+dem_vss(salsa,t1,s2)..  x(salsa,t1) - sur(salsa,t1,s2) + un(salsa,t1,s2) =E= 5 ; (LHS = 5)
+     
+dem_vss(salsa,t1,s3)..  x(salsa,t1) - sur(salsa,t1,s3) + un(salsa,t1,s3) =E= 5 ; (LHS = 5)
+     
+REMAINING 33 ENTRIES SKIPPED
+
+
+---- obj_vss  =E=  
+
+obj_vss..  - 2.5*x(salsa,t1) - 2.75*x(salsa,t2) - 3*x(salsa,t3) - 1.5*x(ketchup,t1) - 1.75*x(ketchup,t2) - 2*x(ketchup,t3) - x(tomato-paste,t1) - 1.1*x(tomato-paste,t2) - 1.2*x(tomato-paste,t3) - 0.075*y(tomatoes,t1,s1) - 0.2*y(tomatoes,t1,s2) - 0.075*y(tomatoes,t1,s3) - 0.15*y(tomatoes,t1,s4) - 0.075*y(tomatoes,t2,s1) - 0.2*y(tomatoes,t2,s2) - 0.075*y(tomatoes,t2,s3) - 0.15*y(tomatoes,t2,s4) - 0.075*y(tomatoes,t3,s1) - 0.2*y(tomatoes,t3,s2) - 0.075*y(tomatoes,t3,s3) - 0.15*y(tomatoes,t3,s4) - 0.15*y(sugar,t1,s1) - 0.4*y(sugar,t1,s2) - 0.15*y(sugar,t1,s3) - 0.3*y(sugar,t1,s4) - 0.15*y(sugar,t2,s1) - 0.4*y(sugar,t2,s2) - 0.15*y(sugar,t2,s3) - 0.3*y(sugar,t2,s4) - 0.15*y(sugar,t3,s1) - 0.4*y(sugar,t3,s2) - 0.15*y(sugar,t3,s3) - 0.3*y(sugar,t3,s4) - 0.3*y(labor,t1,s1) - 0.8*y(labor,t1,s2) - 0.3*y(labor,t1,s3) - 0.6*y(labor,t1,s4) - 0.3*y(labor,t2,s1) - 0.8*y(labor,t2,s2) - 0.3*y(labor,t2,s3) - 0.6*y(labor,t2,s4) - 0.3*y(labor,t3,s1) - 0.8*y(labor,t3,s2) - 0.3*y(labor,t3,s3) - 0.6*y(labor,t3,s4) - 0.15*y(spices,t1,s1) - 0.4*y(spices,t1,s2) - 0.15*y(spices,t1,s3) - 0.3*y(spices,t1,s4) - 0.15*y(spices,t2,s1) - 0.4*y(spices,t2,s2) - 0.15*y(spices,t2,s3) - 0.3*y(spices,t2,s4) - 0.15*y(spices,t3,s1) - 0.4*y(spices,t3,s2) - 0.15*y(spices,t3,s3) - 0.3*y(spices,t3,s4) - 0.03*sur(salsa,t1,s1) - 0.08*sur(salsa,t1,s2) - 0.03*sur(salsa,t1,s3) - 0.06*sur(salsa,t1,s4) - 0.03*sur(salsa,t2,s1) - 0.08*sur(salsa,t2,s2) - 0.03*sur(salsa,t2,s3) - 0.06*sur(salsa,t2,s4) - 0.03*sur(salsa,t3,s1) - 0.08*sur(salsa,t3,s2) - 0.03*sur(salsa,t3,s3) - 0.06*sur(salsa,t3,s4) - 0.0375*sur(ketchup,t1,s1) - 0.1*sur(ketchup,t1,s2) - 0.0375*sur(ketchup,t1,s3) - 0.075*sur(ketchup,t1,s4) - 0.0375*sur(ketchup,t2,s1) - 0.1*sur(ketchup,t2,s2) - 0.0375*sur(ketchup,t2,s3) - 0.075*sur(ketchup,t2,s4) - 0.0375*sur(ketchup,t3,s1) - 0.1*sur(ketchup,t3,s2) - 0.0375*sur(ketchup,t3,s3) - 0.075*sur(ketchup,t3,s4) - 0.075*sur(tomato-paste,t1,s1) - 0.2*sur(tomato-paste,t1,s2) - 0.075*sur(tomato-paste,t1,s3) - 0.15*sur(tomato-paste,t1,s4) - 0.075*sur(tomato-paste,t2,s1) - 0.2*sur(tomato-paste,t2,s2) - 0.075*sur(tomato-paste,t2,s3) - 0.15*sur(tomato-paste,t2,s4) - 0.075*sur(tomato-paste,t3,s1) - 0.2*sur(tomato-paste,t3,s2) - 0.075*sur(tomato-paste,t3,s3) - 0.15*sur(tomato-paste,t3,s4) - 1.8*un(salsa,t1,s1) - 4.8*un(salsa,t1,s2) - 1.8*un(salsa,t1,s3) - 3.6*un(salsa,t1,s4) - 1.8*un(salsa,t2,s1) - 4.8*un(salsa,t2,s2) - 1.8*un(salsa,t2,s3) - 3.6*un(salsa,t2,s4) - 1.8*un(salsa,t3,s1) - 4.8*un(salsa,t3,s2) - 1.8*un(salsa,t3,s3) - 3.6*un(salsa,t3,s4) - 0.9*un(ketchup,t1,s1) - 2.4*un(ketchup,t1,s2) - 0.9*un(ketchup,t1,s3) - 1.8*un(ketchup,t1,s4) - 0.9*un(ketchup,t2,s1) - 2.4*un(ketchup,t2,s2) - 0.9*un(ketchup,t2,s3) - 1.8*un(ketchup,t2,s4) - 0.9*un(ketchup,t3,s1) - 2.4*un(ketchup,t3,s2) - 0.9*un(ketchup,t3,s3) - 1.8*un(ketchup,t3,s4) - 0.6*un(tomato-paste,t1,s1) - 1.6*un(tomato-paste,t1,s2) - 0.6*un(tomato-paste,t1,s3) - 1.2*un(tomato-paste,t1,s4) - 0.6*un(tomato-paste,t2,s1) - 1.6*un(tomato-paste,t2,s2) - 0.6*un(tomato-paste,t2,s3) - 1.2*un(tomato-paste,t2,s4) - 0.6*un(tomato-paste,t3,s1) - 1.6*un(tomato-paste,t3,s2) - 0.6*un(tomato-paste,t3,s3) - 1.2*un(tomato-paste,t3,s4) + tc_vss =E= 0 ; (LHS = 1.13686837721616E-13, INFES = 1.13686837721616E-13 ****)
+     
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 19
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE TTT_vss Using LP From line 125
+
+
+---- x  
+
+x(salsa,t1)
+                (.LO, .L, .UP, .M = 0, 15.6666666666667, +INF, 2.44)
+        0.5     res_vss(tomatoes,s1,t1)
+        0.5     res_vss(tomatoes,s2,t1)
+        0.5     res_vss(tomatoes,s3,t1)
+        0.5     res_vss(tomatoes,s4,t1)
+        1       res_vss(sugar,s1,t1)
+        1       res_vss(sugar,s2,t1)
+        1       res_vss(sugar,s3,t1)
+        1       res_vss(sugar,s4,t1)
+        1       res_vss(labor,s1,t1)
+        1       res_vss(labor,s2,t1)
+        1       res_vss(labor,s3,t1)
+        1       res_vss(labor,s4,t1)
+        3       res_vss(spices,s1,t1)
+        3       res_vss(spices,s2,t1)
+        3       res_vss(spices,s3,t1)
+        3       res_vss(spices,s4,t1)
+        1       dem_vss(salsa,t1,s1)
+        1       dem_vss(salsa,t1,s2)
+        1       dem_vss(salsa,t1,s3)
+        1       dem_vss(salsa,t1,s4)
+       -2.5     obj_vss
+
+x(salsa,t2)
+                (.LO, .L, .UP, .M = 0, 9.75, +INF, -0.509999999999999)
+        0.5     res_vss(tomatoes,s1,t2)
+        0.5     res_vss(tomatoes,s2,t2)
+        0.5     res_vss(tomatoes,s3,t2)
+        0.5     res_vss(tomatoes,s4,t2)
+        1       res_vss(sugar,s1,t2)
+        1       res_vss(sugar,s2,t2)
+        1       res_vss(sugar,s3,t2)
+        1       res_vss(sugar,s4,t2)
+        1       res_vss(labor,s1,t2)
+        1       res_vss(labor,s2,t2)
+        1       res_vss(labor,s3,t2)
+        1       res_vss(labor,s4,t2)
+        3       res_vss(spices,s1,t2)
+        3       res_vss(spices,s2,t2)
+        3       res_vss(spices,s3,t2)
+        3       res_vss(spices,s4,t2)
+        1       dem_vss(salsa,t2,s1)
+        1       dem_vss(salsa,t2,s2)
+        1       dem_vss(salsa,t2,s3)
+        1       dem_vss(salsa,t2,s4)
+       -2.75    obj_vss
+
+x(salsa,t3)
+                (.LO, .L, .UP, .M = 0, 6.83333333333333, +INF, -0.46)
+        0.5     res_vss(tomatoes,s1,t3)
+        0.5     res_vss(tomatoes,s2,t3)
+        0.5     res_vss(tomatoes,s3,t3)
+        0.5     res_vss(tomatoes,s4,t3)
+        1       res_vss(sugar,s1,t3)
+        1       res_vss(sugar,s2,t3)
+        1       res_vss(sugar,s3,t3)
+        1       res_vss(sugar,s4,t3)
+        1       res_vss(labor,s1,t3)
+        1       res_vss(labor,s2,t3)
+        1       res_vss(labor,s3,t3)
+        1       res_vss(labor,s4,t3)
+        3       res_vss(spices,s1,t3)
+        3       res_vss(spices,s2,t3)
+        3       res_vss(spices,s3,t3)
+        3       res_vss(spices,s4,t3)
+        1       dem_vss(salsa,t3,s1)
+        1       dem_vss(salsa,t3,s2)
+        1       dem_vss(salsa,t3,s3)
+        1       dem_vss(salsa,t3,s4)
+       -3       obj_vss
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- y  
+
+y(tomatoes,t1,s1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.075)
+       -1       res_vss(tomatoes,s1,t1)
+       -0.075   obj_vss
+
+y(tomatoes,t1,s2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.2)
+       -1       res_vss(tomatoes,s2,t1)
+       -0.2     obj_vss
+
+y(tomatoes,t1,s3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.075)
+       -1       res_vss(tomatoes,s3,t1)
+       -0.075   obj_vss
+
+REMAINING 45 ENTRIES SKIPPED
+
+---- sur  
+
+sur(salsa,t1,s1)
+                (.LO, .L, .UP, .M = 0, 10.6666666666667, +INF, 0)
+       -1       dem_vss(salsa,t1,s1)
+        1       dem_vss(salsa,t2,s1)
+       -0.03    obj_vss
+
+sur(salsa,t1,s2)
+                (.LO, .L, .UP, .M = 0, 10.6666666666667, +INF, 0)
+       -1       dem_vss(salsa,t1,s2)
+        1       dem_vss(salsa,t2,s2)
+       -0.08    obj_vss
+
+sur(salsa,t1,s3)
+                (.LO, .L, .UP, .M = 0, 10.6666666666667, +INF, 0)
+       -1       dem_vss(salsa,t1,s3)
+        1       dem_vss(salsa,t2,s3)
+       -0.03    obj_vss
+
+REMAINING 33 ENTRIES SKIPPED
+
+---- un  
+
+un(salsa,t1,s1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 1.89)
+        1       dem_vss(salsa,t1,s1)
+       -1.8     obj_vss
+
+un(salsa,t1,s2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 5.04)
+        1       dem_vss(salsa,t1,s2)
+       -4.8     obj_vss
+
+un(salsa,t1,s3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 1.89)
+        1       dem_vss(salsa,t1,s3)
+       -1.8     obj_vss
+
+REMAINING 33 ENTRIES SKIPPED
+
+---- tc_vss  
+
+tc_vss
+                (.LO, .L, .UP, .M = -INF, 967.848333333333, +INF, 0)
+        1       obj_vss
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 20
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE TTT_vss Using LP From line 125
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 5.000E+00, 3.000E+02] - Zero values observed as well
+Bound     [min, max] : [        NA,        NA] - Zero values observed as well
+Matrix    [min, max] : [ 3.000E-02, 4.800E+00]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 21
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE TTT_vss Using LP From line 125
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           3     SINGLE EQUATIONS           85
+BLOCKS OF VARIABLES           5     SINGLE VARIABLES          130
+NON ZERO ELEMENTS           442
+
+
+GENERATION TIME      =        0.000 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 22
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE TTT_vss Using LP From line 125
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   TTT_vss             OBJECTIVE  tc_vss
+     TYPE    LP                  DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  125
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE              939.4500
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT        63    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.53 Mb (peak 0.53 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.02 Mb)
+--- Starting Cplex
+
+
+--- LP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.56 ticks)
+
+
+Optimal solution found
+Objective:          939.450000
+
+
+---- EQU res_vss  
+
+                      LOWER          LEVEL          UPPER         MARGINAL
+
+tomatoes.s1.t1        -INF          122.5000       250.0000          .          
+tomatoes.s1.t2        -INF          221.6667       250.0000          .          
+tomatoes.s1.t3        -INF          122.5000       250.0000          .          
+tomatoes.s2.t1        -INF          122.5000       250.0000          .          
+tomatoes.s2.t2        -INF          221.6667       250.0000          .          
+tomatoes.s2.t3        -INF          122.5000       250.0000          .          
+tomatoes.s3.t1        -INF          122.5000       250.0000          .          
+tomatoes.s3.t2        -INF          221.6667       250.0000          .          
+tomatoes.s3.t3        -INF          122.5000       250.0000          .          
+tomatoes.s4.t1        -INF          122.5000       250.0000          .          
+tomatoes.s4.t2        -INF          221.6667       250.0000          .          
+tomatoes.s4.t3        -INF          122.5000       250.0000          .          
+sugar   .s1.t1        -INF           30.0000       300.0000          .          
+sugar   .s1.t2        -INF           23.3333       300.0000          .          
+sugar   .s1.t3        -INF           30.0000       300.0000          .          
+sugar   .s2.t1        -INF           30.0000       300.0000          .          
+sugar   .s2.t2        -INF           23.3333       300.0000          .          
+sugar   .s2.t3        -INF           30.0000       300.0000          .          
+sugar   .s3.t1        -INF           30.0000       300.0000          .          
+sugar   .s3.t2        -INF           23.3333       300.0000          .          
+sugar   .s3.t3        -INF           30.0000       300.0000          .          
+sugar   .s4.t1        -INF           30.0000       300.0000          .          
+sugar   .s4.t2        -INF           23.3333       300.0000          .          
+sugar   .s4.t3        -INF           30.0000       300.0000          .          
+labor   .s1.t1        -INF           89.0000       200.0000          .          
+labor   .s1.t2        -INF          135.3333       200.0000          .          
+labor   .s1.t3        -INF           89.0000       200.0000          .          
+labor   .s2.t1        -INF           89.0000       200.0000          .          
+labor   .s2.t2        -INF          135.3333       200.0000          .          
+labor   .s2.t3        -INF           89.0000       200.0000          .          
+labor   .s3.t1        -INF           89.0000       200.0000          .          
+labor   .s3.t2        -INF          135.3333       200.0000          .          
+labor   .s3.t3        -INF           89.0000       200.0000          .          
+labor   .s4.t1        -INF           89.0000       200.0000          .          
+labor   .s4.t2        -INF          135.3333       200.0000          .          
+labor   .s4.t3        -INF           89.0000       200.0000          .          
+spices  .s1.t1        -INF          100.0000       100.0000          .          
+spices  .s1.t2        -INF          100.0000       100.0000        -0.1500      
+spices  .s1.t3        -INF          100.0000       100.0000          .          
+spices  .s2.t1        -INF          100.0000       100.0000        -0.3767      
+spices  .s2.t2        -INF          100.0000       100.0000        -0.4000      
+spices  .s2.t3        -INF          100.0000       100.0000          .          
+spices  .s3.t1        -INF          100.0000       100.0000        -0.1500      
+spices  .s3.t2        -INF          100.0000       100.0000        -0.1500      
+spices  .s3.t3        -INF          100.0000       100.0000          .          
+spices  .s4.t1        -INF          100.0000       100.0000        -0.3000      
+spices  .s4.t2        -INF          100.0000       100.0000        -0.1100      
+spices  .s4.t3        -INF          100.0000       100.0000        -0.1533      
+
+---- EQU dem_vss  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s1         5.0000         5.0000         5.0000        -0.0900      
+salsa       .t1.s2         5.0000         5.0000         5.0000        -0.2400      
+salsa       .t1.s3         5.0000         5.0000         5.0000         1.7700      
+salsa       .t1.s4         5.0000         5.0000         5.0000         3.5400      
+salsa       .t2.s1         5.0000         5.0000         5.0000        -0.0600      
+salsa       .t2.s2         5.0000         5.0000         5.0000        -0.1600      
+salsa       .t2.s3        20.0000        20.0000        20.0000         1.8000      
+salsa       .t2.s4        20.0000        20.0000        20.0000         3.6000      
+salsa       .t3.s1         5.0000         5.0000         5.0000        -0.0300      
+salsa       .t3.s2        20.0000        20.0000        20.0000        -0.0800      
+salsa       .t3.s3         5.0000         5.0000         5.0000        -0.0300      
+salsa       .t3.s4        20.0000        20.0000        20.0000         3.6000      
+ketchup     .t1.s1        30.0000        30.0000        30.0000        -0.0958      
+ketchup     .t1.s2        30.0000        30.0000        30.0000        -0.1650      
+ketchup     .t1.s3        30.0000        30.0000        30.0000         0.8625      
+ketchup     .t1.s4        30.0000        30.0000        30.0000         1.7250      
+ketchup     .t2.s1        30.0000        30.0000        30.0000        -0.0750      
+ketchup     .t2.s2        30.0000        30.0000        30.0000        -0.0650      
+ketchup     .t2.s3        40.0000        40.0000        40.0000         0.9000      
+ketchup     .t2.s4        40.0000        40.0000        40.0000         1.8000      
+ketchup     .t3.s1        30.0000        30.0000        30.0000        -0.0375      
+ketchup     .t3.s2        40.0000        40.0000        40.0000         0.0350      
+ketchup     .t3.s3        30.0000        30.0000        30.0000         0.3558      
+ketchup     .t3.s4        40.0000        40.0000        40.0000         1.8000      
+tomato-paste.t1.s1       100.0000       100.0000       100.0000        -0.2250      
+tomato-paste.t1.s2       100.0000       100.0000       100.0000         0.0067      
+tomato-paste.t1.s3       100.0000       100.0000       100.0000         0.5250      
+tomato-paste.t1.s4       100.0000       100.0000       100.0000         0.9000      
+tomato-paste.t2.s1       100.0000       100.0000       100.0000        -0.1500      
+tomato-paste.t2.s2       100.0000       100.0000       100.0000        -0.1975      
+tomato-paste.t2.s3       200.0000       200.0000       200.0000         0.6000      
+tomato-paste.t2.s4       200.0000       200.0000       200.0000         1.0500      
+tomato-paste.t3.s1       100.0000       100.0000       100.0000        -0.0750      
+tomato-paste.t3.s2       200.0000       200.0000       200.0000         0.0025      
+tomato-paste.t3.s3       100.0000       100.0000       100.0000         0.1108      
+tomato-paste.t3.s4       200.0000       200.0000       200.0000         1.2000      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU obj_vss             .              .              .             1.0000      
+
+---- VAR x  
+
+                       LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1          .            15.0000        +INF             .          
+salsa       .t2          .             3.3333        +INF             .          
+salsa       .t3          .            15.0000        +INF             .          
+ketchup     .t1          .            30.0000        +INF             .          
+ketchup     .t2          .            40.0000        +INF             .          
+ketchup     .t3          .            30.0000        +INF             .          
+tomato-paste.t1          .           100.0000        +INF             .          
+tomato-paste.t2          .           200.0000        +INF             .          
+tomato-paste.t3          .           100.0000        +INF             .          
+
+---- VAR y  
+
+                      LOWER          LEVEL          UPPER         MARGINAL
+
+tomatoes.t1.s1          .              .            +INF            0.0750      
+tomatoes.t1.s2          .              .            +INF            0.2000      
+tomatoes.t1.s3          .              .            +INF            0.0750      
+tomatoes.t1.s4          .              .            +INF            0.1500      
+tomatoes.t2.s1          .              .            +INF            0.0750      
+tomatoes.t2.s2          .              .            +INF            0.2000      
+tomatoes.t2.s3          .              .            +INF            0.0750      
+tomatoes.t2.s4          .              .            +INF            0.1500      
+tomatoes.t3.s1          .              .            +INF            0.0750      
+tomatoes.t3.s2          .              .            +INF            0.2000      
+tomatoes.t3.s3          .              .            +INF            0.0750      
+tomatoes.t3.s4          .              .            +INF            0.1500      
+sugar   .t1.s1          .              .            +INF            0.1500      
+sugar   .t1.s2          .              .            +INF            0.4000      
+sugar   .t1.s3          .              .            +INF            0.1500      
+sugar   .t1.s4          .              .            +INF            0.3000      
+sugar   .t2.s1          .              .            +INF            0.1500      
+sugar   .t2.s2          .              .            +INF            0.4000      
+sugar   .t2.s3          .              .            +INF            0.1500      
+sugar   .t2.s4          .              .            +INF            0.3000      
+sugar   .t3.s1          .              .            +INF            0.1500      
+sugar   .t3.s2          .              .            +INF            0.4000      
+sugar   .t3.s3          .              .            +INF            0.1500      
+sugar   .t3.s4          .              .            +INF            0.3000      
+labor   .t1.s1          .              .            +INF            0.3000      
+labor   .t1.s2          .              .            +INF            0.8000      
+labor   .t1.s3          .              .            +INF            0.3000      
+labor   .t1.s4          .              .            +INF            0.6000      
+labor   .t2.s1          .              .            +INF            0.3000      
+labor   .t2.s2          .              .            +INF            0.8000      
+labor   .t2.s3          .              .            +INF            0.3000      
+labor   .t2.s4          .              .            +INF            0.6000      
+labor   .t3.s1          .              .            +INF            0.3000      
+labor   .t3.s2          .              .            +INF            0.8000      
+labor   .t3.s3          .              .            +INF            0.3000      
+labor   .t3.s4          .              .            +INF            0.6000      
+spices  .t1.s1          .              .            +INF            0.1500      
+spices  .t1.s2          .              .            +INF            0.0233      
+spices  .t1.s3          .       -1.42109E-14        +INF             .          
+spices  .t1.s4          .       -1.42109E-14        +INF             .          
+spices  .t2.s1          .       -3.55271E-15        +INF             .          
+spices  .t2.s2          .       -3.55271E-15        +INF             .          
+spices  .t2.s3          .       -3.55271E-15        +INF             .          
+spices  .t2.s4          .              .            +INF            0.1900      
+spices  .t3.s1          .              .            +INF            0.1500      
+spices  .t3.s2          .              .            +INF            0.4000      
+spices  .t3.s3          .              .            +INF            0.1500      
+spices  .t3.s4          .              .            +INF            0.1467      
+
+---- VAR sur  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s1          .            10.0000        +INF             .          
+salsa       .t1.s2          .            10.0000        +INF             .          
+salsa       .t1.s3          .            10.0000        +INF             .          
+salsa       .t1.s4          .            10.0000        +INF             .          
+salsa       .t2.s1          .             8.3333        +INF             .          
+salsa       .t2.s2          .             8.3333        +INF             .          
+salsa       .t2.s3          .              .            +INF            1.8600      
+salsa       .t2.s4          .              .            +INF            0.0600      
+salsa       .t3.s1          .            18.3333        +INF             .          
+salsa       .t3.s2          .             3.3333        +INF             .          
+salsa       .t3.s3          .            10.0000        +INF             .          
+salsa       .t3.s4          .              .            +INF            3.6600      
+ketchup     .t1.s1          .              .            +INF            0.0167      
+ketchup     .t1.s2          .              .            +INF             .          
+ketchup     .t1.s3          .              .            +INF             .          
+ketchup     .t1.s4          .              .            +INF             .          
+ketchup     .t2.s1          .            10.0000        +INF             .          
+ketchup     .t2.s2          .            10.0000        +INF             .          
+ketchup     .t2.s3          .              .            +INF            0.5817      
+ketchup     .t2.s4          .              .            +INF            0.0750      
+ketchup     .t3.s1          .            10.0000        +INF             .          
+ketchup     .t3.s2          .              .            +INF            0.1350      
+ketchup     .t3.s3          .              .            +INF            0.3933      
+ketchup     .t3.s4          .              .            +INF            1.8750      
+tomato-paste.t1.s1          .              .            +INF             .          
+tomato-paste.t1.s2          .              .            +INF            0.4042      
+tomato-paste.t1.s3          .              .            +INF             .          
+tomato-paste.t1.s4          .              .            +INF             .          
+tomato-paste.t2.s1          .           100.0000        +INF             .          
+tomato-paste.t2.s2          .           100.0000        +INF             .          
+tomato-paste.t2.s3          .              .            +INF            0.5642      
+tomato-paste.t2.s4          .              .            +INF             .          
+tomato-paste.t3.s1          .           100.0000        +INF             .          
+tomato-paste.t3.s2          .              .            +INF            0.2025      
+tomato-paste.t3.s3          .              .            +INF            0.1858      
+tomato-paste.t3.s4          .              .            +INF            1.3500      
+
+---- VAR un  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s1          .              .            +INF            1.8900      
+salsa       .t1.s2          .              .            +INF            5.0400      
+salsa       .t1.s3          .              .            +INF            0.0300      
+salsa       .t1.s4          .              .            +INF            0.0600      
+salsa       .t2.s1          .              .            +INF            1.8600      
+salsa       .t2.s2          .              .            +INF            4.9600      
+salsa       .t2.s3          .             6.6667        +INF             .          
+salsa       .t2.s4          .             6.6667        +INF             .          
+salsa       .t3.s1          .              .            +INF            1.8300      
+salsa       .t3.s2          .              .            +INF            4.8800      
+salsa       .t3.s3          .              .            +INF            1.8300      
+salsa       .t3.s4          .             5.0000        +INF             .          
+ketchup     .t1.s1          .              .            +INF            0.9958      
+ketchup     .t1.s2          .              .            +INF            2.5650      
+ketchup     .t1.s3          .              .            +INF            0.0375      
+ketchup     .t1.s4          .              .            +INF            0.0750      
+ketchup     .t2.s1          .              .            +INF            0.9750      
+ketchup     .t2.s2          .              .            +INF            2.4650      
+ketchup     .t2.s3          .              .            +INF             .          
+ketchup     .t2.s4          .              .            +INF             .          
+ketchup     .t3.s1          .              .            +INF            0.9375      
+ketchup     .t3.s2          .              .            +INF            2.3650      
+ketchup     .t3.s3          .              .            +INF            0.5442      
+ketchup     .t3.s4          .            10.0000        +INF             .          
+tomato-paste.t1.s1          .              .            +INF            0.8250      
+tomato-paste.t1.s2          .              .            +INF            1.5933      
+tomato-paste.t1.s3          .              .            +INF            0.0750      
+tomato-paste.t1.s4          .              .            +INF            0.3000      
+tomato-paste.t2.s1          .              .            +INF            0.7500      
+tomato-paste.t2.s2          .              .            +INF            1.7975      
+tomato-paste.t2.s3          .              .            +INF             .          
+tomato-paste.t2.s4          .              .            +INF            0.1500      
+tomato-paste.t3.s1          .              .            +INF            0.6750      
+tomato-paste.t3.s2          .              .            +INF            1.5975      
+tomato-paste.t3.s3          .              .            +INF            0.4892      
+tomato-paste.t3.s4          .           100.0000        +INF             .          
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR tc_vss            -INF          939.4500        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 23
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----    131 PARAMETER evpi                 =      939.450  
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 24
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE TTT_vss Using LP From line 139
+
+
+---- res_vss  =L=  
+
+res_vss(tomatoes,s1,t1)..  0.5*x(salsa,t1) + 0.5*x(ketchup,t1) + x(tomato-paste,t1) - y(tomatoes,t1,s1) =L= 250 ; (LHS = 122.5)
+     
+res_vss(tomatoes,s1,t2)..  0.5*x(salsa,t2) + 0.5*x(ketchup,t2) + x(tomato-paste,t2) - y(tomatoes,t2,s1) =L= 250 ; (LHS = 221.666666666667)
+     
+res_vss(tomatoes,s1,t3)..  0.5*x(salsa,t3) + 0.5*x(ketchup,t3) + x(tomato-paste,t3) - y(tomatoes,t3,s1) =L= 250 ; (LHS = 122.5)
+     
+REMAINING 9 ENTRIES SKIPPED
+
+
+---- dem_vss  =E=  
+
+dem_vss(salsa,t1,s1)..  x(salsa,t1) - sur(salsa,t1,s1) + un(salsa,t1,s1) =E= 5 ; (LHS = 5)
+     
+dem_vss(salsa,t2,s1)..  x(salsa,t2) + sur(salsa,t1,s1) - sur(salsa,t2,s1) + un(salsa,t2,s1) =E= 5 ; (LHS = 5)
+     
+dem_vss(salsa,t3,s1)..  x(salsa,t3) + sur(salsa,t2,s1) - sur(salsa,t3,s1) + un(salsa,t3,s1) =E= 5 ; (LHS = 5)
+     
+REMAINING 6 ENTRIES SKIPPED
+
+
+---- obj_vss  =E=  
+
+obj_vss..  - 2.5*x(salsa,t1) - 2.75*x(salsa,t2) - 3*x(salsa,t3) - 1.5*x(ketchup,t1) - 1.75*x(ketchup,t2) - 2*x(ketchup,t3) - x(tomato-paste,t1) - 1.1*x(tomato-paste,t2) - 1.2*x(tomato-paste,t3) - 0.5*y(tomatoes,t1,s1) - 0.5*y(tomatoes,t2,s1) - 0.5*y(tomatoes,t3,s1) - y(sugar,t1,s1) - y(sugar,t2,s1) - y(sugar,t3,s1) - 2*y(labor,t1,s1) - 2*y(labor,t2,s1) - 2*y(labor,t3,s1) - y(spices,t1,s1) - y(spices,t2,s1) - y(spices,t3,s1) - 0.2*sur(salsa,t1,s1) - 0.2*sur(salsa,t2,s1) - 0.2*sur(salsa,t3,s1) - 0.25*sur(ketchup,t1,s1) - 0.25*sur(ketchup,t2,s1) - 0.25*sur(ketchup,t3,s1) - 0.5*sur(tomato-paste,t1,s1) - 0.5*sur(tomato-paste,t2,s1) - 0.5*sur(tomato-paste,t3,s1) - 12*un(salsa,t1,s1) - 12*un(salsa,t2,s1) - 12*un(salsa,t3,s1) - 6*un(ketchup,t1,s1) - 6*un(ketchup,t2,s1) - 6*un(ketchup,t3,s1) - 4*un(tomato-paste,t1,s1) - 4*un(tomato-paste,t2,s1) - 4*un(tomato-paste,t3,s1) + tc_vss =E= 0 ; (LHS = 120.45, INFES = 120.45 ****)
+     
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 25
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE TTT_vss Using LP From line 139
+
+
+---- x  
+
+x(salsa,t1)
+                (.LO, .L, .UP, .M = 0, 15, +INF, 0)
+        0.5     res_vss(tomatoes,s1,t1)
+        1       res_vss(sugar,s1,t1)
+        1       res_vss(labor,s1,t1)
+        3       res_vss(spices,s1,t1)
+        1       dem_vss(salsa,t1,s1)
+       -2.5     obj_vss
+
+x(salsa,t2)
+                (.LO, .L, .UP, .M = 0, 3.33333333333333, +INF, 0)
+        0.5     res_vss(tomatoes,s1,t2)
+        1       res_vss(sugar,s1,t2)
+        1       res_vss(labor,s1,t2)
+        3       res_vss(spices,s1,t2)
+        1       dem_vss(salsa,t2,s1)
+       -2.75    obj_vss
+
+x(salsa,t3)
+                (.LO, .L, .UP, .M = 0, 15, +INF, 0)
+        0.5     res_vss(tomatoes,s1,t3)
+        1       res_vss(sugar,s1,t3)
+        1       res_vss(labor,s1,t3)
+        3       res_vss(spices,s1,t3)
+        1       dem_vss(salsa,t3,s1)
+       -3       obj_vss
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- y  
+
+y(tomatoes,t1,s1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.075)
+       -1       res_vss(tomatoes,s1,t1)
+       -0.5     obj_vss
+
+y(tomatoes,t2,s1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.075)
+       -1       res_vss(tomatoes,s1,t2)
+       -0.5     obj_vss
+
+y(tomatoes,t3,s1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.075)
+       -1       res_vss(tomatoes,s1,t3)
+       -0.5     obj_vss
+
+REMAINING 9 ENTRIES SKIPPED
+
+---- sur  
+
+sur(salsa,t1,s1)
+                (.LO, .L, .UP, .M = 0, 10, +INF, 0)
+       -1       dem_vss(salsa,t1,s1)
+        1       dem_vss(salsa,t2,s1)
+       -0.2     obj_vss
+
+sur(salsa,t2,s1)
+                (.LO, .L, .UP, .M = 0, 8.33333333333333, +INF, 0)
+       -1       dem_vss(salsa,t2,s1)
+        1       dem_vss(salsa,t3,s1)
+       -0.2     obj_vss
+
+sur(salsa,t3,s1)
+                (.LO, .L, .UP, .M = 0, 18.3333333333333, +INF, 0)
+       -1       dem_vss(salsa,t3,s1)
+       -0.2     obj_vss
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- un  
+
+un(salsa,t1,s1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 1.89)
+        1       dem_vss(salsa,t1,s1)
+      -12       obj_vss
+
+un(salsa,t2,s1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 1.86)
+        1       dem_vss(salsa,t2,s1)
+      -12       obj_vss
+
+un(salsa,t3,s1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 1.83)
+        1       dem_vss(salsa,t3,s1)
+      -12       obj_vss
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- tc_vss  
+
+tc_vss
+                (.LO, .L, .UP, .M = -INF, 939.45, +INF, 0)
+        1       obj_vss
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 26
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE TTT_vss Using LP From line 139
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 5.000E+00, 3.000E+02] - Zero values observed as well
+Bound     [min, max] : [        NA,        NA] - Zero values observed as well
+Matrix    [min, max] : [ 2.000E-01, 1.200E+01]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 27
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE TTT_vss Using LP From line 139
+
+
+LOOPS                                   sc   s1
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           3     SINGLE EQUATIONS           22
+BLOCKS OF VARIABLES           5     SINGLE VARIABLES           40  1 projected
+NON ZERO ELEMENTS           118
+
+
+GENERATION TIME      =        0.000 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+               L O O P S                 sc s1
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 28
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE TTT_vss Using LP From line 139
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   TTT_vss             OBJECTIVE  tc_vss
+     TYPE    LP                  DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  139
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE              528.0000
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT         8    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.50 Mb (peak 0.50 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.00 Mb)
+--- Starting Cplex
+
+
+--- LP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.11 ticks)
+
+
+Optimal solution found
+Objective:          528.000000
+
+
+---- EQU res_vss  
+
+                      LOWER          LEVEL          UPPER         MARGINAL
+
+tomatoes.s1.t1        -INF          122.5000       250.0000          .          
+tomatoes.s1.t2        -INF          130.0000       250.0000          .          
+tomatoes.s1.t3        -INF          100.0000       250.0000          .          
+sugar   .s1.t1        -INF           30.0000       300.0000          .          
+sugar   .s1.t2        -INF           30.0000       300.0000          .          
+sugar   .s1.t3        -INF             .           300.0000          .          
+labor   .s1.t1        -INF           89.0000       200.0000          .          
+labor   .s1.t2        -INF           98.0000       200.0000          .          
+labor   .s1.t3        -INF           50.0000       200.0000          .          
+spices  .s1.t1        -INF          100.0000       100.0000         EPS         
+spices  .s1.t2        -INF           85.0000       100.0000          .          
+spices  .s1.t3        -INF           25.0000       100.0000          .          
+
+---- EQU dem_vss  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s1         5.0000         5.0000         5.0000         2.5000      
+salsa       .t2.s1         5.0000         5.0000         5.0000         2.7000      
+salsa       .t3.s1         5.0000         5.0000         5.0000         2.9000      
+ketchup     .t1.s1        30.0000        30.0000        30.0000         1.5000      
+ketchup     .t2.s1        30.0000        30.0000        30.0000         1.7500      
+ketchup     .t3.s1        30.0000        30.0000        30.0000         2.0000      
+tomato-paste.t1.s1       100.0000       100.0000       100.0000         1.0000      
+tomato-paste.t2.s1       100.0000       100.0000       100.0000         1.1000      
+tomato-paste.t3.s1       100.0000       100.0000       100.0000         1.2000      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU obj_vss             .              .              .             1.0000      
+
+---- VAR x  
+
+                       LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1          .            15.0000        +INF             .          
+salsa       .t2          .              .            +INF            0.0500      
+salsa       .t3          .              .            +INF            0.1000      
+ketchup     .t1          .            30.0000        +INF             .          
+ketchup     .t2          .            60.0000        +INF             .          
+ketchup     .t3          .              .            +INF            EPS         
+tomato-paste.t1          .           100.0000        +INF             .          
+tomato-paste.t2          .           100.0000        +INF             .          
+tomato-paste.t3          .           100.0000        +INF             .          
+
+---- VAR y  
+
+                      LOWER          LEVEL          UPPER         MARGINAL
+
+tomatoes.t1.s1          .              .            +INF            0.5000      
+tomatoes.t2.s1          .              .            +INF            0.5000      
+tomatoes.t3.s1          .              .            +INF            0.5000      
+sugar   .t1.s1          .              .            +INF            1.0000      
+sugar   .t2.s1          .              .            +INF            1.0000      
+sugar   .t3.s1          .              .            +INF            1.0000      
+labor   .t1.s1          .              .            +INF            2.0000      
+labor   .t2.s1          .              .            +INF            2.0000      
+labor   .t3.s1          .              .            +INF            2.0000      
+spices  .t1.s1          .              .            +INF            1.0000      
+spices  .t2.s1          .              .            +INF            1.0000      
+spices  .t3.s1          .              .            +INF            1.0000      
+
+---- VAR sur  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s1          .            10.0000        +INF             .          
+salsa       .t2.s1          .             5.0000        +INF             .          
+salsa       .t3.s1          .              .            +INF            3.1000      
+ketchup     .t1.s1          .              .            +INF             .          
+ketchup     .t2.s1          .            30.0000        +INF             .          
+ketchup     .t3.s1          .              .            +INF            2.2500      
+tomato-paste.t1.s1          .              .            +INF            0.4000      
+tomato-paste.t2.s1          .              .            +INF            0.4000      
+tomato-paste.t3.s1          .              .            +INF            1.7000      
+
+---- VAR un  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s1          .              .            +INF            9.5000      
+salsa       .t2.s1          .              .            +INF            9.3000      
+salsa       .t3.s1          .              .            +INF            9.1000      
+ketchup     .t1.s1          .              .            +INF            4.5000      
+ketchup     .t2.s1          .              .            +INF            4.2500      
+ketchup     .t3.s1          .              .            +INF            4.0000      
+tomato-paste.t1.s1          .              .            +INF            3.0000      
+tomato-paste.t2.s1          .              .            +INF            2.9000      
+tomato-paste.t3.s1          .              .            +INF            2.8000      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR tc_vss            -INF          528.0000        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 29
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE TTT_vss Using LP From line 139
+
+
+---- res_vss  =L=  
+
+res_vss(tomatoes,s2,t1)..  0.5*x(salsa,t1) + 0.5*x(ketchup,t1) + x(tomato-paste,t1) - y(tomatoes,t1,s2) =L= 250 ; (LHS = 122.5)
+     
+res_vss(tomatoes,s2,t2)..  0.5*x(salsa,t2) + 0.5*x(ketchup,t2) + x(tomato-paste,t2) - y(tomatoes,t2,s2) =L= 250 ; (LHS = 130)
+     
+res_vss(tomatoes,s2,t3)..  0.5*x(salsa,t3) + 0.5*x(ketchup,t3) + x(tomato-paste,t3) - y(tomatoes,t3,s2) =L= 250 ; (LHS = 100)
+     
+REMAINING 9 ENTRIES SKIPPED
+
+
+---- dem_vss  =E=  
+
+dem_vss(salsa,t1,s2)..  x(salsa,t1) - sur(salsa,t1,s2) + un(salsa,t1,s2) =E= 5 ; (LHS = 5)
+     
+dem_vss(salsa,t2,s2)..  x(salsa,t2) + sur(salsa,t1,s2) - sur(salsa,t2,s2) + un(salsa,t2,s2) =E= 5 ; (LHS = 1.66666666666667, INFES = 3.33333333333333 ****)
+     
+dem_vss(salsa,t3,s2)..  x(salsa,t3) + sur(salsa,t2,s2) - sur(salsa,t3,s2) + un(salsa,t3,s2) =E= 20 ; (LHS = 5, INFES = 15 ****)
+     
+REMAINING 6 ENTRIES SKIPPED
+
+
+---- obj_vss  =E=  
+
+obj_vss..  - 2.5*x(salsa,t1) - 2.75*x(salsa,t2) - 3*x(salsa,t3) - 1.5*x(ketchup,t1) - 1.75*x(ketchup,t2) - 2*x(ketchup,t3) - x(tomato-paste,t1) - 1.1*x(tomato-paste,t2) - 1.2*x(tomato-paste,t3) - 0.5*y(tomatoes,t1,s2) - 0.5*y(tomatoes,t2,s2) - 0.5*y(tomatoes,t3,s2) - y(sugar,t1,s2) - y(sugar,t2,s2) - y(sugar,t3,s2) - 2*y(labor,t1,s2) - 2*y(labor,t2,s2) - 2*y(labor,t3,s2) - y(spices,t1,s2) - y(spices,t2,s2) - y(spices,t3,s2) - 0.2*sur(salsa,t1,s2) - 0.2*sur(salsa,t2,s2) - 0.2*sur(salsa,t3,s2) - 0.25*sur(ketchup,t1,s2) - 0.25*sur(ketchup,t2,s2) - 0.25*sur(ketchup,t3,s2) - 0.5*sur(tomato-paste,t1,s2) - 0.5*sur(tomato-paste,t2,s2) - 0.5*sur(tomato-paste,t3,s2) - 12*un(salsa,t1,s2) - 12*un(salsa,t2,s2) - 12*un(salsa,t3,s2) - 6*un(ketchup,t1,s2) - 6*un(ketchup,t2,s2) - 6*un(ketchup,t3,s2) - 4*un(tomato-paste,t1,s2) - 4*un(tomato-paste,t2,s2) - 4*un(tomato-paste,t3,s2) + tc_vss =E= 0 ; (LHS = -46.3333333333334, INFES = 46.3333333333334 ****)
+     
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 30
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE TTT_vss Using LP From line 139
+
+
+---- x  
+
+x(salsa,t1)
+                (.LO, .L, .UP, .M = 0, 15, +INF, 0)
+        0.5     res_vss(tomatoes,s2,t1)
+        1       res_vss(sugar,s2,t1)
+        1       res_vss(labor,s2,t1)
+        3       res_vss(spices,s2,t1)
+        1       dem_vss(salsa,t1,s2)
+       -2.5     obj_vss
+
+x(salsa,t2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.0499999999999998)
+        0.5     res_vss(tomatoes,s2,t2)
+        1       res_vss(sugar,s2,t2)
+        1       res_vss(labor,s2,t2)
+        3       res_vss(spices,s2,t2)
+        1       dem_vss(salsa,t2,s2)
+       -2.75    obj_vss
+
+x(salsa,t3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.0999999999999996)
+        0.5     res_vss(tomatoes,s2,t3)
+        1       res_vss(sugar,s2,t3)
+        1       res_vss(labor,s2,t3)
+        3       res_vss(spices,s2,t3)
+        1       dem_vss(salsa,t3,s2)
+       -3       obj_vss
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- y  
+
+y(tomatoes,t1,s2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.2)
+       -1       res_vss(tomatoes,s2,t1)
+       -0.5     obj_vss
+
+y(tomatoes,t2,s2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.2)
+       -1       res_vss(tomatoes,s2,t2)
+       -0.5     obj_vss
+
+y(tomatoes,t3,s2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.2)
+       -1       res_vss(tomatoes,s2,t3)
+       -0.5     obj_vss
+
+REMAINING 9 ENTRIES SKIPPED
+
+---- sur  
+
+sur(salsa,t1,s2)
+                (.LO, .L, .UP, .M = 0, 10, +INF, 0)
+       -1       dem_vss(salsa,t1,s2)
+        1       dem_vss(salsa,t2,s2)
+       -0.2     obj_vss
+
+sur(salsa,t2,s2)
+                (.LO, .L, .UP, .M = 0, 8.33333333333333, +INF, 0)
+       -1       dem_vss(salsa,t2,s2)
+        1       dem_vss(salsa,t3,s2)
+       -0.2     obj_vss
+
+sur(salsa,t3,s2)
+                (.LO, .L, .UP, .M = 0, 3.33333333333333, +INF, 0)
+       -1       dem_vss(salsa,t3,s2)
+       -0.2     obj_vss
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- un  
+
+un(salsa,t1,s2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 5.04)
+        1       dem_vss(salsa,t1,s2)
+      -12       obj_vss
+
+un(salsa,t2,s2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 4.96)
+        1       dem_vss(salsa,t2,s2)
+      -12       obj_vss
+
+un(salsa,t3,s2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 4.88)
+        1       dem_vss(salsa,t3,s2)
+      -12       obj_vss
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- tc_vss  
+
+tc_vss
+                (.LO, .L, .UP, .M = -INF, 528, +INF, 0)
+        1       obj_vss
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 31
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE TTT_vss Using LP From line 139
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 5.000E+00, 3.000E+02] - Zero values observed as well
+Bound     [min, max] : [        NA,        NA] - Zero values observed as well
+Matrix    [min, max] : [ 2.000E-01, 1.200E+01]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 32
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE TTT_vss Using LP From line 139
+
+
+LOOPS                                   sc   s2
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           3     SINGLE EQUATIONS           22
+BLOCKS OF VARIABLES           5     SINGLE VARIABLES           40  1 projected
+NON ZERO ELEMENTS           118
+
+
+GENERATION TIME      =        0.000 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+               L O O P S                 sc s2
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 33
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE TTT_vss Using LP From line 139
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   TTT_vss             OBJECTIVE  tc_vss
+     TYPE    LP                  DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  139
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE              712.2500
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT        11    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.50 Mb (peak 0.50 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.00 Mb)
+--- Starting Cplex
+
+
+--- LP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.12 ticks)
+
+
+Optimal solution found
+Objective:          712.250000
+
+
+---- EQU res_vss  
+
+                      LOWER          LEVEL          UPPER         MARGINAL
+
+tomatoes.s2.t1        -INF          122.5000       250.0000          .          
+tomatoes.s2.t2        -INF          122.5000       250.0000          .          
+tomatoes.s2.t3        -INF          220.0000       250.0000          .          
+sugar   .s2.t1        -INF           30.0000       300.0000          .          
+sugar   .s2.t2        -INF           30.0000       300.0000          .          
+sugar   .s2.t3        -INF           20.0000       300.0000          .          
+labor   .s2.t1        -INF           89.0000       200.0000          .          
+labor   .s2.t2        -INF           89.0000       200.0000          .          
+labor   .s2.t3        -INF          132.0000       200.0000          .          
+spices  .s2.t1        -INF          100.0000       100.0000        -0.0167      
+spices  .s2.t2        -INF          100.0000       100.0000         EPS         
+spices  .s2.t3        -INF           90.0000       100.0000          .          
+
+---- EQU dem_vss  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s2         5.0000         5.0000         5.0000         2.5500      
+salsa       .t2.s2         5.0000         5.0000         5.0000         2.7500      
+salsa       .t3.s2        20.0000        20.0000        20.0000         2.9500      
+ketchup     .t1.s2        30.0000        30.0000        30.0000         1.5167      
+ketchup     .t2.s2        30.0000        30.0000        30.0000         1.7500      
+ketchup     .t3.s2        40.0000        40.0000        40.0000         2.0000      
+tomato-paste.t1.s2       100.0000       100.0000       100.0000         1.0042      
+tomato-paste.t2.s2       100.0000       100.0000       100.0000         1.1000      
+tomato-paste.t3.s2       200.0000       200.0000       200.0000         1.2000      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU obj_vss             .              .              .             1.0000      
+
+---- VAR x  
+
+                       LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1          .            15.0000        +INF             .          
+salsa       .t2          .            15.0000        +INF             .          
+salsa       .t3          .              .            +INF            0.0500      
+ketchup     .t1          .            30.0000        +INF             .          
+ketchup     .t2          .            30.0000        +INF             .          
+ketchup     .t3          .            40.0000        +INF             .          
+tomato-paste.t1          .           100.0000        +INF             .          
+tomato-paste.t2          .           100.0000        +INF             .          
+tomato-paste.t3          .           200.0000        +INF             .          
+
+---- VAR y  
+
+                      LOWER          LEVEL          UPPER         MARGINAL
+
+tomatoes.t1.s2          .              .            +INF            0.5000      
+tomatoes.t2.s2          .              .            +INF            0.5000      
+tomatoes.t3.s2          .              .            +INF            0.5000      
+sugar   .t1.s2          .              .            +INF            1.0000      
+sugar   .t2.s2          .              .            +INF            1.0000      
+sugar   .t3.s2          .              .            +INF            1.0000      
+labor   .t1.s2          .              .            +INF            2.0000      
+labor   .t2.s2          .              .            +INF            2.0000      
+labor   .t3.s2          .              .            +INF            2.0000      
+spices  .t1.s2          .              .            +INF            0.9833      
+spices  .t2.s2          .              .            +INF            1.0000      
+spices  .t3.s2          .              .            +INF            1.0000      
+
+---- VAR sur  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s2          .            10.0000        +INF             .          
+salsa       .t2.s2          .            20.0000        +INF             .          
+salsa       .t3.s2          .              .            +INF            3.1500      
+ketchup     .t1.s2          .              .            +INF            0.0167      
+ketchup     .t2.s2          .              .            +INF             .          
+ketchup     .t3.s2          .              .            +INF            2.2500      
+tomato-paste.t1.s2          .              .            +INF            0.4042      
+tomato-paste.t2.s2          .              .            +INF            0.4000      
+tomato-paste.t3.s2          .              .            +INF            1.7000      
+
+---- VAR un  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s2          .              .            +INF            9.4500      
+salsa       .t2.s2          .              .            +INF            9.2500      
+salsa       .t3.s2          .              .            +INF            9.0500      
+ketchup     .t1.s2          .              .            +INF            4.4833      
+ketchup     .t2.s2          .              .            +INF            4.2500      
+ketchup     .t3.s2          .              .            +INF            4.0000      
+tomato-paste.t1.s2          .              .            +INF            2.9958      
+tomato-paste.t2.s2          .              .            +INF            2.9000      
+tomato-paste.t3.s2          .              .            +INF            2.8000      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR tc_vss            -INF          712.2500        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 34
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE TTT_vss Using LP From line 139
+
+
+---- res_vss  =L=  
+
+res_vss(tomatoes,s3,t1)..  0.5*x(salsa,t1) + 0.5*x(ketchup,t1) + x(tomato-paste,t1) - y(tomatoes,t1,s3) =L= 250 ; (LHS = 122.5)
+     
+res_vss(tomatoes,s3,t2)..  0.5*x(salsa,t2) + 0.5*x(ketchup,t2) + x(tomato-paste,t2) - y(tomatoes,t2,s3) =L= 250 ; (LHS = 122.5)
+     
+res_vss(tomatoes,s3,t3)..  0.5*x(salsa,t3) + 0.5*x(ketchup,t3) + x(tomato-paste,t3) - y(tomatoes,t3,s3) =L= 250 ; (LHS = 220)
+     
+REMAINING 9 ENTRIES SKIPPED
+
+
+---- dem_vss  =E=  
+
+dem_vss(salsa,t1,s3)..  x(salsa,t1) - sur(salsa,t1,s3) + un(salsa,t1,s3) =E= 5 ; (LHS = 5)
+     
+dem_vss(salsa,t2,s3)..  x(salsa,t2) + sur(salsa,t1,s3) - sur(salsa,t2,s3) + un(salsa,t2,s3) =E= 20 ; (LHS = 31.6666666666667, INFES = 11.6666666666667 ****)
+     
+dem_vss(salsa,t3,s3)..  x(salsa,t3) + sur(salsa,t2,s3) - sur(salsa,t3,s3) + un(salsa,t3,s3) =E= 5 ; (LHS = -10, INFES = 15 ****)
+     
+REMAINING 6 ENTRIES SKIPPED
+
+
+---- obj_vss  =E=  
+
+obj_vss..  - 2.5*x(salsa,t1) - 2.75*x(salsa,t2) - 3*x(salsa,t3) - 1.5*x(ketchup,t1) - 1.75*x(ketchup,t2) - 2*x(ketchup,t3) - x(tomato-paste,t1) - 1.1*x(tomato-paste,t2) - 1.2*x(tomato-paste,t3) - 0.5*y(tomatoes,t1,s3) - 0.5*y(tomatoes,t2,s3) - 0.5*y(tomatoes,t3,s3) - y(sugar,t1,s3) - y(sugar,t2,s3) - y(sugar,t3,s3) - 2*y(labor,t1,s3) - 2*y(labor,t2,s3) - 2*y(labor,t3,s3) - y(spices,t1,s3) - y(spices,t2,s3) - y(spices,t3,s3) - 0.2*sur(salsa,t1,s3) - 0.2*sur(salsa,t2,s3) - 0.2*sur(salsa,t3,s3) - 0.25*sur(ketchup,t1,s3) - 0.25*sur(ketchup,t2,s3) - 0.25*sur(ketchup,t3,s3) - 0.5*sur(tomato-paste,t1,s3) - 0.5*sur(tomato-paste,t2,s3) - 0.5*sur(tomato-paste,t3,s3) - 12*un(salsa,t1,s3) - 12*un(salsa,t2,s3) - 12*un(salsa,t3,s3) - 6*un(ketchup,t1,s3) - 6*un(ketchup,t2,s3) - 6*un(ketchup,t3,s3) - 4*un(tomato-paste,t1,s3) - 4*un(tomato-paste,t2,s3) - 4*un(tomato-paste,t3,s3) + tc_vss =E= 0 ; (LHS = -78, INFES = 78 ****)
+     
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 35
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE TTT_vss Using LP From line 139
+
+
+---- x  
+
+x(salsa,t1)
+                (.LO, .L, .UP, .M = 0, 15, +INF, 0)
+        0.5     res_vss(tomatoes,s3,t1)
+        1       res_vss(sugar,s3,t1)
+        1       res_vss(labor,s3,t1)
+        3       res_vss(spices,s3,t1)
+        1       dem_vss(salsa,t1,s3)
+       -2.5     obj_vss
+
+x(salsa,t2)
+                (.LO, .L, .UP, .M = 0, 15, +INF, 0)
+        0.5     res_vss(tomatoes,s3,t2)
+        1       res_vss(sugar,s3,t2)
+        1       res_vss(labor,s3,t2)
+        3       res_vss(spices,s3,t2)
+        1       dem_vss(salsa,t2,s3)
+       -2.75    obj_vss
+
+x(salsa,t3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.0499999999999998)
+        0.5     res_vss(tomatoes,s3,t3)
+        1       res_vss(sugar,s3,t3)
+        1       res_vss(labor,s3,t3)
+        3       res_vss(spices,s3,t3)
+        1       dem_vss(salsa,t3,s3)
+       -3       obj_vss
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- y  
+
+y(tomatoes,t1,s3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.075)
+       -1       res_vss(tomatoes,s3,t1)
+       -0.5     obj_vss
+
+y(tomatoes,t2,s3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.075)
+       -1       res_vss(tomatoes,s3,t2)
+       -0.5     obj_vss
+
+y(tomatoes,t3,s3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.075)
+       -1       res_vss(tomatoes,s3,t3)
+       -0.5     obj_vss
+
+REMAINING 9 ENTRIES SKIPPED
+
+---- sur  
+
+sur(salsa,t1,s3)
+                (.LO, .L, .UP, .M = 0, 10, +INF, 0)
+       -1       dem_vss(salsa,t1,s3)
+        1       dem_vss(salsa,t2,s3)
+       -0.2     obj_vss
+
+sur(salsa,t2,s3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 1.86)
+       -1       dem_vss(salsa,t2,s3)
+        1       dem_vss(salsa,t3,s3)
+       -0.2     obj_vss
+
+sur(salsa,t3,s3)
+                (.LO, .L, .UP, .M = 0, 10, +INF, 0)
+       -1       dem_vss(salsa,t3,s3)
+       -0.2     obj_vss
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- un  
+
+un(salsa,t1,s3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.03)
+        1       dem_vss(salsa,t1,s3)
+      -12       obj_vss
+
+un(salsa,t2,s3)
+                (.LO, .L, .UP, .M = 0, 6.66666666666667, +INF, 0)
+        1       dem_vss(salsa,t2,s3)
+      -12       obj_vss
+
+un(salsa,t3,s3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 1.83)
+        1       dem_vss(salsa,t3,s3)
+      -12       obj_vss
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- tc_vss  
+
+tc_vss
+                (.LO, .L, .UP, .M = -INF, 712.25, +INF, 0)
+        1       obj_vss
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 36
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE TTT_vss Using LP From line 139
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 5.000E+00, 3.000E+02] - Zero values observed as well
+Bound     [min, max] : [        NA,        NA] - Zero values observed as well
+Matrix    [min, max] : [ 2.000E-01, 1.200E+01]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 37
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE TTT_vss Using LP From line 139
+
+
+LOOPS                                   sc   s3
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           3     SINGLE EQUATIONS           22
+BLOCKS OF VARIABLES           5     SINGLE VARIABLES           40  2 projected
+NON ZERO ELEMENTS           118
+
+
+GENERATION TIME      =        0.000 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+               L O O P S                 sc s3
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 38
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE TTT_vss Using LP From line 139
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   TTT_vss             OBJECTIVE  tc_vss
+     TYPE    LP                  DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  139
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE              716.6667
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT         5    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.50 Mb (peak 0.50 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.00 Mb)
+--- Starting Cplex
+
+
+--- LP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.11 ticks)
+
+
+Optimal solution found
+Objective:          716.666667
+
+
+---- EQU res_vss  
+
+                      LOWER          LEVEL          UPPER         MARGINAL
+
+tomatoes.s3.t1        -INF          125.8333       250.0000          .          
+tomatoes.s3.t2        -INF          221.6667       250.0000          .          
+tomatoes.s3.t3        -INF          117.5000       250.0000          .          
+sugar   .s3.t1        -INF           36.6667       300.0000          .          
+sugar   .s3.t2        -INF           23.3333       300.0000          .          
+sugar   .s3.t3        -INF           20.0000       300.0000          .          
+labor   .s3.t1        -INF           95.6667       200.0000          .          
+labor   .s3.t2        -INF          135.3333       200.0000          .          
+labor   .s3.t3        -INF           79.0000       200.0000          .          
+spices  .s3.t1        -INF          100.0000       100.0000        -1.0000      
+spices  .s3.t2        -INF          100.0000       100.0000        -0.9833      
+spices  .s3.t3        -INF           70.0000       100.0000          .          
+
+---- EQU dem_vss  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s3         5.0000         5.0000         5.0000         5.5000      
+salsa       .t2.s3        20.0000        20.0000        20.0000         5.7000      
+salsa       .t3.s3         5.0000         5.0000         5.0000         3.0000      
+ketchup     .t1.s3        30.0000        30.0000        30.0000         2.5000      
+ketchup     .t2.s3        40.0000        40.0000        40.0000         2.7333      
+ketchup     .t3.s3        30.0000        30.0000        30.0000         2.0000      
+tomato-paste.t1.s3       100.0000       100.0000       100.0000         1.2500      
+tomato-paste.t2.s3       200.0000       200.0000       200.0000         1.3458      
+tomato-paste.t3.s3       100.0000       100.0000       100.0000         1.2000      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU obj_vss             .              .              .             1.0000      
+
+---- VAR x  
+
+                       LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1          .            21.6667        +INF             .          
+salsa       .t2          .             3.3333        +INF             .          
+salsa       .t3          .             5.0000        +INF             .          
+ketchup     .t1          .            30.0000        +INF             .          
+ketchup     .t2          .            40.0000        +INF             .          
+ketchup     .t3          .            30.0000        +INF             .          
+tomato-paste.t1          .           100.0000        +INF             .          
+tomato-paste.t2          .           200.0000        +INF             .          
+tomato-paste.t3          .           100.0000        +INF             .          
+
+---- VAR y  
+
+                      LOWER          LEVEL          UPPER         MARGINAL
+
+tomatoes.t1.s3          .              .            +INF            0.5000      
+tomatoes.t2.s3          .              .            +INF            0.5000      
+tomatoes.t3.s3          .              .            +INF            0.5000      
+sugar   .t1.s3          .              .            +INF            1.0000      
+sugar   .t2.s3          .              .            +INF            1.0000      
+sugar   .t3.s3          .              .            +INF            1.0000      
+labor   .t1.s3          .              .            +INF            2.0000      
+labor   .t2.s3          .              .            +INF            2.0000      
+labor   .t3.s3          .              .            +INF            2.0000      
+spices  .t1.s3          .            20.0000        +INF             .          
+spices  .t2.s3          .              .            +INF            0.0167      
+spices  .t3.s3          .              .            +INF            1.0000      
+
+---- VAR sur  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s3          .            16.6667        +INF             .          
+salsa       .t2.s3          .              .            +INF            2.9000      
+salsa       .t3.s3          .              .            +INF            3.2000      
+ketchup     .t1.s3          .              .            +INF            0.0167      
+ketchup     .t2.s3          .              .            +INF            0.9833      
+ketchup     .t3.s3          .              .            +INF            2.2500      
+tomato-paste.t1.s3          .              .            +INF            0.4042      
+tomato-paste.t2.s3          .              .            +INF            0.6458      
+tomato-paste.t3.s3          .              .            +INF            1.7000      
+
+---- VAR un  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s3          .              .            +INF            6.5000      
+salsa       .t2.s3          .              .            +INF            6.3000      
+salsa       .t3.s3          .              .            +INF            9.0000      
+ketchup     .t1.s3          .              .            +INF            3.5000      
+ketchup     .t2.s3          .              .            +INF            3.2667      
+ketchup     .t3.s3          .              .            +INF            4.0000      
+tomato-paste.t1.s3          .              .            +INF            2.7500      
+tomato-paste.t2.s3          .              .            +INF            2.6542      
+tomato-paste.t3.s3          .              .            +INF            2.8000      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR tc_vss            -INF          716.6667        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 39
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE TTT_vss Using LP From line 139
+
+
+---- res_vss  =L=  
+
+res_vss(tomatoes,s4,t1)..  0.5*x(salsa,t1) + 0.5*x(ketchup,t1) + x(tomato-paste,t1) - y(tomatoes,t1,s4) =L= 250 ; (LHS = 125.833333333333)
+     
+res_vss(tomatoes,s4,t2)..  0.5*x(salsa,t2) + 0.5*x(ketchup,t2) + x(tomato-paste,t2) - y(tomatoes,t2,s4) =L= 250 ; (LHS = 221.666666666667)
+     
+res_vss(tomatoes,s4,t3)..  0.5*x(salsa,t3) + 0.5*x(ketchup,t3) + x(tomato-paste,t3) - y(tomatoes,t3,s4) =L= 250 ; (LHS = 117.5)
+     
+REMAINING 9 ENTRIES SKIPPED
+
+
+---- dem_vss  =E=  
+
+dem_vss(salsa,t1,s4)..  x(salsa,t1) - sur(salsa,t1,s4) + un(salsa,t1,s4) =E= 5 ; (LHS = 11.6666666666667, INFES = 6.66666666666667 ****)
+     
+dem_vss(salsa,t2,s4)..  x(salsa,t2) + sur(salsa,t1,s4) - sur(salsa,t2,s4) + un(salsa,t2,s4) =E= 20 ; (LHS = 20)
+     
+dem_vss(salsa,t3,s4)..  x(salsa,t3) + sur(salsa,t2,s4) - sur(salsa,t3,s4) + un(salsa,t3,s4) =E= 20 ; (LHS = 10, INFES = 10 ****)
+     
+REMAINING 6 ENTRIES SKIPPED
+
+
+---- obj_vss  =E=  
+
+obj_vss..  - 2.5*x(salsa,t1) - 2.75*x(salsa,t2) - 3*x(salsa,t3) - 1.5*x(ketchup,t1) - 1.75*x(ketchup,t2) - 2*x(ketchup,t3) - x(tomato-paste,t1) - 1.1*x(tomato-paste,t2) - 1.2*x(tomato-paste,t3) - 0.5*y(tomatoes,t1,s4) - 0.5*y(tomatoes,t2,s4) - 0.5*y(tomatoes,t3,s4) - y(sugar,t1,s4) - y(sugar,t2,s4) - y(sugar,t3,s4) - 2*y(labor,t1,s4) - 2*y(labor,t2,s4) - 2*y(labor,t3,s4) - y(spices,t1,s4) - y(spices,t2,s4) - y(spices,t3,s4) - 0.2*sur(salsa,t1,s4) - 0.2*sur(salsa,t2,s4) - 0.2*sur(salsa,t3,s4) - 0.25*sur(ketchup,t1,s4) - 0.25*sur(ketchup,t2,s4) - 0.25*sur(ketchup,t3,s4) - 0.5*sur(tomato-paste,t1,s4) - 0.5*sur(tomato-paste,t2,s4) - 0.5*sur(tomato-paste,t3,s4) - 12*un(salsa,t1,s4) - 12*un(salsa,t2,s4) - 12*un(salsa,t3,s4) - 6*un(ketchup,t1,s4) - 6*un(ketchup,t2,s4) - 6*un(ketchup,t3,s4) - 4*un(tomato-paste,t1,s4) - 4*un(tomato-paste,t2,s4) - 4*un(tomato-paste,t3,s4) + tc_vss =E= 0 ; (LHS = -578.666666666667, INFES = 578.666666666667 ****)
+     
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 40
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE TTT_vss Using LP From line 139
+
+
+---- x  
+
+x(salsa,t1)
+                (.LO, .L, .UP, .M = 0, 21.6666666666667, +INF, 0)
+        0.5     res_vss(tomatoes,s4,t1)
+        1       res_vss(sugar,s4,t1)
+        1       res_vss(labor,s4,t1)
+        3       res_vss(spices,s4,t1)
+        1       dem_vss(salsa,t1,s4)
+       -2.5     obj_vss
+
+x(salsa,t2)
+                (.LO, .L, .UP, .M = 0, 3.33333333333333, +INF, 0)
+        0.5     res_vss(tomatoes,s4,t2)
+        1       res_vss(sugar,s4,t2)
+        1       res_vss(labor,s4,t2)
+        3       res_vss(spices,s4,t2)
+        1       dem_vss(salsa,t2,s4)
+       -2.75    obj_vss
+
+x(salsa,t3)
+                (.LO, .L, .UP, .M = 0, 5, +INF, 0)
+        0.5     res_vss(tomatoes,s4,t3)
+        1       res_vss(sugar,s4,t3)
+        1       res_vss(labor,s4,t3)
+        3       res_vss(spices,s4,t3)
+        1       dem_vss(salsa,t3,s4)
+       -3       obj_vss
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- y  
+
+y(tomatoes,t1,s4)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.15)
+       -1       res_vss(tomatoes,s4,t1)
+       -0.5     obj_vss
+
+y(tomatoes,t2,s4)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.15)
+       -1       res_vss(tomatoes,s4,t2)
+       -0.5     obj_vss
+
+y(tomatoes,t3,s4)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.15)
+       -1       res_vss(tomatoes,s4,t3)
+       -0.5     obj_vss
+
+REMAINING 9 ENTRIES SKIPPED
+
+---- sur  
+
+sur(salsa,t1,s4)
+                (.LO, .L, .UP, .M = 0, 10, +INF, 0)
+       -1       dem_vss(salsa,t1,s4)
+        1       dem_vss(salsa,t2,s4)
+       -0.2     obj_vss
+
+sur(salsa,t2,s4)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.0600000000000001)
+       -1       dem_vss(salsa,t2,s4)
+        1       dem_vss(salsa,t3,s4)
+       -0.2     obj_vss
+
+sur(salsa,t3,s4)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 3.66)
+       -1       dem_vss(salsa,t3,s4)
+       -0.2     obj_vss
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- un  
+
+un(salsa,t1,s4)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0.0600000000000001)
+        1       dem_vss(salsa,t1,s4)
+      -12       obj_vss
+
+un(salsa,t2,s4)
+                (.LO, .L, .UP, .M = 0, 6.66666666666667, +INF, 0)
+        1       dem_vss(salsa,t2,s4)
+      -12       obj_vss
+
+un(salsa,t3,s4)
+                (.LO, .L, .UP, .M = 0, 5, +INF, 0)
+        1       dem_vss(salsa,t3,s4)
+      -12       obj_vss
+
+REMAINING 6 ENTRIES SKIPPED
+
+---- tc_vss  
+
+tc_vss
+                (.LO, .L, .UP, .M = -INF, 716.666666666667, +INF, 0)
+        1       obj_vss
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 41
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE TTT_vss Using LP From line 139
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 5.000E+00, 3.000E+02] - Zero values observed as well
+Bound     [min, max] : [        NA,        NA] - Zero values observed as well
+Matrix    [min, max] : [ 2.000E-01, 1.200E+01]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 42
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE TTT_vss Using LP From line 139
+
+
+LOOPS                                   sc   s4
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           3     SINGLE EQUATIONS           22
+BLOCKS OF VARIABLES           5     SINGLE VARIABLES           40  1 projected
+NON ZERO ELEMENTS           118
+
+
+GENERATION TIME      =        0.015 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+               L O O P S                 sc s4
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 43
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE TTT_vss Using LP From line 139
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   TTT_vss             OBJECTIVE  tc_vss
+     TYPE    LP                  DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  139
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE              950.0000
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT         2    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.50 Mb (peak 0.50 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.00 Mb)
+--- Starting Cplex
+
+
+--- LP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.10 ticks)
+
+
+Optimal solution found
+Objective:          950.000000
+
+
+---- EQU res_vss  
+
+                      LOWER          LEVEL          UPPER         MARGINAL
+
+tomatoes.s4.t1        -INF          134.1667       250.0000          .          
+tomatoes.s4.t2        -INF          221.6667       250.0000          .          
+tomatoes.s4.t3        -INF          221.6667       250.0000          .          
+sugar   .s4.t1        -INF           53.3333       300.0000          .          
+sugar   .s4.t2        -INF           23.3333       300.0000          .          
+sugar   .s4.t3        -INF           23.3333       300.0000          .          
+labor   .s4.t1        -INF          112.3333       200.0000          .          
+labor   .s4.t2        -INF          135.3333       200.0000          .          
+labor   .s4.t3        -INF          135.3333       200.0000          .          
+spices  .s4.t1        -INF          100.0000       100.0000        -1.0000      
+spices  .s4.t2        -INF          100.0000       100.0000        -0.9833      
+spices  .s4.t3        -INF          100.0000       100.0000        -0.9667      
+
+---- EQU dem_vss  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s4         5.0000         5.0000         5.0000         5.5000      
+salsa       .t2.s4        20.0000        20.0000        20.0000         5.7000      
+salsa       .t3.s4        20.0000        20.0000        20.0000         5.9000      
+ketchup     .t1.s4        30.0000        30.0000        30.0000         2.5000      
+ketchup     .t2.s4        40.0000        40.0000        40.0000         2.7333      
+ketchup     .t3.s4        40.0000        40.0000        40.0000         2.9667      
+tomato-paste.t1.s4       100.0000       100.0000       100.0000         1.2500      
+tomato-paste.t2.s4       200.0000       200.0000       200.0000         1.3458      
+tomato-paste.t3.s4       200.0000       200.0000       200.0000         1.4417      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU obj_vss             .              .              .             1.0000      
+
+---- VAR x  
+
+                       LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1          .            38.3333        +INF             .          
+salsa       .t2          .             3.3333        +INF             .          
+salsa       .t3          .             3.3333        +INF             .          
+ketchup     .t1          .            30.0000        +INF             .          
+ketchup     .t2          .            40.0000        +INF             .          
+ketchup     .t3          .            40.0000        +INF             .          
+tomato-paste.t1          .           100.0000        +INF             .          
+tomato-paste.t2          .           200.0000        +INF             .          
+tomato-paste.t3          .           200.0000        +INF             .          
+
+---- VAR y  
+
+                      LOWER          LEVEL          UPPER         MARGINAL
+
+tomatoes.t1.s4          .              .            +INF            0.5000      
+tomatoes.t2.s4          .              .            +INF            0.5000      
+tomatoes.t3.s4          .              .            +INF            0.5000      
+sugar   .t1.s4          .              .            +INF            1.0000      
+sugar   .t2.s4          .              .            +INF            1.0000      
+sugar   .t3.s4          .              .            +INF            1.0000      
+labor   .t1.s4          .              .            +INF            2.0000      
+labor   .t2.s4          .              .            +INF            2.0000      
+labor   .t3.s4          .              .            +INF            2.0000      
+spices  .t1.s4          .            70.0000        +INF             .          
+spices  .t2.s4          .              .            +INF            0.0167      
+spices  .t3.s4          .              .            +INF            0.0333      
+
+---- VAR sur  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s4          .            33.3333        +INF             .          
+salsa       .t2.s4          .            16.6667        +INF             .          
+salsa       .t3.s4          .              .            +INF            6.1000      
+ketchup     .t1.s4          .              .            +INF            0.0167      
+ketchup     .t2.s4          .              .            +INF            0.0167      
+ketchup     .t3.s4          .              .            +INF            3.2167      
+tomato-paste.t1.s4          .              .            +INF            0.4042      
+tomato-paste.t2.s4          .              .            +INF            0.4042      
+tomato-paste.t3.s4          .              .            +INF            1.9417      
+
+---- VAR un  
+
+                          LOWER          LEVEL          UPPER         MARGINAL
+
+salsa       .t1.s4          .              .            +INF            6.5000      
+salsa       .t2.s4          .              .            +INF            6.3000      
+salsa       .t3.s4          .              .            +INF            6.1000      
+ketchup     .t1.s4          .              .            +INF            3.5000      
+ketchup     .t2.s4          .              .            +INF            3.2667      
+ketchup     .t3.s4          .              .            +INF            3.0333      
+tomato-paste.t1.s4          .              .            +INF            2.7500      
+tomato-paste.t2.s4          .              .            +INF            2.6542      
+tomato-paste.t3.s4          .              .            +INF            2.5583      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR tc_vss            -INF          950.0000        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 12/13/23 01:51:37 Page 44
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----    144 PARAMETER vss                  =       28.398  
+            PARAMETER evpi                 =      182.850  
+
+----    144 PARAMETER results  
+
+MeanValue  735.221,    Stochastic 939.450
+
+
+
+EXECUTION TIME       =        0.422 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+
+
+USER: Introduction to Optimization (CS/ISyE/ECE 524) G230906|0002AS-GEN
+      UW-Madison, CS Dept., Fall 2023, Prof. Ferris              DCE850
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      D:\GAMS\CODE\hw10-1.gms
+Output     D:\GAMS\CODE\hw10-1.lst

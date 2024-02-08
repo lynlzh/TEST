@@ -1,0 +1,221 @@
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 00:46:08 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   1  option limrow = 0,limcol = 0, solprint = off;
+   2  sets
+   3      I /1*6/
+   4      j /x1*x4/;
+   5   
+   6  parameters
+   7      a(I,J)
+   8      b(I) /1 17, 2 -16, 3 7, 4 -15, 5 6, 6 0/;
+   9   
+  10  table a(I,J)
+  11        x1  x2  x3  x4
+  12      1  8  -2   4  -9
+  13      2  1   6  -1  -5
+  14      3  1  -1   1   0
+  15      4  1   2  -7   4
+  16      5  0   0   1  -1
+  17      6  1   0   1  -1;
+  18   
+  19  variables
+  20      x(J),
+  21      e(I),
+  22      ztotdev,
+  23      zminmax;
+  24   
+  25  *define objectives, upper bound and lower bound constraint for each equation
+  26  equations
+  27      errorupbound,
+  28      errorlobound,
+  29      objective1,
+  30      objective2;
+  31   
+  32  errorupbound(I)..
+  33      sum(J, a(I,J)*x(J)) =g= b(I) - e(I);
+  34   
+  35  errorlobound(I)..
+  36      sum(J, a(I,J)*x(J)) =l= b(I) + e(I);
+  37   
+  38  objective1..
+  39      ztotdev =e= sum(I, e(I));
+  40   
+  41  objective2(I)..
+  42      zminmax =g= e(I);
+  43   
+  44  model deviationmodel /errorupbound,errorlobound,objective1/;
+  45  solve deviationmodel using lp minimizing ztotdev;
+  46   
+  47  parameters TotalDevSmall, xValSmall(J);
+  48   
+  49  TotalDevSmall = ztotdev.L;
+  50  xValSmall(J) = x.l(J);
+  51   
+  52  display TotalDevSmall, xValSmall;
+  53   
+  54  model minmaxdeviation /errorupbound,errorlobound,objective2/;
+  55  solve minmaxdeviation using lp minimizing zminmax;
+  56   
+  57  parameters MinMaxDevSmall;
+  58  MinMaxDevSmall = zminmax.L;
+  59   
+  60  display MinMaxDevSmall;
+
+
+COMPILATION TIME     =        0.000 SECONDS      3 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 00:46:08 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE deviationmodel Using LP From line 45
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 6.000E+00, 1.700E+01] - Zero values observed as well
+Bound     [min, max] : [        NA,        NA]
+Matrix    [min, max] : [ 1.000E+00, 9.000E+00]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 00:46:08 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE deviationmodel Using LP From line 45
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           3     SINGLE EQUATIONS           13
+BLOCKS OF VARIABLES           3     SINGLE VARIABLES           11
+NON ZERO ELEMENTS            59
+
+
+GENERATION TIME      =        0.000 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 00:46:08 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE deviationmodel Using LP From line 45
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   deviationmodel      OBJECTIVE  ztotdev
+     TYPE    LP                  DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  45
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE                8.7305
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT        11    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.50 Mb (peak 0.50 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.00 Mb)
+--- Starting Cplex
+
+
+--- LP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.04 ticks)
+
+
+Optimal solution found
+Objective:            8.730539
+
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 00:46:08 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----     52 PARAMETER TotalDevSmall        =        8.731  
+
+----     52 PARAMETER xValSmall  
+
+x1  2.731,    x2 -0.587,    x3  3.683,    x4  2.305
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 00:46:08 Page 6
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE minmaxdeviation Using LP From line 55
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 6.000E+00, 1.700E+01] - Zero values observed as well
+Bound     [min, max] : [        NA,        NA]
+Matrix    [min, max] : [ 1.000E+00, 9.000E+00]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 00:46:08 Page 7
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE minmaxdeviation Using LP From line 55
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           3     SINGLE EQUATIONS           18
+BLOCKS OF VARIABLES           3     SINGLE VARIABLES           11
+NON ZERO ELEMENTS            64
+
+
+GENERATION TIME      =        0.000 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 00:46:08 Page 8
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE minmaxdeviation Using LP From line 55
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   minmaxdeviation     OBJECTIVE  zminmax
+     TYPE    LP                  DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  55
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE                3.6159
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT         7    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.50 Mb (peak 0.50 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.00 Mb)
+--- Starting Cplex
+
+
+--- LP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.07 ticks)
+
+
+Optimal solution found
+Objective:            3.615925
+
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 00:46:08 Page 9
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----     60 PARAMETER MinMaxDevSmall       =        3.616  
+
+
+EXECUTION TIME       =        0.109 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+
+
+USER: Introduction to Optimization (CS/ISyE/ECE 524) G230906|0002AS-GEN
+      UW-Madison, CS Dept., Fall 2023, Prof. Ferris              DCE850
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      D:\GAMS\CODE\hw3-3.gms
+Output     D:\GAMS\CODE\hw3-3.lst

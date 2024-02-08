@@ -1,0 +1,252 @@
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 17:10:21 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   1  set R /r1,r2,r3/;
+   2  set T /t1,t2,t3/;
+   3  set C1 /c1/;
+   4  set C2 /c2/;
+   5   
+   6  table a(R,T)
+   7      t1  t2  t3
+   8  r1  9   6    4
+   9  r2  5   8   11
+  10  r3  50 75  100;
+  11   
+  12  table chem1(C1,T)
+  13      t1 t2  t3
+  14  c1  9  7   10;
+  15   
+  16  table chem2(C2,T)
+  17      t1 t2  t3
+  18  c2  6  10  6;
+  19   
+  20  parameters
+  21    resourcebound(R) /"r1" 200,"r2" 400,"r3" 1850/
+  22    chemical1(T) /"t1" 9, "t2" 7, "t3" 10/
+  23    chemical2(T) /"t1" 6, "t2" 10, "t3" 6/;
+  24   
+  25  free variables
+  26  blend;
+  27   
+  28  positive variables
+  29  x(T);
+  30   
+  31  equation
+  32    resource_con(R)
+  33    chemical1_con(C1)
+  34    chemical2_con(C2);
+  35   
+  36  resource_con(R)..
+  37    sum(T,a(R,T)*x(T)) =L= resourcebound(R);
+  38   
+  39  chemical1_con(C1)..
+  40    5*blend =L= sum(T,chem1(C1,T)*x(T));
+  41   
+  42  chemical2_con(C2)..
+  43    2*blend =L= sum(T,chem2(C2,T)*x(T));
+  44   
+  45  model chemmod /all/;
+  46   
+  47  solve chemmod using lp max blend;
+  48   
+  49  scalar mstat,sstat;
+  50   
+  51  mstat = chemmod.Modelstat;
+  52   
+  53  sstat = chemmod.Solvestat;
+  54   
+  55  parameter proctime(T);
+  56   
+  57  proctime(T) = x.l(T);
+  58   
+  59  display mstat,sstat,blend.l,proctime;
+  60   
+  61   
+  62   
+
+
+COMPILATION TIME     =        0.000 SECONDS      3 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 17:10:21 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE chemmod Using LP From line 47
+
+
+---- resource_con  =L=  
+
+resource_con(r1)..  9*x(t1) + 6*x(t2) + 4*x(t3) =L= 200 ; (LHS = 0)
+     
+resource_con(r2)..  5*x(t1) + 8*x(t2) + 11*x(t3) =L= 400 ; (LHS = 0)
+     
+resource_con(r3)..  50*x(t1) + 75*x(t2) + 100*x(t3) =L= 1850 ; (LHS = 0)
+     
+
+---- chemical1_con  =L=  
+
+chemical1_con(c1)..  5*blend - 9*x(t1) - 7*x(t2) - 10*x(t3) =L= 0 ; (LHS = 0)
+     
+
+---- chemical2_con  =L=  
+
+chemical2_con(c2)..  2*blend - 6*x(t1) - 10*x(t2) - 6*x(t3) =L= 0 ; (LHS = 0)
+     
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 17:10:21 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE chemmod Using LP From line 47
+
+
+---- blend  
+
+blend
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+        5       chemical1_con(c1)
+        2       chemical2_con(c2)
+
+
+---- x  
+
+x(t1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        9       resource_con(r1)
+        5       resource_con(r2)
+       50       resource_con(r3)
+       -9       chemical1_con(c1)
+       -6       chemical2_con(c2)
+
+x(t2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        6       resource_con(r1)
+        8       resource_con(r2)
+       75       resource_con(r3)
+       -7       chemical1_con(c1)
+      -10       chemical2_con(c2)
+
+x(t3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        4       resource_con(r1)
+       11       resource_con(r2)
+      100       resource_con(r3)
+      -10       chemical1_con(c1)
+       -6       chemical2_con(c2)
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 17:10:21 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE chemmod Using LP From line 47
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 2.000E+02, 1.850E+03] - Zero values observed as well
+Bound     [min, max] : [        NA,        NA] - Zero values observed as well
+Matrix    [min, max] : [ 2.000E+00, 1.000E+02]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 17:10:21 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE chemmod Using LP From line 47
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           3     SINGLE EQUATIONS            5
+BLOCKS OF VARIABLES           2     SINGLE VARIABLES            4
+NON ZERO ELEMENTS            17
+
+
+GENERATION TIME      =        0.000 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 17:10:21 Page 6
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE chemmod Using LP From line 47
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   chemmod             OBJECTIVE  blend
+     TYPE    LP                  DIRECTION  MAXIMIZE
+     SOLVER  CPLEX               FROM LINE  47
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE               51.4000
+
+ RESOURCE USAGE, LIMIT          0.031 10000000000.000
+ ITERATION COUNT, LIMIT         4    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.50 Mb (peak 0.50 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.00 Mb)
+--- Starting Cplex
+
+
+--- LP status (1): optimal.
+--- Cplex Time: 0.03sec (det. 0.01 ticks)
+
+
+Optimal solution found
+Objective:           51.400000
+
+
+---- EQU resource_con  
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+r1        -INF          200.0000       200.0000         0.1143      
+r2        -INF          194.5000       400.0000          .          
+r3        -INF         1850.0000      1850.0000         0.0154      
+
+---- EQU chemical1_con  
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+c1        -INF             .              .             0.2000      
+
+---- EQU chemical2_con  
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+c2        -INF          -62.2000          .              .          
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR blend             -INF           51.4000        +INF             .          
+
+---- VAR x  
+
+          LOWER          LEVEL          UPPER         MARGINAL
+
+t1          .            18.0000        +INF             .          
+t2          .              .            +INF           -0.4429      
+t3          .             9.5000        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 17:10:21 Page 7
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----     59 PARAMETER mstat                =        1.000  
+            PARAMETER sstat                =        1.000  
+            VARIABLE blend.L               =       51.400  
+
+----     59 PARAMETER proctime  
+
+t1 18.000,    t3  9.500
+
+
+
+EXECUTION TIME       =        0.188 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+
+
+USER: Introduction to Optimization (CS/ISyE/ECE 524) G230906|0002AS-GEN
+      UW-Madison, CS Dept., Fall 2023, Prof. Ferris              DCE850
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      D:\uw madison\524\hw2\hw2-1.gms
+Output     D:\uw madison\524\hw2\hw2-1.lst

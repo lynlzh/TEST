@@ -1,0 +1,18 @@
+B 3 C o m p i l a t i o n
+B 55 Include File Summary
+B 67 Equation Listing    SOLVE books Using LP From line 37
+D 70 profit_eq
+D 75 resource_con
+B 85 Column Listing      SOLVE books Using LP From line 37
+E 88 profit
+E 95 produce
+B 121 Range Statistics    SOLVE books Using LP From line 37
+B 132 Model Statistics    SOLVE books Using LP From line 37
+B 145 Solution Report     SOLVE books Using LP From line 37
+F 178 profit_eq
+F 180 resource_con
+G 190 profit
+G 194 produce
+B 210 E x e c u t i o n
+I 210 resprof
+I 216 produce

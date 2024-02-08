@@ -1,0 +1,549 @@
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 19:51:04 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   1  set oper /o1*o8/
+   2      machine /m1,m2/
+   3      part /p1*p3/
+   4      t(part,oper)/p1.o1,p1.o2,p2.o3,p2.o4,p2.o5,p3.o6,p3.o7,p3.o8/;
+   5   
+   6  alias (oper,i,j);
+   7  alias (part,x,y);
+   8   
+   9  parameter procdata(part,oper,machine)
+  10  / p1.o1.m1      4
+  11    p1.o2.m2      2
+  12    p2.o3.m2      3
+  13    p2.o4.m1      2
+  14    p2.o5.m1      2
+  15    p3.o6.m2      3
+  16    p3.o7.m1      2
+  17    p3.o8.m2      1/;
+  18   
+  19  binary variables
+  20  m(machine,part,oper,part,oper)
+  21  o(part,oper,oper);
+  22   
+  23  positive variables
+  24  start(part,oper);
+  25   
+  26  free variable makespan;
+  27   
+  28  scalar total;
+  29  total=sum((part,oper,machine), procdata(part,oper,machine));
+  30   
+  31  equations
+  32  objective
+  33  ordm1
+  34  ordm2
+  35  ordo1
+  36  ordo2
+  37  part1
+  38  part2
+  39  part2con
+  40  part3;
+  41   
+  42  objective(part,oper,machine)..
+  43  makespan=g=start(part,oper)+procdata(part,oper,machine);
+  44   
+  45  ordm1(machine,x,i,y,j)$((procdata(x,i,machine) gt 0) and (procdata(y,j,machine) gt 0)  and t(x,i) and t(y,j) and  (i.ord<j.ord))..
+  46  start(x,i) + procdata(x,i,machine)  =l= start(y,j) + total*(1-m(machine,x,i,y,j));
+  47   
+  48  ordm2(machine,x,i,y,j)$((procdata(x,i,machine) gt 0) and (procdata(y,j,machine) gt 0) and t(x,i) and t(y,j) and  (i.ord<j.ord))..
+  49  start(y,j) + procdata(y,j,machine) =l= start(x,i) + total*m(machine,x,i,y,j);
+  50   
+  51  ordo1(machine,part,i,j)$((procdata(part,i,machine) gt 0) and (procdata(part,j,machine) gt 0) and t(part,i) and t(part,j) and i.ord<j.ord)..
+  52  start(part,i)+procdata(part,i,machine) =l= start(part,j) + total*(1-o(part,i,j));
+  53   
+  54  ordo2(machine,part,i,j)$((procdata(part,i,machine) gt 0) and (procdata(part,j,machine) gt 0) and t(part,i) and t(part,j) and i.ord<j.ord)..
+  55  start(part,j)+procdata(part,j,machine) =l= start(part,i) + total*o(part,i,j);
+  56   
+  57  part1..
+  58  start('p1','o2')=g=start('p1','o1')+procdata('p1','o1','m1');
+  59   
+  60  part2..
+  61  start('p2','o5')=g=start('p2','o3')+procdata('p2','o3','m2');
+  62   
+  63  part2con..
+  64  start('p2','o5')=g=start('p2','o4')+procdata('p2','o4','m1');
+  65   
+  66  part3..
+  67  start('p3','o8')=g=start('p3','o7')+procdata('p3','o7','m1');
+  68   
+  69  model makespanmodel /all/;
+  70  solve makespanmodel using mip minimizing makespan;
+  71   
+  72  loop((part,oper)$(t(part,oper)),
+  73      start.l(part,oper) = max(start.l(part,oper),EPS);
+  74  );
+  75   
+  76  option makespan:1,start:1:0:1;
+  77  display makespan.l, start.l;
+
+
+COMPILATION TIME     =        0.000 SECONDS      3 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 19:51:04 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE makespanmodel Using MIP From line 70
+
+
+---- objective  =G=  
+
+objective(p1,o1,m1)..  - start(p1,o1) + makespan =G= 4 ; (LHS = 0, INFES = 4 ****)
+     
+objective(p1,o1,m2)..  - start(p1,o1) + makespan =G= 0 ; (LHS = 0)
+     
+objective(p1,o2,m1)..  - start(p1,o2) + makespan =G= 0 ; (LHS = 0)
+     
+REMAINING 45 ENTRIES SKIPPED
+
+
+---- ordm1  =L=  
+
+ordm1(m1,p1,o1,p2,o4)..  19*m(m1,p1,o1,p2,o4) + start(p1,o1) - start(p2,o4) =L= 15 ; (LHS = 0)
+     
+ordm1(m1,p1,o1,p2,o5)..  19*m(m1,p1,o1,p2,o5) + start(p1,o1) - start(p2,o5) =L= 15 ; (LHS = 0)
+     
+ordm1(m1,p1,o1,p3,o7)..  19*m(m1,p1,o1,p3,o7) + start(p1,o1) - start(p3,o7) =L= 15 ; (LHS = 0)
+     
+REMAINING 9 ENTRIES SKIPPED
+
+
+---- ordm2  =L=  
+
+ordm2(m1,p1,o1,p2,o4)..  - 19*m(m1,p1,o1,p2,o4) - start(p1,o1) + start(p2,o4) =L= -2 ; (LHS = 0, INFES = 2 ****)
+     
+ordm2(m1,p1,o1,p2,o5)..  - 19*m(m1,p1,o1,p2,o5) - start(p1,o1) + start(p2,o5) =L= -2 ; (LHS = 0, INFES = 2 ****)
+     
+ordm2(m1,p1,o1,p3,o7)..  - 19*m(m1,p1,o1,p3,o7) - start(p1,o1) + start(p3,o7) =L= -2 ; (LHS = 0, INFES = 2 ****)
+     
+REMAINING 9 ENTRIES SKIPPED
+
+
+---- ordo1  =L=  
+
+ordo1(m1,p2,o4,o5)..  19*o(p2,o4,o5) + start(p2,o4) - start(p2,o5) =L= 17 ; (LHS = 0)
+     
+ordo1(m2,p3,o6,o8)..  19*o(p3,o6,o8) + start(p3,o6) - start(p3,o8) =L= 16 ; (LHS = 0)
+     
+
+---- ordo2  =L=  
+
+ordo2(m1,p2,o4,o5)..  - 19*o(p2,o4,o5) - start(p2,o4) + start(p2,o5) =L= -2 ; (LHS = 0, INFES = 2 ****)
+     
+ordo2(m2,p3,o6,o8)..  - 19*o(p3,o6,o8) - start(p3,o6) + start(p3,o8) =L= -1 ; (LHS = 0, INFES = 1 ****)
+     
+
+---- part1  =G=  
+
+part1..  - start(p1,o1) + start(p1,o2) =G= 4 ; (LHS = 0, INFES = 4 ****)
+     
+
+---- part2  =G=  
+
+part2..  - start(p2,o3) + start(p2,o5) =G= 3 ; (LHS = 0, INFES = 3 ****)
+     
+
+---- part2con  =G=  
+
+part2con..  - start(p2,o4) + start(p2,o5) =G= 2 ; (LHS = 0, INFES = 2 ****)
+     
+
+---- part3  =G=  
+
+part3..  - start(p3,o7) + start(p3,o8) =G= 2 ; (LHS = 0, INFES = 2 ****)
+     
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 19:51:04 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE makespanmodel Using MIP From line 70
+
+
+---- m  
+
+m(m1,p1,o1,p2,o4)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+       19       ordm1(m1,p1,o1,p2,o4)
+      -19       ordm2(m1,p1,o1,p2,o4)
+
+m(m1,p1,o1,p2,o5)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+       19       ordm1(m1,p1,o1,p2,o5)
+      -19       ordm2(m1,p1,o1,p2,o5)
+
+m(m1,p1,o1,p3,o7)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+       19       ordm1(m1,p1,o1,p3,o7)
+      -19       ordm2(m1,p1,o1,p3,o7)
+
+REMAINING 9 ENTRIES SKIPPED
+
+---- o  
+
+o(p2,o4,o5)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+       19       ordo1(m1,p2,o4,o5)
+      -19       ordo2(m1,p2,o4,o5)
+
+o(p3,o6,o8)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+       19       ordo1(m2,p3,o6,o8)
+      -19       ordo2(m2,p3,o6,o8)
+
+
+---- start  
+
+start(p1,o1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       objective(p1,o1,m1)
+       -1       objective(p1,o1,m2)
+        1       ordm1(m1,p1,o1,p2,o4)
+        1       ordm1(m1,p1,o1,p2,o5)
+        1       ordm1(m1,p1,o1,p3,o7)
+       -1       ordm2(m1,p1,o1,p2,o4)
+       -1       ordm2(m1,p1,o1,p2,o5)
+       -1       ordm2(m1,p1,o1,p3,o7)
+       -1       part1
+
+start(p1,o2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       objective(p1,o2,m1)
+       -1       objective(p1,o2,m2)
+        1       ordm1(m2,p1,o2,p2,o3)
+        1       ordm1(m2,p1,o2,p3,o6)
+        1       ordm1(m2,p1,o2,p3,o8)
+       -1       ordm2(m2,p1,o2,p2,o3)
+       -1       ordm2(m2,p1,o2,p3,o6)
+       -1       ordm2(m2,p1,o2,p3,o8)
+        1       part1
+
+start(p1,o3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1       objective(p1,o3,m1)
+       -1       objective(p1,o3,m2)
+
+REMAINING 21 ENTRIES SKIPPED
+
+---- makespan  
+
+makespan
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+        1       objective(p1,o1,m1)
+        1       objective(p1,o1,m2)
+        1       objective(p1,o2,m1)
+        1       objective(p1,o2,m2)
+        1       objective(p1,o3,m1)
+        1       objective(p1,o3,m2)
+        1       objective(p1,o4,m1)
+        1       objective(p1,o4,m2)
+        1       objective(p1,o5,m1)
+        1       objective(p1,o5,m2)
+        1       objective(p1,o6,m1)
+        1       objective(p1,o6,m2)
+        1       objective(p1,o7,m1)
+        1       objective(p1,o7,m2)
+        1       objective(p1,o8,m1)
+        1       objective(p1,o8,m2)
+        1       objective(p2,o1,m1)
+        1       objective(p2,o1,m2)
+        1       objective(p2,o2,m1)
+        1       objective(p2,o2,m2)
+        1       objective(p2,o3,m1)
+        1       objective(p2,o3,m2)
+        1       objective(p2,o4,m1)
+        1       objective(p2,o4,m2)
+        1       objective(p2,o5,m1)
+        1       objective(p2,o5,m2)
+        1       objective(p2,o6,m1)
+        1       objective(p2,o6,m2)
+        1       objective(p2,o7,m1)
+        1       objective(p2,o7,m2)
+        1       objective(p2,o8,m1)
+        1       objective(p2,o8,m2)
+        1       objective(p3,o1,m1)
+        1       objective(p3,o1,m2)
+        1       objective(p3,o2,m1)
+        1       objective(p3,o2,m2)
+        1       objective(p3,o3,m1)
+        1       objective(p3,o3,m2)
+        1       objective(p3,o4,m1)
+        1       objective(p3,o4,m2)
+        1       objective(p3,o5,m1)
+        1       objective(p3,o5,m2)
+        1       objective(p3,o6,m1)
+        1       objective(p3,o6,m2)
+        1       objective(p3,o7,m1)
+        1       objective(p3,o7,m2)
+        1       objective(p3,o8,m1)
+        1       objective(p3,o8,m2)
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 19:51:04 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE makespanmodel Using MIP From line 70
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 1.000E+00, 1.700E+01] - Zero values observed as well
+Bound     [min, max] : [ 1.000E+00, 1.000E+00] - Zero values observed as well
+Matrix    [min, max] : [ 1.000E+00, 1.900E+01]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 19:51:04 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE makespanmodel Using MIP From line 70
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           9     SINGLE EQUATIONS           80
+BLOCKS OF VARIABLES           4     SINGLE VARIABLES           39
+NON ZERO ELEMENTS           188     DISCRETE VARIABLES         14
+
+
+GENERATION TIME      =        0.000 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 19:51:04 Page 6
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE makespanmodel Using MIP From line 70
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   makespanmodel       OBJECTIVE  makespan
+     TYPE    MIP                 DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  70
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE               10.0000
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT       128    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.51 Mb (peak 0.51 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.01 Mb)
+--- Starting Cplex
+
+
+--- MIP status (101): integer optimal solution.
+--- Cplex Time: 0.00sec (det. 2.03 ticks)
+
+--- Returning a primal only solution to GAMS (marginals all set to NA).
+--- Fixing integer variables and solving final LP...
+
+
+--- Fixed MIP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.11 ticks)
+
+
+Proven optimal solution
+MIP Solution:           10.000000    (128 iterations, 20 nodes)
+Final Solve:            10.000000    (11 iterations)
+
+Best possible:          10.000000
+Absolute gap:            0.000000
+Relative gap:            0.000000
+
+
+---- EQU objective  
+
+                LOWER          LEVEL          UPPER         MARGINAL
+
+p1.o1.m1         4.0000        10.0000        +INF             .          
+p1.o1.m2          .            10.0000        +INF             .          
+p1.o2.m1          .             4.0000        +INF             .          
+p1.o2.m2         2.0000         4.0000        +INF             .          
+p1.o3.m1          .            10.0000        +INF             .          
+p1.o3.m2          .            10.0000        +INF             .          
+p1.o4.m1          .            10.0000        +INF             .          
+p1.o4.m2          .            10.0000        +INF             .          
+p1.o5.m1          .            10.0000        +INF             .          
+p1.o5.m2          .            10.0000        +INF             .          
+p1.o6.m1          .            10.0000        +INF             .          
+p1.o6.m2          .            10.0000        +INF             .          
+p1.o7.m1          .            10.0000        +INF             .          
+p1.o7.m2          .            10.0000        +INF             .          
+p1.o8.m1          .            10.0000        +INF             .          
+p1.o8.m2          .            10.0000        +INF             .          
+p2.o1.m1          .            10.0000        +INF             .          
+p2.o1.m2          .            10.0000        +INF             .          
+p2.o2.m1          .            10.0000        +INF             .          
+p2.o2.m2          .            10.0000        +INF             .          
+p2.o3.m1          .             7.0000        +INF             .          
+p2.o3.m2         3.0000         7.0000        +INF             .          
+p2.o4.m1         2.0000         4.0000        +INF             .          
+p2.o4.m2          .             4.0000        +INF             .          
+p2.o5.m1         2.0000         2.0000        +INF            1.0000      
+p2.o5.m2          .             2.0000        +INF             .          
+p2.o6.m1          .            10.0000        +INF             .          
+p2.o6.m2          .            10.0000        +INF             .          
+p2.o7.m1          .            10.0000        +INF             .          
+p2.o7.m2          .            10.0000        +INF             .          
+p2.o8.m1          .            10.0000        +INF             .          
+p2.o8.m2          .            10.0000        +INF             .          
+p3.o1.m1          .            10.0000        +INF             .          
+p3.o1.m2          .            10.0000        +INF             .          
+p3.o2.m1          .            10.0000        +INF             .          
+p3.o2.m2          .            10.0000        +INF             .          
+p3.o3.m1          .            10.0000        +INF             .          
+p3.o3.m2          .            10.0000        +INF             .          
+p3.o4.m1          .            10.0000        +INF             .          
+p3.o4.m2          .            10.0000        +INF             .          
+p3.o5.m1          .            10.0000        +INF             .          
+p3.o5.m2          .            10.0000        +INF             .          
+p3.o6.m1          .            10.0000        +INF             .          
+p3.o6.m2         3.0000        10.0000        +INF             .          
+p3.o7.m1         2.0000         6.0000        +INF             .          
+p3.o7.m2          .             6.0000        +INF             .          
+p3.o8.m1          .             2.0000        +INF             .          
+p3.o8.m2         1.0000         2.0000        +INF             .          
+
+---- EQU ordm1  
+
+                      LOWER          LEVEL          UPPER         MARGINAL
+
+m1.p1.o1.p2.o4        -INF           13.0000        15.0000          .          
+m1.p1.o1.p2.o5        -INF           11.0000        15.0000          .          
+m1.p1.o1.p3.o7        -INF           15.0000        15.0000        -1.0000      
+m1.p2.o4.p2.o5        -INF           17.0000        17.0000          .          
+m1.p2.o4.p3.o7        -INF            2.0000        17.0000          .          
+m1.p2.o5.p3.o7        -INF            4.0000        17.0000          .          
+m2.p1.o2.p2.o3        -INF            3.0000        17.0000          .          
+m2.p1.o2.p3.o6        -INF            6.0000        17.0000          .          
+m2.p1.o2.p3.o8        -INF           17.0000        17.0000         EPS         
+m2.p2.o3.p3.o6        -INF            3.0000        16.0000          .          
+m2.p2.o3.p3.o8        -INF           14.0000        16.0000          .          
+m2.p3.o6.p3.o8        -INF           11.0000        16.0000          .          
+
+---- EQU ordm2  
+
+                      LOWER          LEVEL          UPPER         MARGINAL
+
+m1.p1.o1.p2.o4        -INF          -13.0000        -2.0000          .          
+m1.p1.o1.p2.o5        -INF          -11.0000        -2.0000          .          
+m1.p1.o1.p3.o7        -INF          -15.0000        -2.0000          .          
+m1.p2.o4.p2.o5        -INF          -17.0000        -2.0000          .          
+m1.p2.o4.p3.o7        -INF           -2.0000        -2.0000        -1.0000      
+m1.p2.o5.p3.o7        -INF           -4.0000        -2.0000          .          
+m2.p1.o2.p2.o3        -INF           -3.0000        -3.0000         EPS         
+m2.p1.o2.p3.o6        -INF           -6.0000        -3.0000          .          
+m2.p1.o2.p3.o8        -INF          -17.0000        -1.0000          .          
+m2.p2.o3.p3.o6        -INF           -3.0000        -3.0000         EPS         
+m2.p2.o3.p3.o8        -INF          -14.0000        -1.0000          .          
+m2.p3.o6.p3.o8        -INF          -11.0000        -1.0000          .          
+
+---- EQU ordo1  
+
+                   LOWER          LEVEL          UPPER         MARGINAL
+
+m1.p2.o4.o5        -INF           17.0000        17.0000          .          
+m2.p3.o6.o8        -INF           11.0000        16.0000          .          
+
+---- EQU ordo2  
+
+                   LOWER          LEVEL          UPPER         MARGINAL
+
+m1.p2.o4.o5        -INF          -17.0000        -2.0000          .          
+m2.p3.o6.o8        -INF          -11.0000        -1.0000          .          
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU part1              4.0000         6.0000        +INF             .          
+---- EQU part2              3.0000         5.0000        +INF             .          
+---- EQU part2con           2.0000         2.0000        +INF            1.0000      
+---- EQU part3              2.0000         4.0000        +INF             .          
+
+---- VAR m  
+
+                      LOWER          LEVEL          UPPER         MARGINAL
+
+m1.p1.o1.p2.o4          .             1.0000         1.0000         EPS         
+m1.p1.o1.p2.o5          .             1.0000         1.0000         EPS         
+m1.p1.o1.p3.o7          .             1.0000         1.0000        19.0000      
+m1.p2.o4.p2.o5          .             1.0000         1.0000         EPS         
+m1.p2.o4.p3.o7          .              .             1.0000       -19.0000      
+m1.p2.o5.p3.o7          .              .             1.0000         EPS         
+m2.p1.o2.p2.o3          .              .             1.0000         EPS         
+m2.p1.o2.p3.o6          .              .             1.0000         EPS         
+m2.p1.o2.p3.o8          .             1.0000         1.0000         EPS         
+m2.p2.o3.p3.o6          .              .             1.0000         EPS         
+m2.p2.o3.p3.o8          .             1.0000         1.0000         EPS         
+m2.p3.o6.p3.o8          .             1.0000         1.0000         EPS         
+
+---- VAR o  
+
+                LOWER          LEVEL          UPPER         MARGINAL
+
+p2.o4.o5          .             1.0000         1.0000         EPS         
+p3.o6.o8          .             1.0000         1.0000         EPS         
+
+---- VAR start  
+
+             LOWER          LEVEL          UPPER         MARGINAL
+
+p1.o1          .              .            +INF            1.0000      
+p1.o2          .             6.0000        +INF             .          
+p1.o3          .              .            +INF            EPS         
+p1.o4          .              .            +INF            EPS         
+p1.o5          .              .            +INF            EPS         
+p1.o6          .              .            +INF            EPS         
+p1.o7          .              .            +INF            EPS         
+p1.o8          .              .            +INF            EPS         
+p2.o1          .              .            +INF            EPS         
+p2.o2          .              .            +INF            EPS         
+p2.o3          .             3.0000        +INF             .          
+p2.o4          .             6.0000        +INF             .          
+p2.o5          .             8.0000        +INF             .          
+p2.o6          .              .            +INF            EPS         
+p2.o7          .              .            +INF            EPS         
+p2.o8          .              .            +INF            EPS         
+p3.o1          .              .            +INF            EPS         
+p3.o2          .              .            +INF            EPS         
+p3.o3          .              .            +INF            EPS         
+p3.o4          .              .            +INF            EPS         
+p3.o5          .              .            +INF            EPS         
+p3.o6          .              .            +INF            EPS         
+p3.o7          .             4.0000        +INF             .          
+p3.o8          .             8.0000        +INF             .          
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR makespan          -INF           10.0000        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 19:51:04 Page 7
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----     77 VARIABLE makespan.L            =         10.0  
+
+----     77 VARIABLE start.L  
+
+p1.o1 EPS
+p1.o2 6.0
+p2.o3 3.0
+p2.o4 6.0
+p2.o5 8.0
+p3.o6 EPS
+p3.o7 4.0
+p3.o8 8.0
+
+
+
+EXECUTION TIME       =        0.032 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+
+
+USER: Introduction to Optimization (CS/ISyE/ECE 524) G230906|0002AS-GEN
+      UW-Madison, CS Dept., Fall 2023, Prof. Ferris              DCE850
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      C:\Users\lanya\Documents\GAMS\Studio\workspace\hw8-1.gms
+Output     C:\Users\lanya\Documents\GAMS\Studio\workspace\hw8-1.lst

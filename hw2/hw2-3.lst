@@ -1,0 +1,204 @@
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/21/23 19:46:26 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   1  option limrow = 0, limcol = 0;
+   2   
+   3  sets
+   4     sites /area1,area2,area3,area4/
+   5     species /Pine, Spruce, Walnut, Hardwd/;
+   6   
+   7  parameters
+   8     area(sites)            /"area1" 1500, "area2" 1700, "area3" 900, "area4" 600/
+   9     yield(sites, species) /area1.Pine 17, area1.Spruce 14, area1.Walnut 10, area1.Hardwd 9,
+  10                            area2.Pine 15, area2.Spruce 16, area2.Walnut 12, area2.Hardwd 11,
+  11                            area3.Pine 13, area3.Spruce 12, area3.Walnut 14, area3.Hardwd 8,
+  12                            area4.Pine 10, area4.Spruce 11, area4.Walnut 8, area4.Hardwd 6/;
+  13   
+  14  parameter
+  15  minreqyield(species) /Pine 22500, Spruce 9000, Walnut 4800, Hardwd 3500/;
+  16   
+  17  parameter
+  18  revenue(sites, species) /area1.Pine 16, area1.Spruce 12, area1.Walnut 20, area1.Hardwd 18,
+  19                          area2.Pine 14, area2.Spruce 13, area2.Walnut 24, area2.Hardwd 20,
+  20                          area3.Pine 17, area3.Spruce 10, area3.Walnut 28, area3.Hardwd 20,
+  21                          area4.Pine 12, area4.Spruce 11, area4.Walnut 18, area4.Hardwd 17/;
+  22   
+  23  positive variables
+  24  grow(sites, species);
+  25   
+  26  free variables
+  27  profit;
+  28   
+  29  equations
+  30     totalareaallocated(sites)
+  31     minyieldrequirement(species)
+  32     profit_con;
+  33   
+  34  totalareaallocated(sites)..
+  35  sum(species, grow(sites, species)) =l= area(sites);
+  36   
+  37  minyieldrequirement(species)..
+  38  sum(sites, yield(sites, species) * grow(sites, species)) =g= minreqyield(species);
+  39   
+  40  profit_con..
+  41  profit =e= sum((sites, species), revenue(sites, species) * grow(sites, species));
+  42   
+  43  model forest /all/;
+  44   
+  45  solve forest using lp maximizing profit;
+  46   
+  47  scalar mstat,sstat;
+  48   
+  49  mstat = forest.Modelstat;
+  50   
+  51  sstat = forest.Solvestat;
+  52   
+  53  display grow.l, profit.l;
+  54   
+  55  display mstat,sstat;
+
+
+COMPILATION TIME     =        0.000 SECONDS      3 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/21/23 19:46:26 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE forest Using LP From line 45
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 6.000E+02, 2.250E+04] - Zero values observed as well
+Bound     [min, max] : [        NA,        NA] - Zero values observed as well
+Matrix    [min, max] : [ 1.000E+00, 2.800E+01]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/21/23 19:46:26 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE forest Using LP From line 45
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           3     SINGLE EQUATIONS            9
+BLOCKS OF VARIABLES           2     SINGLE VARIABLES           17
+NON ZERO ELEMENTS            49
+
+
+GENERATION TIME      =        0.000 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/21/23 19:46:26 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE forest Using LP From line 45
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   forest              OBJECTIVE  profit
+     TYPE    LP                  DIRECTION  MAXIMIZE
+     SOLVER  CPLEX               FROM LINE  45
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE            95031.1887
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT         5    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.50 Mb (peak 0.50 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.00 Mb)
+--- Starting Cplex
+
+
+--- LP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.02 ticks)
+
+
+Optimal solution found
+Objective:        95031.188725
+
+
+---- EQU totalareaallocated  
+
+             LOWER          LEVEL          UPPER         MARGINAL
+
+area1        -INF         1500.0000      1500.0000        21.6250      
+area2        -INF         1700.0000      1700.0000        24.0000      
+area3        -INF          900.0000       900.0000        28.0000      
+area4        -INF          600.0000       600.0000        18.5625      
+
+---- EQU minyieldrequirement  
+
+              LOWER          LEVEL          UPPER         MARGINAL
+
+Pine       22500.0000     22500.0000        +INF           -0.3309      
+Spruce      9000.0000      9000.0000        +INF           -0.6875      
+Walnut      4800.0000     28240.4412        +INF             .          
+Hardwd      3500.0000      3500.0000        +INF           -0.2604      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU profit_con          .              .              .             1.0000      
+
+---- VAR grow  
+
+                    LOWER          LEVEL          UPPER         MARGINAL
+
+area1.Pine            .          1323.5294        +INF             .          
+area1.Spruce          .           176.4706        +INF             .          
+area1.Walnut          .              .            +INF           -1.6250      
+area1.Hardwd          .              .            +INF           -1.2813      
+area2.Pine            .              .            +INF           -5.0368      
+area2.Spruce          .           396.6299        +INF             .          
+area2.Walnut          .          1303.3701        +INF             .          
+area2.Hardwd          .              .            +INF           -1.1354      
+area3.Pine            .              .            +INF           -6.6985      
+area3.Spruce          .              .            +INF           -9.7500      
+area3.Walnut          .           900.0000        +INF             .          
+area3.Hardwd          .              .            +INF           -5.9167      
+area4.Pine            .              .            +INF           -3.2537      
+area4.Spruce          .            16.6667        +INF             .          
+area4.Walnut          .              .            +INF           -0.5625      
+area4.Hardwd          .           583.3333        +INF             .          
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR profit            -INF        95031.1887        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/21/23 19:46:26 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----     53 VARIABLE grow.L  
+
+             Pine      Spruce      Walnut      Hardwd
+
+area1    1323.529     176.471
+area2                 396.630    1303.370
+area3                             900.000
+area4                  16.667                 583.333
+
+
+----     53 VARIABLE profit.L              =    95031.189  
+
+----     55 PARAMETER mstat                =        1.000  
+            PARAMETER sstat                =        1.000  
+
+
+EXECUTION TIME       =        0.047 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+
+
+USER: Introduction to Optimization (CS/ISyE/ECE 524) G230906|0002AS-GEN
+      UW-Madison, CS Dept., Fall 2023, Prof. Ferris              DCE850
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      D:\GAMS\CODE\hw2-3.gms
+Output     D:\GAMS\CODE\hw2-3.lst

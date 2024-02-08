@@ -1,0 +1,1037 @@
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 08:50:04 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   1  set orig(*), dest(*);
+   2  parameter supply(orig), demand(dest), rate(orig,dest), limit(orig,dest);
+   3  $macro trnfn(x) x/(1 - (x)**0.8/limit(orig,dest))
+GDXIN   C:\Users\lanya\Documents\GAMS\Studio\workspace\nltrans.gdx
+--- LOAD  orig = 1:orig
+--- LOAD  dest = 2:dest
+--- LOAD  supply = 3:supply
+--- LOAD  demand = 4:demand
+--- LOAD  rate = 5:rate
+--- LOAD  limit = 6:limit
+   7   
+   8  set bpp 'price break points' /0*3/;
+   9  set bps(bpp) 'price break segments' /1*3/;
+  10  alias(i,bps);
+  11   
+  12  variables
+  13  x(orig,dest)
+  14  y(orig,dest)
+  15  w(orig,dest,bpp);
+  16   
+  17  binary variables sup(orig,dest,bpp);
+  18   
+  19  table p(orig, dest, bpp);
+  20  p(orig, dest, '0') = 0;
+  21  p(orig, dest, '1') = limit(orig, dest)/3;
+  22  p(orig, dest, '2') = 2*limit(orig, dest)/3;
+  23  p(orig, dest, '3') = limit(orig, dest);
+  24   
+  25  table cost(orig,dest,bpp);
+  26  cost(orig, dest, '0') = 0/(1 - (0)**0.8/limit(orig,dest));
+  27  cost(orig, dest, '1') = [1/3]*limit(orig, dest)/(1 - ([1/3]*limit(orig, dest))**0.8/limit(orig,dest));
+  28  cost(orig, dest, '2') = [2/3]*limit(orig, dest)/(1 - ([2/3]*limit(orig, dest))**0.8/limit(orig,dest));
+  29  cost(orig, dest, '3') = limit(orig, dest)/(1 - (limit(orig, dest))**0.8/limit(orig,dest));
+  30   
+  31  parameter
+  32  intercept(orig,dest,bpp)
+  33  slope(orig,dest,bpp);
+  34   
+  35  slope(orig,dest,i)$(ord(i) lt 3) = (cost(orig,dest,i)-cost(orig,dest,i-1))/(p(orig,dest,i)-p(orig,dest,i-1));
+  36   
+  37  intercept(orig,dest,i)$(ord(i) lt 3) = cost(orig,dest,i-1) - slope(orig,dest,i)*p(orig,dest,i-1);
+  38   
+  39  slope(orig,dest,'3') = ([11/12]*limit(orig,dest)/(1 - ([11/12]*limit(orig,dest))**0.8/limit(orig,dest)) - cost(orig,dest,'2'))/([11/12]*limit(orig, dest) - p(orig,dest,'2'));
+  40   
+  41  intercept(orig,dest,'3') = cost(orig,dest,'2') - slope(orig,dest,'3')*p(orig,dest,'2');;
+  42   
+  43  positive variable trans(orig,dest) ’units to ship’;
+  44  variables total_cost, total_cost1;
+  45  equations
+  46  objective
+  47  objective1
+  48  obj(orig,dest)
+  49  supplycons(orig)
+  50  demandcons(dest)
+  51  supplycons1(orig)
+  52  demandcons1(dest)
+  53  buy(orig,dest)
+  54  w_lo(orig,dest,i)
+  55  w_up(orig,dest,i)
+  56  onecons(orig,dest);
+  57   
+  58  objective..
+  59  total_cost =e= sum((orig,dest), rate(orig,dest)*y(orig,dest));
+  60   
+  61  objective1..
+  62  total_cost1 =e= sum((orig,dest), rate(orig,dest)*trans(orig,dest)/(1 - (trans(orig,dest))**0.8/limit(orig,dest)) );
+  63   
+  64  obj(orig,dest)..
+  65  y(orig,dest) =e= sum(i$bps(i), intercept(orig,dest,i)*sup(orig,dest,i) + slope(orig,dest,i) * w(orig,dest,i));
+  66   
+  67  supplycons(orig)..
+  68  sum(dest, x(orig,dest)) =e= supply(orig);
+  69   
+  70  demandcons(dest)..
+  71  sum(orig, x(orig,dest)) =e= demand(dest);
+  72   
+  73  supplycons1(orig)..
+  74  sum(dest, trans(orig,dest)) =e= supply(orig);
+  75   
+  76  demandcons1(dest)..
+  77  sum(orig, trans(orig,dest)) =e= demand(dest);
+  78   
+  79  buy(orig,dest)..
+  80  sum(i$bps(i), w(orig,dest,i)) =e= x(orig,dest);
+  81   
+  82  w_lo(orig,dest,i)$bps(i)..
+  83  p(orig,dest,i-1) * sup(orig,dest,i) =l= w(orig,dest,i);
+  84   
+  85  w_up(orig,dest,i)$bps(i)..
+  86  w(orig,dest,i) =l= p(orig,dest,i) * sup(orig,dest,i);
+  87   
+  88  onecons(orig,dest)..
+  89  sum(i$bps(i), sup(orig,dest,i)) =e= 1;
+  90   
+  91  model nltranstest /objective1, supplycons1, demandcons1/;
+  92  trans.l(orig,dest) = limit(orig,dest)/2;
+  93  trans.lo(orig,dest) = 1e-10;
+  94  trans.up(orig,dest) = 0.99*limit(orig,dest);
+  95  solve nltranstest using nlp minimizing total_cost1;
+  96   
+  97  model nltrans /objective,obj, supplycons, demandcons,buy, w_lo, w_up, onecons/;
+  98  x.l(orig,dest) = limit(orig,dest)/2;
+  99  x.lo(orig,dest) = 1e-10;
+ 100  x.up(orig,dest) = 0.99*limit(orig,dest);
+ 101  solve nltrans using mip minimizing total_cost;
+ 102   
+ 103  parameter fracdiff(orig,dest);
+ 104  fracdiff(orig,dest) = 100*abs(trans.l(orig,dest)- x.l(orig,dest))/max(1, trans.l(orig,dest))
+ 105  display total_cost.l, fracdiff;
+ 106   
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 08:50:04 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Include File Summary
+
+
+   SEQ   GLOBAL TYPE      PARENT   LOCAL  FILENAME
+
+     1        1 INPUT          0       0  C:\Users\lanya\Documents\GAMS\Studio\workspace\hw8-2.gms
+     2        4 GDXIN          1       4  C:\Users\lanya\Documents\GAMS\Studio\workspace\nltrans.gdx
+
+
+COMPILATION TIME     =        0.000 SECONDS      3 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 08:50:04 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE nltranstest Using NLP From line 95
+
+
+---- objective1  =E=  
+
+objective1..  - (54.1757968699789)*trans(gary,fra) - (18.5668845676327)*trans(gary,det) - (14.5882664459971)*trans(gary,lan) - (18.5668845676327)*trans(gary,win) - (21.5204269625383)*trans(gary,stl) - (113.908085726622)*trans(gary,fre) - (10.6096483243615)*trans(gary,laf) - (37.5063209099854)*trans(clev,fra) - (12.1052401664278)*trans(clev,det) - (16.1403202219037)*trans(clev,lan) - (12.1052401664278)*trans(clev,win) - (36.1171979133193)*trans(clev,stl) - (131.966684683282)*trans(clev,fre) - (22.5455026892682)*trans(clev,laf) - (32.2806404438075)*trans(pitt,fra) - (19.197523537924)*trans(pitt,det) - (23.3112785817648)*trans(pitt,lan) - (17.8262718566437)*trans(pitt,win) - (38.8954439066515)*trans(pitt,stl) - (137.523176669947)*trans(pitt,fre) - (26.6987070654892)*trans(pitt,laf) + total_cost1 =E= 0 ; (LHS = -215300.438721918, INFES = 215300.438721918 ****)
+     
+
+---- supplycons1  =E=  
+
+supplycons1(gary)..  trans(gary,fra) + trans(gary,det) + trans(gary,lan) + trans(gary,win) + trans(gary,stl) + trans(gary,fre) + trans(gary,laf) =E= 1400 ; (LHS = 2900, INFES = 1500 ****)
+     
+supplycons1(clev)..  trans(clev,fra) + trans(clev,det) + trans(clev,lan) + trans(clev,win) + trans(clev,stl) + trans(clev,fre) + trans(clev,laf) =E= 2600 ; (LHS = 2450, INFES = 150 ****)
+     
+supplycons1(pitt)..  trans(pitt,fra) + trans(pitt,det) + trans(pitt,lan) + trans(pitt,win) + trans(pitt,stl) + trans(pitt,fre) + trans(pitt,laf) =E= 2900 ; (LHS = 2250, INFES = 650 ****)
+     
+
+---- demandcons1  =E=  
+
+demandcons1(fra)..  trans(gary,fra) + trans(clev,fra) + trans(pitt,fra) =E= 900 ; (LHS = 900)
+     
+demandcons1(det)..  trans(gary,det) + trans(clev,det) + trans(pitt,det) =E= 1200 ; (LHS = 1200)
+     
+demandcons1(lan)..  trans(gary,lan) + trans(clev,lan) + trans(pitt,lan) =E= 600 ; (LHS = 1200, INFES = 600 ****)
+     
+REMAINING 4 ENTRIES SKIPPED
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 08:50:04 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE nltranstest Using NLP From line 95
+
+
+---- trans  ’units to ship’
+
+trans(gary,fra)
+                (.LO, .L, .UP, .M = 1E-10, 250, 495, 0)
+     (-54.1758) objective1
+        1       supplycons1(gary)
+        1       demandcons1(fra)
+
+trans(gary,det)
+                (.LO, .L, .UP, .M = 1E-10, 500, 990, 0)
+     (-18.5669) objective1
+        1       supplycons1(gary)
+        1       demandcons1(det)
+
+trans(gary,lan)
+                (.LO, .L, .UP, .M = 1E-10, 500, 990, 0)
+     (-14.5883) objective1
+        1       supplycons1(gary)
+        1       demandcons1(lan)
+
+REMAINING 18 ENTRIES SKIPPED
+
+---- total_cost1  
+
+total_cost1
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+        1       objective1
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 08:50:04 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE nltranstest Using NLP From line 95
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 4.000E+02, 2.900E+03] - Zero values observed as well
+Bound     [min, max] : [ 1.000E-10, 9.900E+02]
+Matrix    [min, max] : [ 1.000E+00, 1.375E+02]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 08:50:04 Page 6
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE nltranstest Using NLP From line 95
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           3     SINGLE EQUATIONS           11
+BLOCKS OF VARIABLES           2     SINGLE VARIABLES           22
+NON ZERO ELEMENTS            64     NON LINEAR N-Z             21
+CODE LENGTH                 212     CONSTANT POOL              39
+
+
+GENERATION TIME      =        0.015 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 08:50:04 Page 7
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE nltranstest Using NLP From line 95
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   nltranstest         OBJECTIVE  total_cost1
+     TYPE    NLP                 DIRECTION  MINIMIZE
+     SOLVER  CONOPT              FROM LINE  95
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      2 Locally Optimal
+**** OBJECTIVE VALUE           259615.1603
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT        21    2147483647
+ EVALUATION ERRORS              0             0
+ 
+ 
+    C O N O P T 3   version 3.17N
+    Copyright (C)   ARKI Consulting and Development A/S
+                    Bagsvaerdvej 246 A
+                    DK-2880 Bagsvaerd, Denmark
+ 
+ 
+    The model has 22 variables and 11 constraints
+    with 64 Jacobian elements, 21 of which are nonlinear.
+    The Hessian of the Lagrangian has 21 elements on the diagonal,
+    0 elements below the diagonal, and 21 nonlinear variables.
+ 
+ ** Warning **  The value of LFITER is out of range.
+                LFITER is decreased from 2147483647 to 1000000000.
+ 
+                   Pre-triangular equations:   0
+                   Post-triangular equations:  1
+ 
+ 
+ ** Optimal solution. Reduced gradient less than tolerance.
+ 
+ 
+ CONOPT time Total                            0.000 seconds
+   of which: Function evaluations             0.000 =  0.0%
+             1st Derivative evaluations       0.000 =  0.0%
+             2nd Derivative evaluations       0.000 =  0.0%
+             Directional 2nd Derivative       0.000 =  0.0%
+ 
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU objective1          .              .              .             1.0000      
+
+---- EQU supplycons1  
+
+            LOWER          LEVEL          UPPER         MARGINAL
+
+gary      1400.0000      1400.0000      1400.0000       -17.7460      
+clev      2600.0000      2600.0000      2600.0000        -6.1124      
+pitt      2900.0000      2900.0000      2900.0000          .          
+
+---- EQU demandcons1  
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+fra       900.0000       900.0000       900.0000        40.0744      
+det      1200.0000      1200.0000      1200.0000        21.5434      
+lan       600.0000       600.0000       600.0000        21.9071      
+win       400.0000       400.0000       400.0000        16.5604      
+stl      1700.0000      1700.0000      1700.0000        50.7062      
+fre      1100.0000      1100.0000      1100.0000       154.0080      
+laf      1000.0000      1000.0000      1000.0000        26.8729      
+
+---- VAR trans  ’units to ship’
+
+                LOWER          LEVEL          UPPER         MARGINAL
+
+gary.fra   1.000000E-10   1.000000E-10       495.0000        16.6717      
+gary.det   1.000000E-10   1.000000E-10       990.0000        10.2027      
+gary.lan   1.000000E-10   1.000000E-10       990.0000         6.8389      
+gary.win   1.000000E-10   1.000000E-10       990.0000        15.1856      
+gary.stl   1.000000E-10       792.0000       792.0000        -5.2231      
+gary.fre   1.000000E-10       404.1507       495.0000   -1.35714E-10      
+gary.laf   1.000000E-10       203.8493       990.0000          .          
+clev.fra   1.000000E-10       165.3329       495.0000   -6.54765E-11      
+clev.det   1.000000E-10       775.1786       792.0000   -1.26548E-11      
+clev.lan   1.000000E-10       366.6882       792.0000          .          
+clev.win   1.000000E-10       178.9464       792.0000          .          
+clev.stl   1.000000E-10       431.0705       495.0000          .          
+clev.fre   1.000000E-10       348.2451       495.0000          .          
+clev.laf   1.000000E-10       334.5381       990.0000          .          
+pitt.fra   1.000000E-10       734.6671       792.0000          .          
+pitt.det   1.000000E-10       424.8214       594.0000          .          
+pitt.lan   1.000000E-10       233.3118       594.0000   1.676952E-10      
+pitt.win   1.000000E-10       221.0536       594.0000   6.322054E-11      
+pitt.stl   1.000000E-10       476.9295       495.0000   -2.17071E-10      
+pitt.fre   1.000000E-10       347.6042       495.0000   -1.94348E-10      
+pitt.laf   1.000000E-10       461.6125       891.0000          .          
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR total_cos~        -INF       259615.1603        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+                             0     ERRORS
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 08:50:04 Page 8
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE nltrans Using MIP From line 101
+
+
+---- objective  =E=  
+
+objective..  - 39*y(gary,fra) - 14*y(gary,det) - 11*y(gary,lan) - 14*y(gary,win) - 16*y(gary,stl) - 82*y(gary,fre) - 8*y(gary,laf) - 27*y(clev,fra) - 9*y(clev,det) - 12*y(clev,lan) - 9*y(clev,win) - 26*y(clev,stl) - 95*y(clev,fre) - 17*y(clev,laf) - 24*y(pitt,fra) - 14*y(pitt,det) - 17*y(pitt,lan) - 13*y(pitt,win) - 28*y(pitt,stl) - 99*y(pitt,fre) - 20*y(pitt,laf) + total_cost =E= 0 ; (LHS = 0)
+     
+
+---- obj  =E=  
+
+obj(gary,fra)..  y(gary,fra) - 1.13612400968099*w(gary,fra,1) - 1.3910717002915*w(gary,fra,2) - 1.6473132480097*w(gary,fra,3) + 42.4912817684192*sup(gary,fra,2) + 127.90513100782*sup(gary,fra,3) =E= 0 ; (LHS = 0)
+     
+obj(gary,det)..  y(gary,det) - 1.11645083264485*w(gary,det,1) - 1.32735585431449*w(gary,det,2) - 1.53022705326042*w(gary,det,3) + 70.3016738898807*sup(gary,det,2) + 205.549139853835*sup(gary,det,3) =E= 0 ; (LHS = 0)
+     
+obj(gary,lan)..  y(gary,lan) - 1.11645083264485*w(gary,lan,1) - 1.32735585431449*w(gary,lan,2) - 1.53022705326042*w(gary,lan,3) + 70.3016738898807*sup(gary,lan,2) + 205.549139853835*sup(gary,lan,3) =E= 0 ; (LHS = 0)
+     
+REMAINING 18 ENTRIES SKIPPED
+
+
+---- supplycons  =E=  
+
+supplycons(gary)..  x(gary,fra) + x(gary,det) + x(gary,lan) + x(gary,win) + x(gary,stl) + x(gary,fre) + x(gary,laf) =E= 1400 ; (LHS = 2900, INFES = 1500 ****)
+     
+supplycons(clev)..  x(clev,fra) + x(clev,det) + x(clev,lan) + x(clev,win) + x(clev,stl) + x(clev,fre) + x(clev,laf) =E= 2600 ; (LHS = 2450, INFES = 150 ****)
+     
+supplycons(pitt)..  x(pitt,fra) + x(pitt,det) + x(pitt,lan) + x(pitt,win) + x(pitt,stl) + x(pitt,fre) + x(pitt,laf) =E= 2900 ; (LHS = 2250, INFES = 650 ****)
+     
+
+---- demandcons  =E=  
+
+demandcons(fra)..  x(gary,fra) + x(clev,fra) + x(pitt,fra) =E= 900 ; (LHS = 900)
+     
+demandcons(det)..  x(gary,det) + x(clev,det) + x(pitt,det) =E= 1200 ; (LHS = 1200)
+     
+demandcons(lan)..  x(gary,lan) + x(clev,lan) + x(pitt,lan) =E= 600 ; (LHS = 1200, INFES = 600 ****)
+     
+REMAINING 4 ENTRIES SKIPPED
+
+
+---- buy  =E=  
+
+buy(gary,fra)..  - x(gary,fra) + w(gary,fra,1) + w(gary,fra,2) + w(gary,fra,3) =E= 0 ; (LHS = -250, INFES = 250 ****)
+     
+buy(gary,det)..  - x(gary,det) + w(gary,det,1) + w(gary,det,2) + w(gary,det,3) =E= 0 ; (LHS = -500, INFES = 500 ****)
+     
+buy(gary,lan)..  - x(gary,lan) + w(gary,lan,1) + w(gary,lan,2) + w(gary,lan,3) =E= 0 ; (LHS = -500, INFES = 500 ****)
+     
+REMAINING 18 ENTRIES SKIPPED
+
+
+---- w_lo  =L=  
+
+w_lo(gary,fra,1)..  - w(gary,fra,1) =L= 0 ; (LHS = 0)
+     
+w_lo(gary,fra,2)..  - w(gary,fra,2) + 166.666666666667*sup(gary,fra,2) =L= 0 ; (LHS = 0)
+     
+w_lo(gary,fra,3)..  - w(gary,fra,3) + 333.333333333333*sup(gary,fra,3) =L= 0 ; (LHS = 0)
+     
+REMAINING 60 ENTRIES SKIPPED
+
+
+---- w_up  =L=  
+
+w_up(gary,fra,1)..  w(gary,fra,1) - 166.666666666667*sup(gary,fra,1) =L= 0 ; (LHS = 0)
+     
+w_up(gary,fra,2)..  w(gary,fra,2) - 333.333333333333*sup(gary,fra,2) =L= 0 ; (LHS = 0)
+     
+w_up(gary,fra,3)..  w(gary,fra,3) - 500*sup(gary,fra,3) =L= 0 ; (LHS = 0)
+     
+REMAINING 60 ENTRIES SKIPPED
+
+
+---- onecons  =E=  
+
+onecons(gary,fra)..  sup(gary,fra,1) + sup(gary,fra,2) + sup(gary,fra,3) =E= 1 ; (LHS = 0, INFES = 1 ****)
+     
+onecons(gary,det)..  sup(gary,det,1) + sup(gary,det,2) + sup(gary,det,3) =E= 1 ; (LHS = 0, INFES = 1 ****)
+     
+onecons(gary,lan)..  sup(gary,lan,1) + sup(gary,lan,2) + sup(gary,lan,3) =E= 1 ; (LHS = 0, INFES = 1 ****)
+     
+REMAINING 18 ENTRIES SKIPPED
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 08:50:04 Page 9
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE nltrans Using MIP From line 101
+
+
+---- x  
+
+x(gary,fra)
+                (.LO, .L, .UP, .M = 1E-10, 250, 495, 0)
+        1       supplycons(gary)
+        1       demandcons(fra)
+       -1       buy(gary,fra)
+
+x(gary,det)
+                (.LO, .L, .UP, .M = 1E-10, 500, 990, 0)
+        1       supplycons(gary)
+        1       demandcons(det)
+       -1       buy(gary,det)
+
+x(gary,lan)
+                (.LO, .L, .UP, .M = 1E-10, 500, 990, 0)
+        1       supplycons(gary)
+        1       demandcons(lan)
+       -1       buy(gary,lan)
+
+REMAINING 18 ENTRIES SKIPPED
+
+---- y  
+
+y(gary,fra)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+      -39       objective
+        1       obj(gary,fra)
+
+y(gary,det)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+      -14       objective
+        1       obj(gary,det)
+
+y(gary,lan)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+      -11       objective
+        1       obj(gary,lan)
+
+REMAINING 18 ENTRIES SKIPPED
+
+---- w  
+
+w(gary,fra,1)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+       -1.1361  obj(gary,fra)
+        1       buy(gary,fra)
+       -1       w_lo(gary,fra,1)
+        1       w_up(gary,fra,1)
+
+w(gary,fra,2)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+       -1.3911  obj(gary,fra)
+        1       buy(gary,fra)
+       -1       w_lo(gary,fra,2)
+        1       w_up(gary,fra,2)
+
+w(gary,fra,3)
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+       -1.6473  obj(gary,fra)
+        1       buy(gary,fra)
+       -1       w_lo(gary,fra,3)
+        1       w_up(gary,fra,3)
+
+REMAINING 60 ENTRIES SKIPPED
+
+---- sup  
+
+sup(gary,fra,1)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+     -166.6667  w_up(gary,fra,1)
+        1       onecons(gary,fra)
+
+sup(gary,fra,2)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+       42.4913  obj(gary,fra)
+      166.6667  w_lo(gary,fra,2)
+     -333.3333  w_up(gary,fra,2)
+        1       onecons(gary,fra)
+
+sup(gary,fra,3)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      127.9051  obj(gary,fra)
+      333.3333  w_lo(gary,fra,3)
+     -500       w_up(gary,fra,3)
+        1       onecons(gary,fra)
+
+REMAINING 60 ENTRIES SKIPPED
+
+---- total_cost  
+
+total_cost
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+        1       objective
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 08:50:04 Page 10
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE nltrans Using MIP From line 101
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 1.000E+00, 2.900E+03] - Zero values observed as well
+Bound     [min, max] : [ 1.000E-10, 9.900E+02] - Zero values observed as well
+Matrix    [min, max] : [ 1.000E+00, 1.000E+03]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 08:50:04 Page 11
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE nltrans Using MIP From line 101
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           8     SINGLE EQUATIONS          200
+BLOCKS OF VARIABLES           5     SINGLE VARIABLES          169
+NON ZERO ELEMENTS           568     DISCRETE VARIABLES         63
+
+
+GENERATION TIME      =        0.000 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 08:50:04 Page 12
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE nltrans Using MIP From line 101
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   nltrans             OBJECTIVE  total_cost
+     TYPE    MIP                 DIRECTION  MINIMIZE
+     SOLVER  CPLEX               FROM LINE  101
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE           260110.7071
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT        66    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.54 Mb (peak 0.54 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.01 Mb (peak 0.02 Mb)
+--- Starting Cplex
+
+
+--- MIP status (101): integer optimal solution.
+--- Cplex Time: 0.00sec (det. 2.14 ticks)
+
+--- Returning a primal only solution to GAMS (marginals all set to NA).
+--- Fixing integer variables and solving final LP...
+
+
+--- Fixed MIP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.21 ticks)
+
+
+Proven optimal solution
+MIP Solution:       260110.707086    (66 iterations, 0 nodes)
+Final Solve:        260110.707086    (7 iterations)
+
+Best possible:      260110.707086
+Absolute gap:            0.000000
+Relative gap:            0.000000
+
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU objective           .              .              .             1.0000      
+
+---- EQU obj  
+
+                LOWER          LEVEL          UPPER         MARGINAL
+
+gary.fra          .              .              .            39.0000      
+gary.det          .              .              .            14.0000      
+gary.lan          .              .              .            11.0000      
+gary.win          .              .              .            14.0000      
+gary.stl          .              .              .            16.0000      
+gary.fre          .              .              .            82.0000      
+gary.laf          .              .              .             8.0000      
+clev.fra          .              .              .            27.0000      
+clev.det          .              .              .             9.0000      
+clev.lan          .              .              .            12.0000      
+clev.win          .              .              .             9.0000      
+clev.stl          .              .              .            26.0000      
+clev.fre          .              .              .            95.0000      
+clev.laf          .              .              .            17.0000      
+pitt.fra          .              .              .            24.0000      
+pitt.det          .              .              .            14.0000      
+pitt.lan          .              .              .            17.0000      
+pitt.win          .              .              .            13.0000      
+pitt.stl          .              .              .            28.0000      
+pitt.fre          .              .              .            99.0000      
+pitt.laf          .              .              .            20.0000      
+
+---- EQU supplycons  
+
+            LOWER          LEVEL          UPPER         MARGINAL
+
+gary      1400.0000      1400.0000      1400.0000       -10.9143      
+clev      2600.0000      2600.0000      2600.0000          .          
+pitt      2900.0000      2900.0000      2900.0000         6.8777      
+
+---- EQU demandcons  
+
+           LOWER          LEVEL          UPPER         MARGINAL
+
+fra       900.0000       900.0000       900.0000        30.6753      
+det      1200.0000      1200.0000      1200.0000        15.7117      
+lan       600.0000       600.0000       600.0000        16.1567      
+win       400.0000       400.0000       400.0000        10.1017      
+stl      1700.0000      1700.0000      1700.0000        42.8301      
+fre      1100.0000      1100.0000      1100.0000       145.9940      
+laf      1000.0000      1000.0000      1000.0000        19.8459      
+
+---- EQU buy  
+
+                LOWER          LEVEL          UPPER         MARGINAL
+
+gary.fra          .              .              .            44.3088      
+gary.det          .              .              .            15.6303      
+gary.lan          .              .              .            12.2810      
+gary.win          .              .              .            15.6303      
+gary.stl          .              .              .            25.0354      
+gary.fre          .              .              .           135.0797      
+gary.laf          .              .              .             8.9316      
+clev.fra          .              .              .            30.6753      
+clev.det          .              .              .            14.0824      
+clev.lan          .              .              .            16.1567      
+clev.win          .              .              .            10.1017      
+clev.stl          .              .              .            42.8301      
+clev.fre          .              .              .           145.9940      
+clev.laf          .              .              .            19.8459      
+pitt.fra          .              .              .            37.5531      
+pitt.det          .              .              .            22.5894      
+pitt.lan          .              .              .            23.0345      
+pitt.win          .              .              .            16.9795      
+pitt.stl          .              .              .            46.1248      
+pitt.fre          .              .              .           152.8718      
+pitt.laf          .              .              .            26.7237      
+
+---- EQU w_lo  
+
+                  LOWER          LEVEL          UPPER         MARGINAL
+
+gary.fra.1        -INF      -1.00000E-10          .              .          
+gary.fra.2        -INF             .              .            -9.9430      
+gary.fra.3        -INF             .              .           -19.9364      
+gary.det.1        -INF      -1.00000E-10          .              .          
+gary.det.2        -INF             .              .            -2.9527      
+gary.det.3        -INF             .              .            -5.7929      
+gary.lan.1        -INF      -1.00000E-10          .              .          
+gary.lan.2        -INF             .              .            -2.3200      
+gary.lan.3        -INF             .              .            -4.5515      
+gary.win.1        -INF      -1.00000E-10          .              .          
+gary.win.2        -INF             .              .            -2.9527      
+gary.win.3        -INF             .              .            -5.7929      
+gary.stl.1        -INF             .              .              .          
+gary.stl.2        -INF             .              .              .          
+gary.stl.3        -INF         -258.6667          .              .          
+gary.fre.1        -INF             .              .              .          
+gary.fre.2        -INF             .              .              .          
+gary.fre.3        -INF         -100.0000          .              .          
+gary.laf.1        -INF         -174.6667          .              .          
+gary.laf.2        -INF             .              .            -1.6872      
+gary.laf.3        -INF             .              .            -3.3102      
+clev.fra.1        -INF         -128.3333          .              .          
+clev.fra.2        -INF             .              .            -6.8836      
+clev.fra.3        -INF             .              .           -13.8021      
+clev.det.1        -INF             .              .              .          
+clev.det.2        -INF             .              .              .          
+clev.det.3        -INF         -258.6667          .              .          
+clev.lan.1        -INF             .              .              .          
+clev.lan.2        -INF         -133.3333          .              .          
+clev.lan.3        -INF             .              .            -2.6198      
+clev.win.1        -INF         -200.0000          .              .          
+clev.win.2        -INF             .              .            -2.0158      
+clev.win.3        -INF             .              .            -3.9807      
+clev.stl.1        -INF             .              .              .          
+clev.stl.2        -INF             .              .              .          
+clev.stl.3        -INF          -79.6667          .              .          
+clev.fre.1        -INF             .              .              .          
+clev.fre.2        -INF         -166.6667          .              .          
+clev.fre.3        -INF             .              .           -10.5007      
+clev.laf.1        -INF             .              .              .          
+clev.laf.2        -INF             .              .            -2.7191      
+clev.laf.3        -INF             .              .            -6.1679      
+pitt.fra.1        -INF             .              .              .          
+pitt.fra.2        -INF             .              .              .          
+pitt.fra.3        -INF         -238.3333          .              .          
+pitt.det.1        -INF             .              .              .          
+pitt.det.2        -INF             .              .              .          
+pitt.det.3        -INF           -8.0000          .              .          
+pitt.lan.1        -INF         -200.0000          .              .          
+pitt.lan.2        -INF             .              .            -0.3057      
+pitt.lan.3        -INF             .              .            -4.3955      
+pitt.win.1        -INF             .              .              .          
+pitt.win.2        -INF             .              .            -0.8689      
+pitt.win.3        -INF             .              .            -3.9964      
+pitt.stl.1        -INF             .              .              .          
+pitt.stl.2        -INF             .              .              .          
+pitt.stl.3        -INF         -161.6667          .              .          
+pitt.fre.1        -INF             .              .              .          
+pitt.fre.2        -INF         -166.6667          .              .          
+pitt.fre.3        -INF             .              .           -10.2123      
+pitt.laf.1        -INF             .              .              .          
+pitt.laf.2        -INF         -192.0000          .              .          
+pitt.laf.3        -INF             .              .            -4.1996      
+
+---- EQU w_up  
+
+                  LOWER          LEVEL          UPPER         MARGINAL
+
+gary.fra.1        -INF         -166.6667          .              .          
+gary.fra.2        -INF             .              .              .          
+gary.fra.3        -INF             .              .              .          
+gary.det.1        -INF         -333.3333          .              .          
+gary.det.2        -INF             .              .              .          
+gary.det.3        -INF             .              .              .          
+gary.lan.1        -INF         -333.3333          .              .          
+gary.lan.2        -INF             .              .              .          
+gary.lan.3        -INF             .              .              .          
+gary.win.1        -INF         -333.3333          .              .          
+gary.win.2        -INF             .              .              .          
+gary.win.3        -INF             .              .              .          
+gary.stl.1        -INF             .              .            -7.0767      
+gary.stl.2        -INF             .              .            -3.4931      
+gary.stl.3        -INF           -8.0000          .              .          
+gary.fre.1        -INF             .              .           -41.9175      
+gary.fre.2        -INF             .              .           -21.0118      
+gary.fre.3        -INF          -66.6667          .              .          
+gary.laf.1        -INF         -158.6667          .              .          
+gary.laf.2        -INF             .              .              .          
+gary.laf.3        -INF             .              .              .          
+clev.fra.1        -INF          -38.3333          .              .          
+clev.fra.2        -INF             .              .              .          
+clev.fra.3        -INF             .              .              .          
+clev.det.1        -INF             .              .            -3.9807      
+clev.det.2        -INF             .              .            -1.9649      
+clev.det.3        -INF           -8.0000          .              .          
+clev.lan.1        -INF             .              .            -2.6877      
+clev.lan.2        -INF         -133.3333          .              .          
+clev.lan.3        -INF             .              .              .          
+clev.win.1        -INF          -66.6667          .              .          
+clev.win.2        -INF             .              .              .          
+clev.win.3        -INF             .              .              .          
+clev.stl.1        -INF             .              .           -13.2909      
+clev.stl.2        -INF             .              .            -6.6623      
+clev.stl.3        -INF          -87.0000          .              .          
+clev.fre.1        -INF             .              .           -38.0622      
+clev.fre.2        -INF             .              .           -13.8422      
+clev.fre.3        -INF             .              .              .          
+clev.laf.1        -INF             .              .            -0.8663      
+clev.laf.2        -INF         -333.3333          .              .          
+clev.laf.3        -INF             .              .              .          
+pitt.fra.1        -INF             .              .           -10.6151      
+pitt.fra.2        -INF             .              .            -5.2396      
+pitt.fra.3        -INF          -28.3333          .              .          
+pitt.det.1        -INF             .              .            -6.7608      
+pitt.det.2        -INF             .              .            -3.3681      
+pitt.det.3        -INF         -192.0000          .              .          
+pitt.lan.1        -INF             .              .            -3.8140      
+pitt.lan.2        -INF             .              .              .          
+pitt.lan.3        -INF             .              .              .          
+pitt.win.1        -INF             .              .            -2.2815      
+pitt.win.2        -INF         -200.0000          .              .          
+pitt.win.3        -INF             .              .              .          
+pitt.stl.1        -INF             .              .           -14.3133      
+pitt.stl.2        -INF             .              .            -7.1748      
+pitt.stl.3        -INF           -5.0000          .              .          
+pitt.fre.1        -INF             .              .           -40.3955      
+pitt.fre.2        -INF             .              .           -15.1557      
+pitt.fre.3        -INF             .              .              .          
+pitt.laf.1        -INF             .              .            -4.3391      
+pitt.laf.2        -INF         -108.0000          .              .          
+pitt.laf.3        -INF             .              .              .          
+
+---- EQU onecons  
+
+                LOWER          LEVEL          UPPER         MARGINAL
+
+gary.fra         1.0000         1.0000         1.0000          .          
+gary.det         1.0000         1.0000         1.0000          .          
+gary.lan         1.0000         1.0000         1.0000          .          
+gary.win         1.0000         1.0000         1.0000          .          
+gary.stl         1.0000         1.0000         1.0000          .          
+gary.fre         1.0000         1.0000         1.0000          .          
+gary.laf         1.0000         1.0000         1.0000          .          
+clev.fra         1.0000         1.0000         1.0000          .          
+clev.det         1.0000         1.0000         1.0000          .          
+clev.lan         1.0000         1.0000         1.0000          .          
+clev.win         1.0000         1.0000         1.0000          .          
+clev.stl         1.0000         1.0000         1.0000          .          
+clev.fre         1.0000         1.0000         1.0000          .          
+clev.laf         1.0000         1.0000         1.0000          .          
+pitt.fra         1.0000         1.0000         1.0000          .          
+pitt.det         1.0000         1.0000         1.0000          .          
+pitt.lan         1.0000         1.0000         1.0000          .          
+pitt.win         1.0000         1.0000         1.0000          .          
+pitt.stl         1.0000         1.0000         1.0000          .          
+pitt.fre         1.0000         1.0000         1.0000          .          
+pitt.laf         1.0000         1.0000         1.0000          .          
+
+---- VAR x  
+
+                LOWER          LEVEL          UPPER         MARGINAL
+
+gary.fra   1.000000E-10   1.000000E-10       495.0000        24.5478      
+gary.det   1.000000E-10   1.000000E-10       990.0000        10.8330      
+gary.lan   1.000000E-10   1.000000E-10       990.0000         7.0386      
+gary.win   1.000000E-10   1.000000E-10       990.0000        16.4429      
+gary.stl   1.000000E-10       792.0000       792.0000        -6.8804      
+gary.fre   1.000000E-10       433.3333       495.0000          .          
+gary.laf   1.000000E-10       174.6667       990.0000          .          
+clev.fra   1.000000E-10       128.3333       495.0000          .          
+clev.det   1.000000E-10       792.0000       792.0000        -1.6293      
+clev.lan   1.000000E-10       400.0000       792.0000          .          
+clev.win   1.000000E-10       200.0000       792.0000          .          
+clev.stl   1.000000E-10       413.0000       495.0000          .          
+clev.fre   1.000000E-10       333.3333       495.0000          .          
+clev.laf   1.000000E-10       333.3333       990.0000          .          
+pitt.fra   1.000000E-10       771.6667       792.0000          .          
+pitt.det   1.000000E-10       408.0000       594.0000          .          
+pitt.lan   1.000000E-10       200.0000       594.0000          .          
+pitt.win   1.000000E-10       200.0000       594.0000          .          
+pitt.stl   1.000000E-10       495.0000       495.0000        -3.5831      
+pitt.fre   1.000000E-10       333.3333       495.0000          .          
+pitt.laf   1.000000E-10       492.0000       891.0000          .          
+
+---- VAR y  
+
+                LOWER          LEVEL          UPPER         MARGINAL
+
+gary.fra        -INF      1.136124E-10        +INF             .          
+gary.det        -INF      1.116451E-10        +INF             .          
+gary.lan        -INF      1.116451E-10        +INF             .          
+gary.win        -INF      1.116451E-10        +INF             .          
+gary.stl        -INF         1063.0880        +INF             .          
+gary.fre        -INF          585.9306        +INF             .          
+gary.laf        -INF          195.0067        +INF             .          
+clev.fra        -INF          145.8026        +INF             .          
+clev.det        -INF         1063.0880        +INF             .          
+clev.lan        -INF          478.8301        +INF             .          
+clev.win        -INF          224.4832        +INF             .          
+clev.stl        -INF          552.4352        +INF             .          
+clev.fre        -INF          421.1993        +INF             .          
+clev.laf        -INF          372.1503        +INF             .          
+pitt.fra        -INF         1031.2722        +INF             .          
+pitt.det        -INF          513.6213        +INF             .          
+pitt.lan        -INF          226.1226        +INF             .          
+pitt.win        -INF          226.1226        +INF             .          
+pitt.stl        -INF          687.5149        +INF             .          
+pitt.fre        -INF          421.1993        +INF             .          
+pitt.laf        -INF          592.3152        +INF             .          
+
+---- VAR w  
+
+                  LOWER          LEVEL          UPPER         MARGINAL
+
+gary.fra.1        -INF      1.000000E-10        +INF             .          
+gary.fra.2        -INF             .            +INF             .          
+gary.fra.3        -INF             .            +INF             .          
+gary.det.1        -INF      1.000000E-10        +INF             .          
+gary.det.2        -INF             .            +INF             .          
+gary.det.3        -INF             .            +INF             .          
+gary.lan.1        -INF      1.000000E-10        +INF             .          
+gary.lan.2        -INF             .            +INF             .          
+gary.lan.3        -INF             .            +INF             .          
+gary.win.1        -INF      1.000000E-10        +INF             .          
+gary.win.2        -INF             .            +INF             .          
+gary.win.3        -INF             .            +INF             .          
+gary.stl.1        -INF             .            +INF             .          
+gary.stl.2        -INF             .            +INF             .          
+gary.stl.3        -INF          792.0000        +INF             .          
+gary.fre.1        -INF             .            +INF             .          
+gary.fre.2        -INF             .            +INF             .          
+gary.fre.3        -INF          433.3333        +INF             .          
+gary.laf.1        -INF          174.6667        +INF             .          
+gary.laf.2        -INF             .            +INF             .          
+gary.laf.3        -INF             .            +INF             .          
+clev.fra.1        -INF          128.3333        +INF             .          
+clev.fra.2        -INF             .            +INF             .          
+clev.fra.3        -INF             .            +INF             .          
+clev.det.1        -INF             .            +INF             .          
+clev.det.2        -INF             .            +INF             .          
+clev.det.3        -INF          792.0000        +INF             .          
+clev.lan.1        -INF             .            +INF             .          
+clev.lan.2        -INF          400.0000        +INF             .          
+clev.lan.3        -INF             .            +INF             .          
+clev.win.1        -INF          200.0000        +INF             .          
+clev.win.2        -INF             .            +INF             .          
+clev.win.3        -INF             .            +INF             .          
+clev.stl.1        -INF             .            +INF             .          
+clev.stl.2        -INF             .            +INF             .          
+clev.stl.3        -INF          413.0000        +INF             .          
+clev.fre.1        -INF             .            +INF             .          
+clev.fre.2        -INF          333.3333        +INF             .          
+clev.fre.3        -INF             .            +INF             .          
+clev.laf.1        -INF             .            +INF             .          
+clev.laf.2        -INF          333.3333        +INF             .          
+clev.laf.3        -INF             .            +INF             .          
+pitt.fra.1        -INF             .            +INF             .          
+pitt.fra.2        -INF             .            +INF             .          
+pitt.fra.3        -INF          771.6667        +INF             .          
+pitt.det.1        -INF             .            +INF             .          
+pitt.det.2        -INF             .            +INF             .          
+pitt.det.3        -INF          408.0000        +INF             .          
+pitt.lan.1        -INF          200.0000        +INF             .          
+pitt.lan.2        -INF             .            +INF             .          
+pitt.lan.3        -INF             .            +INF             .          
+pitt.win.1        -INF             .            +INF             .          
+pitt.win.2        -INF          200.0000        +INF             .          
+pitt.win.3        -INF             .            +INF             .          
+pitt.stl.1        -INF             .            +INF             .          
+pitt.stl.2        -INF             .            +INF             .          
+pitt.stl.3        -INF          495.0000        +INF             .          
+pitt.fre.1        -INF             .            +INF             .          
+pitt.fre.2        -INF          333.3333        +INF             .          
+pitt.fre.3        -INF             .            +INF             .          
+pitt.laf.1        -INF             .            +INF             .          
+pitt.laf.2        -INF          492.0000        +INF             .          
+pitt.laf.3        -INF             .            +INF             .          
+
+---- VAR sup  
+
+                  LOWER          LEVEL          UPPER         MARGINAL
+
+gary.fra.1          .             1.0000         1.0000         EPS         
+gary.fra.2          .              .             1.0000   -4.54747E-13      
+gary.fra.3          .              .             1.0000      1657.1600      
+gary.det.1          .             1.0000         1.0000         EPS         
+gary.det.2          .              .             1.0000   2.273737E-13      
+gary.det.3          .              .             1.0000       984.2234      
+gary.lan.1          .             1.0000         1.0000         EPS         
+gary.lan.2          .              .             1.0000   4.547474E-13      
+gary.lan.3          .              .             1.0000       773.3184      
+gary.win.1          .             1.0000         1.0000         EPS         
+gary.win.2          .              .             1.0000   2.273737E-13      
+gary.win.3          .              .             1.0000       984.2234      
+gary.stl.1          .              .             1.0000     -1887.1272      
+gary.stl.2          .              .             1.0000     -2818.6180      
+gary.stl.3          .             1.0000         1.0000     -2818.6180      
+gary.fre.1          .              .             1.0000     -6986.2529      
+gary.fre.2          .              .             1.0000    -10488.2207      
+gary.fre.3          .             1.0000         1.0000    -10488.2207      
+gary.laf.1          .             1.0000         1.0000         EPS         
+gary.laf.2          .              .             1.0000   2.273737E-13      
+gary.laf.3          .              .             1.0000       562.4134      
+clev.fra.1          .             1.0000         1.0000         EPS         
+clev.fra.2          .              .             1.0000         EPS         
+clev.fra.3          .              .             1.0000      1147.2646      
+clev.det.1          .              .             1.0000     -1061.5091      
+clev.det.2          .              .             1.0000     -1585.4726      
+clev.det.3          .             1.0000         1.0000     -1585.4726      
+clev.lan.1          .              .             1.0000      -716.7274      
+clev.lan.2          .             1.0000         1.0000      -716.7274      
+clev.lan.3          .              .             1.0000      -716.7274      
+clev.win.1          .             1.0000         1.0000         EPS         
+clev.win.2          .              .             1.0000   -1.13687E-13      
+clev.win.3          .              .             1.0000       537.5455      
+clev.stl.1          .              .             1.0000     -2215.1534      
+clev.stl.2          .              .             1.0000     -3325.5334      
+clev.stl.3          .             1.0000         1.0000     -3325.5334      
+clev.fre.1          .              .             1.0000     -6343.7063      
+clev.fre.2          .             1.0000         1.0000     -8650.7408      
+clev.fre.3          .              .             1.0000     -8650.7408      
+clev.laf.1          .              .             1.0000      -288.7583      
+clev.laf.2          .             1.0000         1.0000      -288.7583      
+clev.laf.3          .              .             1.0000       617.6118      
+pitt.fra.1          .              .             1.0000     -2830.6909      
+pitt.fra.2          .              .             1.0000     -4227.9270      
+pitt.fra.3          .             1.0000         1.0000     -4227.9270      
+pitt.det.1          .              .             1.0000     -1352.1634      
+pitt.det.2          .              .             1.0000     -2025.7779      
+pitt.det.3          .             1.0000         1.0000     -2025.7779      
+pitt.lan.1          .             1.0000         1.0000      -762.8062      
+pitt.lan.2          .              .             1.0000      -762.8062      
+pitt.lan.3          .              .             1.0000      -701.6601      
+pitt.win.1          .              .             1.0000      -456.3014      
+pitt.win.2          .             1.0000         1.0000      -456.3014      
+pitt.win.3          .              .             1.0000      -282.5217      
+pitt.stl.1          .              .             1.0000     -2385.5498      
+pitt.stl.2          .              .             1.0000     -3581.3437      
+pitt.stl.3          .             1.0000         1.0000     -3581.3437      
+pitt.fre.1          .              .             1.0000     -6732.5789      
+pitt.fre.2          .             1.0000         1.0000     -9258.5209      
+pitt.fre.3          .              .             1.0000     -9258.5209      
+pitt.laf.1          .              .             1.0000     -1301.7428      
+pitt.laf.2          .             1.0000         1.0000     -1301.7428      
+pitt.laf.3          .              .             1.0000     -1301.7428      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR total_cost        -INF       260110.7071        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 11/20/23 08:50:04 Page 13
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----    105 VARIABLE total_cost.L          =   260110.707  
+
+----    105 PARAMETER fracdiff  
+
+             fra         det         lan         win         stl         fre         laf
+
+gary                                                                   7.221      14.316
+clev      22.379       2.170       9.084      11.765       4.192       4.282       0.360
+pitt       5.036       3.960      14.278       9.524       3.789       4.105       6.583
+
+
+
+EXECUTION TIME       =        0.094 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+
+
+USER: Introduction to Optimization (CS/ISyE/ECE 524) G230906|0002AS-GEN
+      UW-Madison, CS Dept., Fall 2023, Prof. Ferris              DCE850
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      C:\Users\lanya\Documents\GAMS\Studio\workspace\hw8-2.gms
+Output     C:\Users\lanya\Documents\GAMS\Studio\workspace\hw8-2.lst

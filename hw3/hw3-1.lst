@@ -1,0 +1,142 @@
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 00:51:03 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   1  option limrow = 0,limcol = 0, solprint = off;
+   2   
+   3  sets
+   4      month /Jan, Feb, Mar, Apr/
+   5      period /one, two, three, four/;
+   6   
+   7  alias (month, m);
+   8  alias (month, start_m);
+   9  alias (period, p);
+  10   
+  11  scalars
+  12      initialcash /400/;
+  13   
+  14  parameters
+  15      revenues(month) /Jan 600, Feb 800, Mar 250, Apr 300/,
+  16      bills(month) /Jan 700, Feb 500, Mar 600, Apr 250/,
+  17      interestrate(period) /one 0.0025, two 0.0035, three 0.004, four 0.006/;
+  18   
+  19  positive variables
+  20      investments(month, period),
+  21      cash_balance(month);
+  22   
+  23  free variables
+  24      finalCash;
+  25  equations
+  26      initialCashBalanceEq,
+  27      cashBalanceEq,
+  28      cashmay,
+  29      investmentConstraint;
+  30   
+  31  initialCashBalanceEq..
+  32      cash_balance('Jan') =e= initialcash;
+  33   
+  34  cashBalanceEq(m)$(ord(m) > 1 )..
+  35      cash_balance(m) =e= cash_balance(m-1)
+  36                       + revenues(m-1) - bills(m-1)
+  37                       - sum(p, investments(m-1,p))
+  38                       + sum((start_m,p)$(ord(start_m) + ord(p) = ord(m)-1), investments(start_m,p)*(1 + interestrate(p)));
+  39   
+  40  investmentConstraint(m)$(ord(m) < card(month))..
+  41      sum(p, investments(m,p)) =l= cash_balance(m)+revenues(m)-bills(m)
+  42   +sum((start_m,p)$(ord(start_m) + ord(p) = ord(m)), investments(start_m,p)*(1 + interestrate(p)));
+  43   
+  44  cashmay..
+  45      finalCash=e= cash_balance('Apr')+revenues('Apr')-bills('Apr')- sum(p, investments('Apr',p))
+  46                       + sum((start_m,p)$(ord(start_m) + ord(p) = 4), investments(start_m,p)*(1 + interestrate(p)));
+  47   
+  48  model finco /all/;
+  49  solve finco maximizing finalCash using lp;
+  50   
+  51  display finalCash.l;
+  52   
+  53   
+
+
+COMPILATION TIME     =        0.000 SECONDS      3 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 00:51:03 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE finco Using LP From line 49
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 5.000E+01, 4.000E+02]
+Bound     [min, max] : [        NA,        NA] - Zero values observed as well
+Matrix    [min, max] : [ 1.000E+00, 1.004E+00]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 00:51:03 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE finco Using LP From line 49
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           4     SINGLE EQUATIONS            8
+BLOCKS OF VARIABLES           3     SINGLE VARIABLES           21
+NON ZERO ELEMENTS            49
+
+
+GENERATION TIME      =        0.000 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 00:51:03 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE finco Using LP From line 49
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   finco               OBJECTIVE  finalCash
+     TYPE    LP                  DIRECTION  MAXIMIZE
+     SOLVER  CPLEX               FROM LINE  49
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE              302.8825
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT         4    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.50 Mb (peak 0.50 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.00 Mb)
+--- Starting Cplex
+
+
+--- LP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.02 ticks)
+
+
+Optimal solution found
+Objective:          302.882505
+
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/29/23 00:51:03 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----     51 VARIABLE finalCash.L           =      302.883  
+
+
+EXECUTION TIME       =        0.063 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+
+
+USER: Introduction to Optimization (CS/ISyE/ECE 524) G230906|0002AS-GEN
+      UW-Madison, CS Dept., Fall 2023, Prof. Ferris              DCE850
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      D:\uw madison\524\hw3\hw3-1.gms
+Output     D:\uw madison\524\hw3\hw3-1.lst

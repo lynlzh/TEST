@@ -1,0 +1,323 @@
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:30:03 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   1  set I /1*6/;
+   2   
+   3  parameter
+   4   minInvest(I) /1 3, 2 2, 3 9, 4 5, 5 12, 6 4/,
+   5   maxInvest(I) /1 27, 2 12, 3 35, 4 15, 5 46, 6 18/,
+   6   expReturn(I) /1 113, 2 109, 3 117, 4 110, 5 122, 6 112/;
+   7   
+   8  positive variable investAmount(I);
+   9   
+  10  binary variable investDecision(I);
+  11   
+  12  variable z;
+  13   
+  14  equation
+  15  objFunction
+  16  totalInvestmentConstraint
+  17  maxAmountConstraint(I)
+  18  minAmountConstraint(I)
+  19  x5Constraint
+  20  x6Constraint;
+  21   
+  22  objFunction..
+  23  z =e= sum(I, investAmount(I)*expReturn(I)/100);
+  24   
+  25  totalInvestmentConstraint..
+  26  sum(I, investAmount(I)) =l= 80;
+  27   
+  28  maxAmountConstraint(i)..
+  29  investAmount(I) =l= maxInvest(I) * investDecision(I);
+  30   
+  31  minAmountConstraint(I)..
+  32  investAmount(I) =g= minInvest(I) * investDecision(I);
+  33   
+  34  x6Constraint..
+  35  investAmount('6') =g= minInvest('6') * investDecision('3');
+  36   
+  37  x5Constraint..
+  38  investAmount('5') =l= (investAmount('2') + investAmount('4') + investAmount('6'));
+  39   
+  40  model investmentmodel /all/;
+  41   
+  42  solve investmentmodel using MIP maximizing z;
+  43   
+  44  parameter expectedReturn;
+  45  expectedReturn = z.l;display expectedReturn;
+  46   
+  47  set investments(I);
+  48  investments(I) = (investAmount.l(I) > 0.5);
+  49  options investments:0:0:1; display investments;
+  50   
+  51   
+  52   
+  53   
+
+
+COMPILATION TIME     =        0.000 SECONDS      3 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:30:03 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE investmentmodel Using MIP From line 42
+
+
+---- objFunction  =E=  
+
+objFunction..  - 1.13*investAmount(1) - 1.09*investAmount(2) - 1.17*investAmount(3) - 1.1*investAmount(4) - 1.22*investAmount(5) - 1.12*investAmount(6) + z =E= 0 ; (LHS = 0)
+     
+
+---- totalInvestmentConstraint  =L=  
+
+totalInvestmentConstraint..  investAmount(1) + investAmount(2) + investAmount(3) + investAmount(4) + investAmount(5) + investAmount(6) =L= 80 ; (LHS = 0)
+     
+
+---- maxAmountConstraint  =L=  
+
+maxAmountConstraint(1)..  investAmount(1) - 27*investDecision(1) =L= 0 ; (LHS = 0)
+     
+maxAmountConstraint(2)..  investAmount(2) - 12*investDecision(2) =L= 0 ; (LHS = 0)
+     
+maxAmountConstraint(3)..  investAmount(3) - 35*investDecision(3) =L= 0 ; (LHS = 0)
+     
+REMAINING 3 ENTRIES SKIPPED
+
+
+---- minAmountConstraint  =G=  
+
+minAmountConstraint(1)..  investAmount(1) - 3*investDecision(1) =G= 0 ; (LHS = 0)
+     
+minAmountConstraint(2)..  investAmount(2) - 2*investDecision(2) =G= 0 ; (LHS = 0)
+     
+minAmountConstraint(3)..  investAmount(3) - 9*investDecision(3) =G= 0 ; (LHS = 0)
+     
+REMAINING 3 ENTRIES SKIPPED
+
+
+---- x5Constraint  =L=  
+
+x5Constraint..  - investAmount(2) - investAmount(4) + investAmount(5) - investAmount(6) =L= 0 ; (LHS = 0)
+     
+
+---- x6Constraint  =G=  
+
+x6Constraint..  investAmount(6) - 4*investDecision(3) =G= 0 ; (LHS = 0)
+     
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:30:03 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE investmentmodel Using MIP From line 42
+
+
+---- investAmount  
+
+investAmount(1)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1.13    objFunction
+        1       totalInvestmentConstraint
+        1       maxAmountConstraint(1)
+        1       minAmountConstraint(1)
+
+investAmount(2)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1.09    objFunction
+        1       totalInvestmentConstraint
+        1       maxAmountConstraint(2)
+        1       minAmountConstraint(2)
+       -1       x5Constraint
+
+investAmount(3)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+       -1.17    objFunction
+        1       totalInvestmentConstraint
+        1       maxAmountConstraint(3)
+        1       minAmountConstraint(3)
+
+REMAINING 3 ENTRIES SKIPPED
+
+---- investDecision  
+
+investDecision(1)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      -27       maxAmountConstraint(1)
+       -3       minAmountConstraint(1)
+
+investDecision(2)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      -12       maxAmountConstraint(2)
+       -2       minAmountConstraint(2)
+
+investDecision(3)
+                (.LO, .L, .UP, .M = 0, 0, 1, 0)
+      -35       maxAmountConstraint(3)
+       -9       minAmountConstraint(3)
+       -4       x6Constraint
+
+REMAINING 3 ENTRIES SKIPPED
+
+---- z  
+
+z
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+        1       objFunction
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:30:03 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE investmentmodel Using MIP From line 42
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 8.000E+01, 8.000E+01] - Zero values observed as well
+Bound     [min, max] : [ 1.000E+00, 1.000E+00] - Zero values observed as well
+Matrix    [min, max] : [ 1.000E+00, 4.600E+01]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:30:03 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE investmentmodel Using MIP From line 42
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           6     SINGLE EQUATIONS           16
+BLOCKS OF VARIABLES           3     SINGLE VARIABLES           13
+NON ZERO ELEMENTS            43     DISCRETE VARIABLES          6
+
+
+GENERATION TIME      =        0.000 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:30:03 Page 6
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE investmentmodel Using MIP From line 42
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   investmentmodel     OBJECTIVE  z
+     TYPE    MIP                 DIRECTION  MAXIMIZE
+     SOLVER  CPLEX               FROM LINE  42
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE               93.5000
+
+ RESOURCE USAGE, LIMIT          0.015 10000000000.000
+ ITERATION COUNT, LIMIT         6    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.50 Mb (peak 0.50 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.00 Mb)
+--- Starting Cplex
+
+
+--- MIP status (101): integer optimal solution.
+--- Cplex Time: 0.02sec (det. 0.15 ticks)
+
+--- Returning a primal only solution to GAMS (marginals all set to NA).
+--- Fixing integer variables and solving final LP...
+
+
+--- Fixed MIP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.02 ticks)
+
+
+Proven optimal solution
+MIP Solution:           93.500000    (6 iterations, 0 nodes)
+Final Solve:            93.500000    (2 iterations)
+
+Best possible:          93.500000
+Absolute gap:           -0.000000
+Relative gap:           -0.000000
+
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU objFuncti~          .              .              .             1.0000      
+---- EQU totalInve~        -INF           80.0000        80.0000         1.1700      
+
+---- EQU maxAmountConstraint  
+
+         LOWER          LEVEL          UPPER         MARGINAL
+
+1        -INF             .              .              .          
+2        -INF             .              .              .          
+3        -INF           -1.0000          .              .          
+4        -INF          -10.0000          .              .          
+5        -INF          -23.0000          .              .          
+6        -INF             .              .       2.220446E-16      
+
+---- EQU minAmountConstraint  
+
+         LOWER          LEVEL          UPPER         MARGINAL
+
+1          .              .            +INF             .          
+2          .              .            +INF             .          
+3          .            25.0000        +INF             .          
+4          .              .            +INF           -0.0200      
+5          .            11.0000        +INF             .          
+6          .            14.0000        +INF             .          
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU x5Constra~        -INF             .              .             0.0500      
+---- EQU x6Constra~          .            14.0000        +INF             .          
+
+---- VAR investAmount  
+
+         LOWER          LEVEL          UPPER         MARGINAL
+
+1          .              .            +INF           -0.0400      
+2          .              .            +INF           -0.0300      
+3          .            34.0000        +INF             .          
+4          .             5.0000        +INF             .          
+5          .            23.0000        +INF             .          
+6          .            18.0000        +INF             .          
+
+---- VAR investDecision  
+
+         LOWER          LEVEL          UPPER         MARGINAL
+
+1          .              .             1.0000         EPS         
+2          .              .             1.0000         EPS         
+3          .             1.0000         1.0000         EPS         
+4          .             1.0000         1.0000        -0.1000      
+5          .             1.0000         1.0000         EPS         
+6          .             1.0000         1.0000   3.996803E-15      
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR z                 -INF           93.5000        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 10/26/23 22:30:03 Page 7
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----     45 PARAMETER expectedReturn       =       93.500  
+
+----     49 SET investments  
+
+3
+4
+5
+6
+
+
+
+EXECUTION TIME       =        0.047 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+
+
+USER: Introduction to Optimization (CS/ISyE/ECE 524) G230906|0002AS-GEN
+      UW-Madison, CS Dept., Fall 2023, Prof. Ferris              DCE850
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      D:\GAMS\CODE\hw6-1.gms
+Output     D:\GAMS\CODE\hw6-1.lst

@@ -1,0 +1,275 @@
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/14/23 23:16:06 Page 1
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+C o m p i l a t i o n
+
+
+   1  set I/light, dark/;
+   2  set R/malt, hops, yeast/;
+   3   
+   4  scalar lightmax /13/,darkmax /30/;
+   5  *lightmax: min(malt/2,hops/3,yeast/2)=13
+   6  *darkmax:  min(malt/3,hops/1,yeast/[5/3])=30
+   7   
+   8  table a(R,I)  "Per-Unit resource requirements"
+   9          light   dark
+  10  malt      2      3
+  11  hops      3      1
+  12  yeast     2     [5/3];
+  13   
+  14  parameters
+  15      profitMargin(I) / "light" 2 , "dark" 1 /
+  16      resourcebound(R) /"malt" 90,"hops" 40, "yeast" 80/;
+  17   
+  18  free variable Profit "total profit";
+  19   
+  20  positive variables
+  21  x(I) "beer"
+  22  ingre(R) "ingredients"
+  23   
+  24  equation
+  25  profit_eq         "profit definition"
+  26  resource(R)        "resourcebound"
+  27  y(R)               "ingredients";
+  28   
+  29  * EQUATION (MODEL) DEFINITION
+  30  profit_eq..
+  31    Profit =E= sum(I,profitMargin(I)*x(I));
+  32   
+  33  resource(R)..
+  34    sum(I,a(R,I)*x(I)) =L= resourcebound(R);
+  35   
+  36  y(R)..
+  37    ingre(R)=E= sum(I,a(R,I)*x(I));
+  38   
+  39  * VARIBLE BOUNDS
+  40  x.up('light') = lightmax;
+  41  x.up('dark') = darkmax;
+  42   
+  43  model softsuds /all/;
+  44   
+  45  solve softsuds using lp maximizing profit;
+  46   
+  47  variables quant(I),ingredients(R);
+  48   
+  49  quant.l(I) = x.l(I);
+  50   
+  51  ingredients.l(R) = ingre.l(R)
+  52   
+  53  display ingredients.l;
+  54   
+  55  display Profit.l,quant.l;
+  56   
+  57   
+
+
+COMPILATION TIME     =        0.000 SECONDS      3 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/14/23 23:16:06 Page 2
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Equation Listing    SOLVE softsuds Using LP From line 45
+
+
+---- profit_eq  =E=  profit definition
+
+profit_eq..  Profit - 2*x(light) - x(dark) =E= 0 ; (LHS = 0)
+     
+
+---- resource  =L=  resourcebound
+
+resource(malt)..  2*x(light) + 3*x(dark) =L= 90 ; (LHS = 0)
+     
+resource(hops)..  3*x(light) + x(dark) =L= 40 ; (LHS = 0)
+     
+resource(yeast)..  2*x(light) + 1.66666666666667*x(dark) =L= 80 ; (LHS = 0)
+     
+
+---- y  =E=  ingredients
+
+y(malt)..  - 2*x(light) - 3*x(dark) + ingre(malt) =E= 0 ; (LHS = 0)
+     
+y(hops)..  - 3*x(light) - x(dark) + ingre(hops) =E= 0 ; (LHS = 0)
+     
+y(yeast)..  - 2*x(light) - 1.66666666666667*x(dark) + ingre(yeast) =E= 0 ; (LHS = 0)
+     
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/14/23 23:16:06 Page 3
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Column Listing      SOLVE softsuds Using LP From line 45
+
+
+---- Profit  total profit
+
+Profit
+                (.LO, .L, .UP, .M = -INF, 0, +INF, 0)
+        1       profit_eq
+
+
+---- x  beer
+
+x(light)
+                (.LO, .L, .UP, .M = 0, 0, 13, 0)
+       -2       profit_eq
+        2       resource(malt)
+        3       resource(hops)
+        2       resource(yeast)
+       -2       y(malt)
+       -3       y(hops)
+       -2       y(yeast)
+
+x(dark)
+                (.LO, .L, .UP, .M = 0, 0, 30, 0)
+       -1       profit_eq
+        3       resource(malt)
+        1       resource(hops)
+        1.6667  resource(yeast)
+       -3       y(malt)
+       -1       y(hops)
+       -1.6667  y(yeast)
+
+
+---- ingre  ingredients
+
+ingre(malt)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       y(malt)
+
+ingre(hops)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       y(hops)
+
+ingre(yeast)
+                (.LO, .L, .UP, .M = 0, 0, +INF, 0)
+        1       y(yeast)
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/14/23 23:16:06 Page 4
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Range Statistics    SOLVE softsuds Using LP From line 45
+
+
+RANGE STATISTICS (ABSOLUTE NON-ZERO FINITE VALUES)
+
+RHS       [min, max] : [ 4.000E+01, 9.000E+01] - Zero values observed as well
+Bound     [min, max] : [ 1.300E+01, 3.000E+01] - Zero values observed as well
+Matrix    [min, max] : [ 1.000E+00, 3.000E+00]
+
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/14/23 23:16:06 Page 5
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Model Statistics    SOLVE softsuds Using LP From line 45
+
+
+MODEL STATISTICS
+
+BLOCKS OF EQUATIONS           3     SINGLE EQUATIONS            7
+BLOCKS OF VARIABLES           3     SINGLE VARIABLES            6
+NON ZERO ELEMENTS            18
+
+
+GENERATION TIME      =        0.016 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/14/23 23:16:06 Page 6
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+Solution Report     SOLVE softsuds Using LP From line 45
+
+
+               S O L V E      S U M M A R Y
+
+     MODEL   softsuds            OBJECTIVE  Profit
+     TYPE    LP                  DIRECTION  MAXIMIZE
+     SOLVER  CPLEX               FROM LINE  45
+
+**** SOLVER STATUS     1 Normal Completion
+**** MODEL STATUS      1 Optimal
+**** OBJECTIVE VALUE               35.7143
+
+ RESOURCE USAGE, LIMIT          0.000 10000000000.000
+ ITERATION COUNT, LIMIT         2    2147483647
+--- GAMS/CPLEX licensed for continuous and discrete problems.
+--- GMO setup time: 0.00s
+--- GMO memory 0.50 Mb (peak 0.50 Mb)
+--- Dictionary memory 0.00 Mb
+--- Cplex 22.1.1.0 link memory 0.00 Mb (peak 0.00 Mb)
+--- Starting Cplex
+
+
+--- LP status (1): optimal.
+--- Cplex Time: 0.00sec (det. 0.01 ticks)
+
+
+Optimal solution found
+Objective:           35.714286
+
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- EQU profit_eq           .              .              .             1.0000      
+
+  profit_eq  profit definition
+
+---- EQU resource  resourcebound
+
+             LOWER          LEVEL          UPPER         MARGINAL
+
+malt         -INF           90.0000        90.0000         0.1429      
+hops         -INF           40.0000        40.0000         0.5714      
+yeast        -INF           53.8095        80.0000          .          
+
+---- EQU y  ingredients
+
+             LOWER          LEVEL          UPPER         MARGINAL
+
+malt           .              .              .             EPS         
+hops           .              .              .             EPS         
+yeast          .              .              .             EPS         
+
+                           LOWER          LEVEL          UPPER         MARGINAL
+
+---- VAR Profit            -INF           35.7143        +INF             .          
+
+  Profit  total profit
+
+---- VAR x  beer
+
+             LOWER          LEVEL          UPPER         MARGINAL
+
+light          .             4.2857        13.0000          .          
+dark           .            27.1429        30.0000          .          
+
+---- VAR ingre  ingredients
+
+             LOWER          LEVEL          UPPER         MARGINAL
+
+malt           .            90.0000        +INF             .          
+hops           .            40.0000        +INF             .          
+yeast          .            53.8095        +INF             .          
+
+
+**** REPORT SUMMARY :        0     NONOPT
+                             0 INFEASIBLE
+                             0  UNBOUNDED
+GAMS 44.3.0  8b8fb1cb Sep 1, 2023           WEX-WEI x86 64bit/MS Windows - 09/14/23 23:16:06 Page 7
+G e n e r a l   A l g e b r a i c   M o d e l i n g   S y s t e m
+E x e c u t i o n
+
+
+----     53 VARIABLE ingredients.L  
+
+malt  90.000,    hops  40.000,    yeast 53.810
+
+
+----     55 VARIABLE Profit.L              =       35.714  total profit
+
+----     55 VARIABLE quant.L  
+
+light  4.286,    dark  27.143
+
+
+
+EXECUTION TIME       =        0.063 SECONDS      4 MB  44.3.0 8b8fb1cb WEX-WEI
+
+
+USER: Introduction to Optimization (CS/ISyE/ECE 524) G230906|0002AS-GEN
+      UW-Madison, CS Dept., Fall 2023, Prof. Ferris              DCE850
+      License for teaching and research at degree granting institutions
+
+
+**** FILE SUMMARY
+
+Input      D:\GAMS\CODE\hw1-2.gms
+Output     D:\GAMS\CODE\hw1-2.lst
